@@ -1,0 +1,2 @@
+# ARTINX_Train
+RoboMaster机甲大师机器人大赛南方科技大学ARTINX战队电控组培训教学资料
