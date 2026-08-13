@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.7 入队综合作业 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+/* ============ 本小节附加：方向卡与概念图 ============ */
+.dir-card{cursor:pointer;transition:transform .15s,box-shadow .15s;user-select:none}
+.dir-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(120,76,246,.15)}
+.dir-card.on{border-color:var(--purple);background:var(--lavender)}
+.flow-node{text-align:center;border:2px solid var(--lavender);border-radius:12px;padding:8px 6px;background:#fff}
+.flow-node b{display:block;font-size:15px;color:var(--purple)}
+.flow-node span{display:block;font-size:11.5px;color:var(--muted)}
+.flow-arrow{font-size:18px;color:var(--purple);font-weight:800;align-self:center;flex:none}
+.qcard{border-left:5px solid var(--purple)}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">1.7　入队综合作业</div>
+      <h1 class="anim" style="animation-delay:.2s">入队综合作业</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">独立完成一个闭环控制小任务，两周交卷</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图：作业全景</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center;gap:12px">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>任务书</h3>
+        <p class="small">2 周完成一个闭环小任务；交付物 4 样：视频、Git 仓库、README、一页报告</p>
+      </div>
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>三个方向</h3>
+        <p class="small">A 电机速度闭环（推荐）；B 简单单轴云台；C 自选小任务。均按里程碑 1/2/3 推进</p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>七项考察</h3>
+        <p class="small">理解代码、解释数据流、独立定位、查资料、合理用 AI、Git 规范、稳定运行</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>六步节奏</h3>
+        <p class="small">画框图 → 最小闭环 → 输入显示 → 加保护 → 整理 Git → README 与视频</p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>常见翻车点</h3>
+        <p class="small">抄 AI 不验证、一次提交全部、只调通一次、不会描述问题、拖到最后三天</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.3s">
+        <h3>提交方式</h3>
+        <p class="small">推送战队指定平台；仓库地址与截止时间以通知为准（讲解时公布）</p>
+      </div>
+    </div>
+    <p class="anim muted" style="animation-delay:.4s;text-align:center">本页之后按「任务书 → 方向 → 考察点 → 演示 → 翻车点 → 资源」展开；完整版见 教学内容.md</p>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：任务书总览 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">任务书：作业是什么</h2>
+    <p class="anim" style="animation-delay:.05s">
+      <strong>入队综合作业</strong>＝在 2 周内独立完成一个「输入 → 控制逻辑 → 执行器 → 反馈」完整闭环的小型控制任务，
+      检验 1.1~1.6 全部内容的独立运用能力。系统必须包含：STM32、输入设备、执行器、反馈、基本控制逻辑、PID（或等价反馈控制）、Git、基本异常处理。
+    </p>
+    <pre class="anim" style="animation-delay:.15s;margin:10px 0">输入(按键) ──目标值──► 控制逻辑(状态+PID) ──控制量──► 执行器(电调+电机)
+     ▲                                                     │
+     └──────────── 反馈帧(编码器 角度/转速) ◄───────────────┘
+（即 1.4 的「STM32 → CAN → 电调 → 电机 → 编码器 → STM32」＋ 1.5 的 PID ＋ 1.6 的 Git/AI）</pre>
+    <div class="grid grid-3" style="animation-delay:.25s">
+      <div class="card white anim">
+        <p class="small">功能完整 ≠ 合格：<em>能跑</em>只是起点，讲得清每一环才算理解。</p>
+      </div>
+      <div class="card white anim">
+        <p class="small">过程与结果同样计分：Git 历史、排查记录、AI 使用记录都是交付物。</p>
+      </div>
+      <div class="card green anim">
+        <p class="small">这是 1.1~1.6 的「结业考」，也是你第一次独立开发。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：交付物与考察权重 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">任务书：交什么、按什么评分</h2>
+    <div class="cols" style="align-items:stretch;gap:20px">
+      <div style="justify-content:flex-start;gap:8px">
+        <h3 class="anim" style="animation-delay:.05s;margin-top:0">交付物清单（缺一不可）</h3>
+        <table class="anim" style="animation-delay:.1s">
+          <tr><th>交付物</th><th>要求</th></tr>
+          <tr><td>实机演示视频</td><td>≤1 分钟，一镜到底，展示核心功能与异常处理</td></tr>
+          <tr><td>Git 仓库</td><td>≥10 次有意义提交，信息规范，.gitignore 生效</td></tr>
+          <tr><td>README.md</td><td>功能、系统框图、数据流、运行方法、问题记录</td></tr>
+          <tr><td>一页报告</td><td>数据流图、调参记录、AI 使用记录</td></tr>
+        </table>
+      </div>
+      <div>
+        <h3 class="anim" style="animation-delay:.15s;margin-top:0">考察维度与参考权重</h3>
+        <table class="anim" style="animation-delay:.2s">
+          <tr><th>维度</th><th>权重</th><th>一句话说明</th></tr>
+          <tr><td>系统稳定运行</td><td>30%</td><td>功能完整、连续稳定、异常有处理</td></tr>
+          <tr><td>理解代码 / 数据流</td><td>25%</td><td>讲得清每一环、每一行关键代码</td></tr>
+          <tr><td>独立定位问题</td><td>15%</td><td>有排查过程记录，不靠运气</td></tr>
+          <tr><td>Git 规范</td><td>15%</td><td>小步提交、信息规范、历史可读</td></tr>
+          <tr><td>合理使用 AI</td><td>10%</td><td>有记录、能解释、不盲抄</td></tr>
+          <tr><td>查找资料</td><td>5%</td><td>会用资料站、手册、开源项目</td></tr>
+        </table>
+        <p class="small muted anim" style="animation-delay:.3s;margin-top:6px">权重供参考，最终以战队公布为准。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：时间安排 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">任务书：两周怎么用</h2>
+    <div class="cols" style="align-items:stretch;gap:20px">
+      <div style="justify-content:flex-start">
+        <h3 class="anim" style="animation-delay:.05s;margin-top:0">建议节奏（D = 第几天）</h3>
+        <table class="anim" style="animation-delay:.1s">
+          <tr><th>时间</th><th>该做什么</th><th>完成标志</th></tr>
+          <tr><td>D1~2</td><td>画系统框图、复习 1.4/1.5 代码、确认环境</td><td>框图完成，老代码跑通</td></tr>
+          <tr><td>D3~5</td><td>里程碑 1：最小闭环</td><td>电机按目标稳定转</td></tr>
+          <tr><td>D6~7</td><td>里程碑 2：输入 + 显示</td><td>改目标、看得到数据</td></tr>
+          <tr><td>D8~10</td><td>里程碑 3：异常处理</td><td>拔线、重启不失控</td></tr>
+          <tr><td>D11~12</td><td>长时间测试 + 修 bug</td><td>连续跑 5 分钟以上</td></tr>
+          <tr><td>D13</td><td>整理 Git、写 README、录视频</td><td>交付物齐</td></tr>
+          <tr><td>D14</td><td>缓冲日，提前交</td><td>不卡死线</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="callout warn anim" style="animation-delay:.15s">
+          <p><strong>红线</strong>：最后三天才开工 = 高频翻车（只能抄）。节奏是建议，但 D14 必须留作缓冲。</p>
+        </div>
+        <div class="callout anim" style="animation-delay:.25s;margin-top:10px">
+          <p><strong>提交方式</strong>：把 Git 仓库推送到战队指定平台，并提交仓库地址与视频链接。<span class="small muted">（平台地址与截止时间：讲解时由战队统一公布。）</span></p>
+        </div>
+        <div class="callout tip anim" style="animation-delay:.35s;margin-top:10px">
+          <p><strong>组队与硬件</strong>：作业独立完成；硬件与设备借用方式按战队安排（讲解时说明）。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：三个方向速览 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">三个方向，任选其一</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th>方向</th><th>任务一句话</th><th>难度</th><th>验收核心（可测量）</th></tr>
+      <tr>
+        <td><strong>A 电机速度闭环控制器</strong></td>
+        <td>设定目标转速，PID 闭环跟踪并实时显示</td>
+        <td>推荐</td>
+        <td>±5% 速度跟踪、3 秒内稳定、连续 5 分钟</td>
+      </tr>
+      <tr>
+        <td><strong>B 简单单轴云台（Pitch）</strong></td>
+        <td>设定目标角度，PID 位置环稳定云台</td>
+        <td>中等</td>
+        <td>±60° 内无震荡、误差 ≤2°、掰动后回位</td>
+      </tr>
+      <tr>
+        <td><strong>C 自选小任务</strong></td>
+        <td>任何难度相当的闭环小任务</td>
+        <td>中等</td>
+        <td>自拟且可测量，先交 200 字方案</td>
+      </tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.15s;margin-top:12px">
+      <p>选择建议：<em>没把握选 A</em>（最扎实，直接复用 1.4/1.5 成果）；<em>对云台感兴趣选 B</em>；<em>有想法选 C</em>，但必须先写方案与带教确认。</p>
+    </div>
+    <p class="small muted anim" style="animation-delay:.25s">三个方向共用同一骨架：里程碑 1 最小闭环 → 里程碑 2 输入与显示 → 里程碑 3 保护与收尾。</p>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：方向 A 任务与知识点 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">方向 A：电机速度闭环控制器</h2>
+    <p class="anim" style="animation-delay:.05s">
+      <strong>任务描述</strong>：在 1.4/1.5 的电机平台上做一台「可设定转速的恒速转台」——用按键（或电位器）设定目标转速，
+      STM32 通过 PID 速度闭环驱动电机（M3508 / M2006 均可）稳定跟踪，串口实时打印「目标 / 实际 / 误差」；
+      含目标限幅、输出限幅、电机离线检测。
+    </p>
+    <h3 class="anim" style="animation-delay:.15s">涉及知识点对照（全部来自 1.1~1.6）</h3>
+    <table class="anim" style="animation-delay:.2s">
+      <tr><th>作业环节</th><th>用到的知识点</th><th>来自</th></tr>
+      <tr><td>环境与工具链</td><td>编译、烧录、调试</td><td>1.1</td></tr>
+      <tr><td>控制逻辑</td><td>变量、判断、循环、函数、结构体</td><td>1.2</td></tr>
+      <tr><td>定时调度</td><td>Timer、中断（1 kHz 控制周期）</td><td>1.3</td></tr>
+      <tr><td>输入</td><td>GPIO 按键读取</td><td>1.3</td></tr>
+      <tr><td>通信</td><td>CAN 收发（控制帧 / 反馈帧）</td><td>1.3、1.4</td></tr>
+      <tr><td>执行器与反馈</td><td>电调、电机、编码器、控制量 / 反馈量</td><td>1.4</td></tr>
+      <tr><td>闭环控制</td><td>Target / Current / Error、P / I / D</td><td>1.5</td></tr>
+      <tr><td>过程管理</td><td>Git 提交、.gitignore、AI 辅助</td><td>1.6</td></tr>
+      <tr><td>异常处理</td><td>目标/输出限幅、反馈超时检测</td><td>本节引入，2.9 深入</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：方向 A 里程碑与验收 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">方向 A：里程碑与验收标准</h2>
+    <div class="cols" style="align-items:stretch;gap:20px">
+      <div style="justify-content:flex-start">
+        <h3 class="anim" style="animation-delay:.05s;margin-top:0">三个里程碑</h3>
+        <table class="anim" style="animation-delay:.1s">
+          <tr><th>里程碑</th><th>内容与自查点</th></tr>
+          <tr><td>1 最小闭环</td><td>读反馈 + 发控制量 + PID_Calc 接成环；目标写死（如 1000 RPM）。自查：0→1000 阶跃 3 秒内进 ±5% 带、无持续振荡</td></tr>
+          <tr><td>2 输入与显示</td><td>按键短按 ±500、串口打印 目标|实际|误差。自查：运行时改目标平滑变速、数字与实测一致</td></tr>
+          <tr><td>3 保护与收尾</td><td>目标/输出限幅、离线报警停输出、整理 Git、README、视频。自查：拔 CAN 线报警不失控、重启一致</td></tr>
+        </table>
+      </div>
+      <div>
+        <h3 class="anim" style="animation-delay:.15s;margin-top:0">验收标准（全部可测量）</h3>
+        <ol class="anim" style="animation-delay:.2s">
+          <li>安全范围内任意设定目标，实际转速<em>稳态误差 ≤ ±5%</em>（对 1000 RPM 即 ±50 RPM）；</li>
+          <li>0 → 1000 RPM 阶跃，<em>3 秒内</em>进入 ±5% 误差带，无持续振荡；</li>
+          <li>运行时改目标，平滑变速，不出现瞬间满功率冲击；</li>
+          <li><em>连续运行 ≥5 分钟</em>无异常；断电重启后表现一致；</li>
+          <li>拔掉电机 CAN 线，程序检测离线、报警并停止输出，插回后恢复。</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：方向 B ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">方向 B：简单单轴云台（Pitch）</h2>
+    <p class="anim" style="animation-delay:.05s">
+      <strong>任务描述</strong>：以编码器（或 IMU）角度为反馈，PID <em>位置环</em>把云台稳定在目标角度；按键（或电位器）设定目标；含角度限位保护。
+      硬件可选 GM6020（内置绝对编码器、直驱）或 M2006 + C610 + 编码器，按战队现有硬件选。
+    </p>
+    <div class="cols" style="align-items:stretch;gap:20px">
+      <div style="justify-content:flex-start">
+        <h3 class="anim" style="animation-delay:.1s;margin-top:6px">三个里程碑</h3>
+        <table class="anim" style="animation-delay:.15s">
+          <tr><th>里程碑</th><th>内容与自查点</th></tr>
+          <tr><td>1 角度反馈</td><td>读编码器/IMU 角度并打印。自查：手转 30° 读数变化约 30°，两端不跳变</td></tr>
+          <tr><td>2 位置闭环</td><td>先调 P，再视情况加 D 抑制震荡。自查：±30° 阶跃到位无震荡、掰动后自动回位</td></tr>
+          <tr><td>3 输入与保护</td><td>按键 ±5° 步进、超 ±60° 截断、异常停输出。自查：设 ±90° 被截到 ±60°</td></tr>
+        </table>
+      </div>
+      <div>
+        <h3 class="anim" style="animation-delay:.2s;margin-top:6px">验收标准（全部可测量）</h3>
+        <ol class="anim" style="animation-delay:.25s">
+          <li>目标角度在 <em>-60° ~ +60°</em> 内任意设定，到位<em>误差 ≤ ±2°</em>，<em>无震荡</em>；</li>
+          <li>手动掰动约 30° 后松手，<em>1 秒内</em>回到目标并稳定；</li>
+          <li>目标超出 ±60° 被截断到限位值，不撞击机械限位；</li>
+          <li><em>连续运行 ≥5 分钟</em>角度不漂移；断电重启一致；</li>
+          <li>反馈超时等异常出现时停止输出，不失控转动。</li>
+        </ol>
+        <p class="small muted anim" style="animation-delay:.3s;margin-top:6px">知识点：1.4 的 IMU 与 Yaw/Pitch、编码器；1.5 位置环（角度环通常少用 I，讲解时说明）。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：方向 C ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">方向 C：自选小任务</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>硬性要求</h3>
+        <ul>
+          <li>必须包含「输入 → 控制逻辑 → 执行器 → 反馈」完整闭环；</li>
+          <li>至少含 PID 或等价的反馈控制；</li>
+          <li>开工前写 <em>200 字方案</em>（做什么、输入/执行/反馈各是什么、验收标准怎么量），提交带教确认；</li>
+          <li>验收标准<em>必须可测量</em>（数字 + 时间），不能写「效果好」。</li>
+        </ul>
+      </div>
+      <div class="card white anim" style="animation-delay:.15s">
+        <h3>参考例子（不必照抄）</h3>
+        <table>
+          <tr><th>题目</th><th>反馈 / 执行器 / 控制</th></tr>
+          <tr><td>恒温小风扇</td><td>温度传感器 + PWM 风扇 + PID 温控</td></tr>
+          <tr><td>恒照度 LED</td><td>光敏传感器 + LED + PID 恒定照度</td></tr>
+          <tr><td>舵机角度控制</td><td>舵机 + 电位器反馈 + 位置环</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.25s;margin-top:12px">
+      <p>用其他执行器（舵机 / 风扇等）的按对应资料自学——这本身就是<em>「查资料」考察项</em>的一部分。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：演示一 · 数据流闭环动画 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：数据流闭环动起来</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="dataflow"></canvas>
+      <div class="demo-controls">
+        <label>目标转速 <input type="range" id="dfTarget" min="0" max="3000" step="100" value="1000"></label>
+        <button class="btn" id="dfPause">暂停</button>
+        <label>点击任一环节，查看「用到的知识」</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：演示二 · 三个方向对比卡 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：三个方向对比</h2>
+    <div class="grid grid-3" style="flex:none;margin-bottom:10px">
+      <div class="card dir-card anim" id="dirA" style="animation-delay:.05s">
+        <h3 style="margin-top:0">A · 电机速度闭环</h3>
+        <p class="small muted">推荐 · 基础最扎实</p>
+      </div>
+      <div class="card dir-card anim" id="dirB" style="animation-delay:.15s">
+        <h3 style="margin-top:0">B · 单轴云台</h3>
+        <p class="small muted">角度位置环</p>
+      </div>
+      <div class="card dir-card anim" id="dirC" style="animation-delay:.25s">
+        <h3 style="margin-top:0">C · 自选小任务</h3>
+        <p class="small muted">200 字方案先行</p>
+      </div>
+    </div>
+    <div class="card anim" id="dirDetail" style="animation-delay:.3s;flex:1;min-height:0;overflow:auto">
+      <p class="small muted">点击上方方向卡，展开任务描述 / 里程碑 / 验收标准</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：演示三 · 里程碑推进表 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：里程碑推进表</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="milestone"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="msA">方向 A</button>
+        <button class="btn ghost" id="msB">方向 B</button>
+        <button class="btn ghost" id="msC">方向 C</button>
+        <label>点击行打勾，下方显示该里程碑的验收标准</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：考察点 1/2 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">考察点 1/2：理解代码与解释数据流</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>1 · 是否理解自己的代码</h3>
+        <p><strong>及格线</strong>：能画出系统数据流图，并解释图上每一个环节——每个环节回答三问：<em>数据是什么</em>（类型、单位、取值范围）、<em>从哪来往哪去</em>、<em>多久更新一次</em>。</p>
+        <p><strong>硬核检验</strong>：带教随机指着代码里任意一行，你能说清它干什么、为什么这么写。「这段是 AI 写的，我不清楚」= 漏点。</p>
+      </div>
+      <div class="card white anim" style="animation-delay:.15s">
+        <h3>2 · 能否解释系统数据流</h3>
+        <p><strong>一镜到底</strong>：完整叙述按下按键后——信号如何变成按键状态 → 目标值如何更新 → PID 如何算出控制量 → CAN 帧如何发出 → 电机如何转 → 编码器如何回报 → 下一次计算如何用到回报值。</p>
+        <p><strong>时间尺度</strong>：1 kHz 控制周期 = 每秒 1000 次循环；要清楚哪个环节最慢、哪里可能被阻塞。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：考察点 3/4 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">考察点 3/4：定位问题与查资料</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>3 · 能否独立定位基本问题</h3>
+        <p><strong>四步法</strong>：现象 → 假设 → 验证 → 缩小范围。示例「电机不转」：</p>
+        <ul>
+          <li>假设① 程序没跑 → 加 LED 心跳，灯在闪，排除；</li>
+          <li>假设② CAN 初始化失败 → 打印初始化返回值，出现错误码；</li>
+          <li>假设③ 波特率 / 线序 → 按错误码查手册对应项，确认。</li>
+        </ul>
+        <p class="small muted">工具：Keil Debug（断点、Watch）、串口打印、万用表。每排除一个假设，缩小一圈范围。</p>
+      </div>
+      <div class="card white anim" style="animation-delay:.15s">
+        <h3>4 · 能否查找资料</h3>
+        <p>会查三类资料：</p>
+        <ul>
+          <li><strong>官方资料</strong>：RoboMaster 资料站、电机 / 电调手册；</li>
+          <li><strong>开源项目</strong>：往届战队开源、GitHub 仓库；</li>
+          <li><strong>问答与文档</strong>：报错原文搜索、按模板提问。</li>
+        </ul>
+        <p><strong>消化</strong>：查到的资料要能用自己的话转述「它说了什么、我用了哪部分」，不是复制粘贴。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：考察点 5/6 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">考察点 5/6：合理用 AI 与 Git 规范</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>5 · 是否合理使用 AI</h3>
+        <p>两件事：<em>记录</em> + <em>解释</em>。</p>
+        <ul>
+          <li>记录：哪一步用了 AI、问了什么、AI 给了什么、你采纳/否决了什么，写进报告；</li>
+          <li>解释：提交前能解释<em>每一行关键代码</em>——AI 可以写，解释责任在你。</li>
+        </ul>
+        <p class="small"><strong>红线</strong>：AI 生成 → 能编译 → 直接交。能跑但讲不清 = 没做。</p>
+      </div>
+      <div class="card white anim" style="animation-delay:.15s">
+        <h3>6 · Git 使用是否规范</h3>
+        <ul>
+          <li><strong>小步提交</strong>：一次 commit 一件事，全程 ≥10 次有意义提交；</li>
+          <li><strong>信息规范</strong>：<code>feat: 添加按键调速功能</code>，杜绝「更新」「111」；</li>
+          <li><strong>.gitignore 生效</strong>：Objects/ 等编译产物不入库；</li>
+          <li><strong>历史可读</strong>：git log 从头到尾能看出开发过程——证明不是最后一天复制粘贴。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：考察点 7 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">考察点 7：系统能否稳定运行（权重 30%）</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>调通一次 ≠ 稳定运行</h3>
+        <p>稳定运行的最低标准：</p>
+        <ul>
+          <li><em>连续运行 ≥5 分钟</em>无异常；</li>
+          <li>反复断电重启，表现一致；</li>
+          <li>制造异常（拔线、乱按、极端目标）系统不失控——要么处理，要么报警。</li>
+        </ul>
+        <p class="small muted">视频里要展示的是连续稳定运行，不是「唯一成功的一次」。</p>
+      </div>
+      <div class="card white anim" style="animation-delay:.15s">
+        <h3>异常处理三件套（加分项）</h3>
+        <table>
+          <tr><th>措施</th><th>做法</th></tr>
+          <tr><td>目标限幅</td><td>输入目标超出安全范围即截断</td></tr>
+          <tr><td>输出限幅</td><td>PID 输出截断，防瞬间满功率</td></tr>
+          <tr><td>反馈超时检测</td><td>约 100 ms 未收到反馈帧 → 停止输出并报警</td></tr>
+        </table>
+        <p class="small muted">超时阈值等参数以你实测为准，此处为参考量级。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：演示四 · 判断卡 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：这样交作业，行不行？</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="judge"></canvas>
+      <div class="demo-controls">
+        <label>点击卡片翻牌，查看判断与理由</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：推荐开发节奏 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">推荐开发节奏：六步</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center;gap:12px">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>① 画系统框图</h3>
+        <p class="small">标出每环数据类型与周期；画不清就别开工——图都画不出来，代码一定糊。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>② 搭最小闭环</h3>
+        <p class="small">只做反馈 → PID → 执行器，目标值写死。这是地基，地基稳了再盖楼。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>③ 加输入与显示</h3>
+        <p class="small">目标可调、数据可见（串口打印）。看不见的系统没法调。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>④ 加保护与异常处理</h3>
+        <p class="small">限幅、超时检测、失控保护。放在功能完成之后、测试之前。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>⑤ 整理 Git 记录</h3>
+        <p class="small">回看 log：信息是否规范、.gitignore 是否生效、历史能否讲出开发故事。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.3s">
+        <h3>⑥ README + 视频</h3>
+        <p class="small">README 五要素：功能 / 框图 / 数据流 / 运行 / 问题记录；视频一镜到底。</p>
+      </div>
+    </div>
+    <p class="anim muted" style="animation-delay:.4s;text-align:center">原则：先画图，后搭环，再添砖；先能跑，后能稳，最后补文档。</p>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：常见翻车点 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见翻车点清单</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th>翻车点</th><th>表现</th><th>怎么避免</th></tr>
+      <tr><td>抄 AI 代码不验证</td><td>能跑，被问一行就卡壳</td><td>1.6 的必须动作：diff 逐行审 → 编译 → 实机验证</td></tr>
+      <tr><td>Git 一次提交全部</td><td>历史只有「first commit: 全部完成」</td><td>小步提交，完成一个功能就 commit 一次</td></tr>
+      <tr><td>只调通一次就交</td><td>演示时重启一次就翻车</td><td>连续运行 5 分钟 + 反复断电重启测试</td></tr>
+      <tr><td>不会描述问题</td><td>只喊「电机不转」</td><td>按提问模板带齐现象 / 期望 / 已尝试 / 数据</td></tr>
+      <tr><td>只调参数不理解参数</td><td>说不清 Kp 变大为何震荡</td><td>每次改参数记下现象，回看 1.5 概念</td></tr>
+      <tr><td>拖到最后三天</td><td>节奏崩掉，只能抄</td><td>按 D1~D14 建议节奏走，D14 是缓冲日</td></tr>
+      <tr><td>交付物不齐</td><td>缺 README / 缺视频</td><td>把交付物清单当 checklist 逐项打勾</td></tr>
+    </table>
+    <div class="callout danger anim" style="animation-delay:.15s;margin-top:12px">
+      <p>最危险的不是代码写错，而是<em>「能跑」掩盖了「不懂」</em>——答疑与验收时都会追问到讲不清为止。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：提问模板 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">答疑提问模板：四要素 + 一猜测</h2>
+    <div class="grid grid-2" style="flex:none;gap:12px">
+      <div class="card white qcard anim" style="animation-delay:.05s">
+        <h3 style="margin-top:0">现象</h3>
+        <p class="small">描述你看到了什么，而不是你的结论（写「电机不转」，别写「电机坏了」）。</p>
+      </div>
+      <div class="card white qcard anim" style="animation-delay:.1s">
+        <h3 style="margin-top:0">期望</h3>
+        <p class="small">你希望发生什么，尽量量化。</p>
+      </div>
+      <div class="card white qcard anim" style="animation-delay:.15s">
+        <h3 style="margin-top:0">已尝试</h3>
+        <p class="small">你做过哪些排查、结果如何——证明动过脑子，也避免别人重复。</p>
+      </div>
+      <div class="card white qcard anim" style="animation-delay:.2s">
+        <h3 style="margin-top:0">数据 / 截图</h3>
+        <p class="small">日志、报错原文、照片。一张截图胜过一百个字。</p>
+      </div>
+    </div>
+    <pre class="anim" style="animation-delay:.25s;margin:10px 0;flex:1;min-height:0">【现象】电机上电后不转，串口无输出（具体、可复现）
+【期望】上电后能以 1000 RPM 恒速旋转
+【已尝试】1. 检查 CAN 线序（通过） 2. 换电机（依旧不转）
+          3. 加打印：CAN 初始化返回错误码 0x03
+【数据】串口日志截图 + 接线照片 + 报错原文
+【猜测】怀疑 CAN 波特率配置不匹配</pre>
+    <p class="small muted anim" style="animation-delay:.35s">提问前先自查三步：先看报错原文 → 先查资料 → 先复现一次。还解决不了再按模板提问。</p>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源（均已验证可访问）</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center;gap:10px">
+      <div class="card white anim" style="animation-delay:.05s">
+        <p><strong>Conventional Commits 中文</strong> <span class="small muted">— commit 信息规范，写提交前对照格式</span></p>
+        <p class="small"><a href="https://www.conventionalcommits.org/zh-hans/v1.0.0/" target="_blank" rel="noopener">conventionalcommits.org/zh-hans/v1.0.0</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.1s">
+        <p><strong>RoboMaster 官网</strong> <span class="small muted">— 官方赛事、规则与资料入口</span></p>
+        <p class="small"><a href="https://www.robomaster.com/zh-CN" target="_blank" rel="noopener">robomaster.com/zh-CN</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.15s">
+        <p><strong>RoboMaster 官方社区</strong> <span class="small muted">— 各战队开源专栏与问答</span></p>
+        <p class="small"><a href="https://bbs.robomaster.com/" target="_blank" rel="noopener">bbs.robomaster.com</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.2s">
+        <p><strong>华南虎战队开源组织</strong> <span class="small muted">— 知名战队往届项目参考</span></p>
+        <p class="small"><a href="https://github.com/scutrobotlab" target="_blank" rel="noopener">github.com/scutrobotlab</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.25s">
+        <p><strong>《提问的智慧》简体中文版</strong> <span class="small muted">— 答疑前值得读一遍</span></p>
+        <p class="small"><a href="https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md" target="_blank" rel="noopener">github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.3s">
+        <p><strong>Learn Git Branching</strong> <span class="small muted">— Git 分支闯关练习</span></p>
+        <p class="small"><a href="https://learngitbranching.js.org/" target="_blank" rel="noopener">learngitbranching.js.org</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：交作业前自检 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">交作业前自检（8 问）</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center;gap:10px">
+      <div class="card white anim" style="animation-delay:.05s"><p class="small">1. 数据流图每个环节都能说出「类型 + 单位 + 更新周期」？</p></div>
+      <div class="card white anim" style="animation-delay:.1s"><p class="small">2. 随机指代码里任意一行，我都能解释？</p></div>
+      <div class="card white anim" style="animation-delay:.15s"><p class="small">3. 拔掉 CAN 线，系统会报警并停止输出，而不是失控？</p></div>
+      <div class="card white anim" style="animation-delay:.2s"><p class="small">4. 目标给到极端值（最大 / 最小 / 快速反复切换），有限幅处理？</p></div>
+      <div class="card white anim" style="animation-delay:.25s"><p class="small">5. git log 历史 ≥10 次，信息符合「类型: 简述」？</p></div>
+      <div class="card white anim" style="animation-delay:.3s"><p class="small">6. .gitignore 生效，编译产物没有进仓库？</p></div>
+      <div class="card white anim" style="animation-delay:.35s"><p class="small">7. README 写清功能、框图、数据流、运行方法、问题记录？</p></div>
+      <div class="card green anim" style="animation-delay:.4s"><p class="small">8. 视频展示的是连续稳定运行，而不是唯一成功的一次？</p></div>
+    </div>
+    <p class="anim muted" style="animation-delay:.45s;text-align:center">8 问全过，再提交。参考答案与详细解释见 教学内容.md。</p>
+  </section>
+
+  <!-- ══════════════════ 第 24 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>作业 = 一个讲得清的闭环 + 一份规范的过程记录</li>
+        <li>三方向：速度环 / 单轴云台 / 自选，均按里程碑 1/2/3 推进</li>
+        <li>六步节奏：先画图 → 搭闭环 → 加保护 → 补文档</li>
+        <li>交前自检：±5% 跟踪、无震荡、5 分钟、10+ commit、8 问全过</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        完整任务书与自检清单见 <strong>教学内容.md</strong>，两周后见。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（各小节自行编写） ================= */
+/*
+  注册格式：
+  ARTINX_DEMOS['example'] = {
+    init(canvas, slide){ ...每帧动画写在这里... },
+    destroy(){ ...清除定时器/raf... }
+  };
+  提示：
+  - canvas 尺寸随窗口变化，用下方 fit(canvas) 获取 CSS 像素尺寸并处理高清屏
+  - 页面切换到其他页时会自动调用 destroy()，切回时重新 init()
+  - 不要依赖任何外部库，用原生 canvas 即可
+  - 演示内绿色统一为荧光绿 #AFFF00（亮）与深绿 #83BF00；canvas 文字禁用 emoji
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+function rr(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+const SANS = '"Segoe UI","Microsoft YaHei",sans-serif';
+const MONO = 'Consolas,"Cascadia Mono",monospace';
+const G_BRIGHT = '#AFFF00';  /* 荧光绿（亮） */
+const G_DEEP = '#83BF00';    /* 深绿 */
+function wrapLines(ctx, text, maxW) {
+  const out = [];
+  let line = '';
+  for (const ch of text) {
+    if (ctx.measureText(line + ch).width > maxW && line) { out.push(line); line = ch; }
+    else line += ch;
+  }
+  if (line) out.push(line);
+  return out;
+}
+function drawArrow(ctx, x1, y1, x2, y2, color, lw) {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  const hl = 9;
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw || 2;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - Math.cos(a) * hl * 0.6, y2 - Math.sin(a) * hl * 0.6); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - Math.cos(a - 0.42) * hl, y2 - Math.sin(a - 0.42) * hl);
+  ctx.lineTo(x2 - Math.cos(a + 0.42) * hl, y2 - Math.sin(a + 0.42) * hl);
+  ctx.closePath(); ctx.fill();
+}
+
+// ═══════ 演示一：系统数据流闭环动画 ═══════
+ARTINX_DEMOS['dataflow'] = (() => {
+  const NODES = {
+    input:  { t: '输入', s: '按键 / 电位器', chips: ['GPIO（1.3）', '按键检测（1.3）', '目标限幅（本节）'], line: '读按键 / 电位器，得到目标值' },
+    ctl:    { t: '控制逻辑', s: '状态 + PID', chips: ['C 语言（1.2）', 'PID（1.5）', '1ms 周期（1.3）'], line: '算误差，输出控制量' },
+    act:    { t: '执行器', s: '电调 + 电机', chips: ['CAN 发送（1.4）', '控制量（1.4）', '电调（1.4）'], line: '电流指令 → 电机转动' },
+    fb:     { t: '反馈', s: '编码器', chips: ['编码器（1.4）', 'CAN 接收（1.4）', '反馈量（1.4）'], line: '角度 / 转速回报给主控' }
+  };
+  let raf = null, running = true, t = 0, last = 0;
+  let selected = 'ctl', onClick = null, cv = null, rects = {}, edges = [];
+  const EDGE_T = 1.15; // 每条边上的数据包耗时（秒）
+
+  function layout(w, h) {
+    const bw = Math.min(168, w * 0.20), bh = 58;
+    const inR = { x: w * 0.045, y: h * 0.33, w: bw, h: bh };
+    const ctR = { x: w * 0.44 - (bw + 16) / 2, y: h * 0.045, w: bw + 16, h: bh };
+    const acR = { x: w * 0.955 - bw, y: h * 0.33, w: bw, h: bh };
+    const fbR = { x: w * 0.44 - (bw + 16) / 2, y: h * 0.615, w: bw + 16, h: bh };
+    rects = { input: inR, ctl: ctR, act: acR, fb: fbR };
+    edges = [
+      { a: 'input', b: 'ctl', label: '目标值', kind: 'goal',
+        x1: inR.x + inR.w, y1: inR.y + inR.h / 2, x2: ctR.x + ctR.w * 0.30, y2: ctR.y + ctR.h },
+      { a: 'ctl', b: 'act', label: '控制量', kind: 'cmd',
+        x1: ctR.x + ctR.w, y1: ctR.y + ctR.h / 2, x2: acR.x + acR.w / 2, y2: acR.y },
+      { a: 'act', b: 'fb', label: '实测值', kind: 'goal',
+        x1: acR.x + acR.w / 2, y1: acR.y + acR.h, x2: fbR.x + fbR.w, y2: fbR.y + fbR.h / 2 },
+      { a: 'fb', b: 'ctl', label: '反馈帧', kind: 'goal',
+        x1: fbR.x, y1: fbR.y + fbR.h / 2, x2: ctR.x + ctR.w * 0.70, y2: ctR.y + ctR.h }
+    ];
+  }
+
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    const dt = clamp(now - (last || now), 0, 60) / 1000; last = now;
+    if (running) t += dt;
+    layout(w, h);
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 连线与箭头
+    edges.forEach(e => {
+      const active = currentEdge() === e;
+      drawArrow(ctx, e.x1, e.y1, e.x2, e.y2, active ? '#784CF6' : '#C9C3DE', active ? 3 : 1.8);
+      const mx = (e.x1 + e.x2) / 2, my = (e.y1 + e.y2) / 2;
+      ctx.font = '12px ' + SANS; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#5A5468';
+      ctx.fillText(e.label, mx + (e.a === 'fb' ? -44 : 0), my - 12);
+    });
+
+    // 数据包（沿当前边运动）
+    const ei = Math.floor(t / EDGE_T) % edges.length;
+    const e = edges[ei];
+    const k = clamp((t % EDGE_T) / EDGE_T, 0, 1);
+    const ease = 0.5 - 0.5 * Math.cos(Math.PI * k);
+    const px = e.x1 + (e.x2 - e.x1) * ease, py = e.y1 + (e.y2 - e.y1) * ease;
+    const isCmd = e.kind === 'cmd';
+    ctx.beginPath(); ctx.arc(px, py, 12, 0, Math.PI * 2);
+    ctx.fillStyle = isCmd ? 'rgba(120,76,246,.18)' : 'rgba(175,255,0,.35)';
+    ctx.fill();
+    ctx.beginPath(); ctx.arc(px, py, 6.5, 0, Math.PI * 2);
+    ctx.fillStyle = isCmd ? '#784CF6' : G_BRIGHT;
+    ctx.fill();
+    ctx.strokeStyle = isCmd ? '#4A2BD4' : G_DEEP; ctx.lineWidth = 1.6; ctx.stroke();
+
+    // 环节节点
+    const target = +document.getElementById('dfTarget').value;
+    const noise = Math.sin(performance.now() / 300) * 18 + Math.sin(performance.now() / 77) * 9;
+    const curRpm = Math.round(target + noise);
+    const subs = {
+      input: '目标 ' + target + ' rpm',
+      ctl: '误差 ' + (target - curRpm) + ' rpm',
+      act: '发送控制量',
+      fb: '实测 ' + curRpm + ' rpm'
+    };
+    Object.keys(rects).forEach(key => {
+      const r = rects[key];
+      const sel = key === selected;
+      const isArrive = edgeArrivesAt(ei, k, key);
+      ctx.fillStyle = sel ? '#E3DBFC' : '#F7F4FE';
+      ctx.strokeStyle = sel ? '#784CF6' : (isArrive ? G_DEEP : '#E8E4F4');
+      ctx.lineWidth = sel ? 3 : (isArrive ? 2.2 : 1.5);
+      rr(ctx, r.x, r.y, r.w, r.h, 13); ctx.fill(); ctx.stroke();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#262034';
+      ctx.font = '700 17px ' + SANS;
+      ctx.fillText(NODES[key].t, r.x + r.w / 2, r.y + 22);
+      ctx.fillStyle = '#5A5468';
+      ctx.font = '13px ' + SANS;
+      ctx.fillText(NODES[key].s, r.x + r.w / 2, r.y + 40);
+      ctx.fillStyle = '#784CF6';
+      ctx.font = '700 12px ' + MONO;
+      ctx.fillText(subs[key], r.x + r.w / 2, r.y + r.h - 8);
+    });
+
+    // 底部「用到的知识」面板
+    const py0 = h - 88;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.2;
+    rr(ctx, 8, py0, w - 16, 80, 12); ctx.fill(); ctx.stroke();
+    const nd = NODES[selected];
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#784CF6';
+    ctx.font = '700 14px ' + SANS;
+    ctx.fillText('· ' + nd.t + ' 用到的知识', 24, py0 + 20);
+    let cx0 = 24 + ctx.measureText('· ' + nd.t + ' 用到的知识').width + 14;
+    nd.chips.forEach(ch => {
+      ctx.font = '12px ' + SANS;
+      const tw = ctx.measureText(ch).width + 22;
+      rr(ctx, cx0, py0 + 9, tw, 22, 11);
+      ctx.fillStyle = '#F7F4FE'; ctx.fill();
+      ctx.strokeStyle = '#E3DBFC'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#5A2FD0';
+      ctx.fillText(ch, cx0 + 11, py0 + 21);
+      cx0 += tw + 8;
+    });
+    ctx.fillStyle = '#5A5468';
+    ctx.font = '13px ' + SANS;
+    ctx.fillText(nd.line + '（点击上方环节切换）', 24, py0 + 52);
+
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  function currentEdge() {
+    return edges[Math.floor(t / EDGE_T) % edges.length];
+  }
+  function edgeArrivesAt(ei, k, nodeKey) {
+    return k > 0.82 && edges[ei].b === nodeKey;
+  }
+  function pick(offsetX, offsetY) {
+    for (const key of Object.keys(rects)) {
+      const r = rects[key];
+      if (offsetX >= r.x && offsetX <= r.x + r.w && offsetY >= r.y && offsetY <= r.y + r.h) return key;
+    }
+    return null;
+  }
+  function refreshPause() {
+    const b = document.getElementById('dfPause');
+    if (b) b.textContent = running ? '暂停' : '播放';
+  }
+  return {
+    init(canvas) {
+      cv = canvas;
+      onClick = (e) => {
+        const hit = pick(e.offsetX, e.offsetY);
+        if (hit) selected = hit;
+      };
+      canvas.addEventListener('click', onClick);
+      if (!raf) { last = 0; raf = requestAnimationFrame(() => draw(canvas)); }
+      refreshPause();
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      if (cv && onClick) cv.removeEventListener('click', onClick);
+      onClick = null; cv = null;
+    },
+    togglePlay() { running = !running; refreshPause(); }
+  };
+})();
+document.getElementById('dfPause').onclick = () => ARTINX_DEMOS['dataflow'].togglePlay();
+
+// ═══════ 演示二：里程碑推进 checklist ═══════
+ARTINX_DEMOS['milestone'] = (() => {
+  const DATA = {
+    A: { name: '电机速度闭环控制器',
+      m1: ['0→1000 RPM 阶跃 3 秒进 ±5% 带', '无持续振荡'],
+      m2: ['按键改目标，转速平滑变化', '串口显示与实测一致'],
+      m3: ['拔 CAN 线 → 报警停输出', '重启一致，连续跑 5 分钟'] },
+    B: { name: '简单单轴云台（Pitch）',
+      m1: ['手动转 30°，读数变化约 30°', '两端不跳变、方向正确'],
+      m2: ['±30° 阶跃到位、无震荡', '掰动后 1 秒内回位'],
+      m3: ['目标超 ±60° 被截断', '连续 5 分钟不漂移'] },
+    C: { name: '自选小任务',
+      m1: ['反馈可读、执行可动', '闭环起效（按你的方案）'],
+      m2: ['目标可调、数据可见'],
+      m3: ['异常不失控', 'README + 视频齐全'] }
+  };
+  const META = [
+    { t: '里程碑 1', s: '最小闭环' },
+    { t: '里程碑 2', s: '输入与显示' },
+    { t: '里程碑 3', s: '保护与收尾' }
+  ];
+  let dir = 'A';
+  const checked = { A: [false, false, false], B: [false, false, false], C: [false, false, false] };
+  let focus = -1;
+  let raf = null, onClick = null, cv = null;
+  let rows = [];
+
+  function layout(w, h) {
+    const pad = 16, top = 12, rowH = 56, gap = 12;
+    rows = [0, 1, 2].map(i => ({ x: pad, y: top + i * (rowH + gap), w: w - pad * 2, h: rowH }));
+  }
+  function drawCheck(ctx, cx, cy, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, cy + 1);
+    ctx.lineTo(cx - 1.5, cy + 5);
+    ctx.lineTo(cx + 6, cy - 5);
+    ctx.stroke();
+  }
+  function refreshBtns() {
+    ['A', 'B', 'C'].forEach(k => {
+      const b = document.getElementById('ms' + k);
+      if (b) b.className = 'btn' + (dir === k ? '' : ' ghost');
+    });
+  }
+
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    layout(w, h);
+    ctx.clearRect(0, 0, w, h);
+    ctx.textBaseline = 'middle';
+
+    // 表头：方向 + 进度
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#262034';
+    ctx.font = '700 15px ' + SANS;
+    ctx.fillText(DATA[dir].name, 16, 30);
+    const done = checked[dir].filter(Boolean).length;
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#784CF6';
+    ctx.font = '700 14px ' + SANS;
+    ctx.fillText('完成 ' + done + '/3', w - 16, 30);
+
+    // 三个里程碑行
+    rows.forEach((r, i) => {
+      const on = checked[dir][i];
+      const isFocus = focus === i;
+      ctx.fillStyle = on ? 'rgba(175,255,0,.28)' : (isFocus ? '#F7F4FE' : '#FFFFFF');
+      ctx.strokeStyle = on ? G_DEEP : (isFocus ? '#784CF6' : '#E8E4F4');
+      ctx.lineWidth = isFocus ? 2 : 1.2;
+      rr(ctx, r.x, r.y, r.w, r.h, 13); ctx.fill(); ctx.stroke();
+      // 复选框（勾为线段绘制，不用文字符号）
+      const cy = r.y + r.h / 2, cx0 = r.x + 34;
+      ctx.beginPath(); ctx.arc(cx0, cy, 13, 0, Math.PI * 2);
+      ctx.fillStyle = on ? G_BRIGHT : '#FFFFFF'; ctx.fill();
+      ctx.strokeStyle = on ? G_DEEP : '#C9C3DE'; ctx.lineWidth = 2; ctx.stroke();
+      if (on) drawCheck(ctx, cx0, cy, '#2C4000');
+      // 标题与副题
+      ctx.textAlign = 'left';
+      ctx.fillStyle = on ? '#3C6400' : '#262034';
+      ctx.font = '700 17px ' + SANS;
+      ctx.fillText(META[i].t + ' · ' + META[i].s, cx0 + 28, cy - 10);
+      ctx.fillStyle = '#5A5468';
+      ctx.font = '12px ' + SANS;
+      const brief = { A: ['反馈 → PID → 电机', '按键改目标 + 串口显示', '限幅 / 离线检测 / 收尾'],
+                      B: ['角度反馈读准', '位置环稳住角度', '限位保护 + 收尾'],
+                      C: ['闭环起效', '目标可调可见', '异常不失控'] }[dir][i];
+      ctx.fillText(brief, cx0 + 28, cy + 12);
+      if (isFocus) {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#784CF6';
+        ctx.font = '600 12px ' + SANS;
+        ctx.fillText('查看下方验收标准 ↓', r.x + r.w - 16, cy);
+      }
+    });
+
+    // 底部验收标准面板
+    const py0 = rows[2].y + rows[2].h + 12;
+    const ph = h - py0 - 8;
+    ctx.fillStyle = '#F7F4FE';
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.2;
+    rr(ctx, 16, py0, w - 32, ph, 12); ctx.fill(); ctx.stroke();
+    const fi = focus >= 0 ? focus : checked[dir].findIndex(Boolean);
+    ctx.textAlign = 'left';
+    if (fi < 0) {
+      ctx.fillStyle = '#5A5468';
+      ctx.font = '14px ' + SANS;
+      ctx.fillText('点击上方任一行打勾，这里会显示该里程碑的验收标准（可测量）', 32, py0 + ph / 2);
+    } else {
+      ctx.fillStyle = '#784CF6';
+      ctx.font = '700 14px ' + SANS;
+      ctx.fillText('· ' + META[fi].t + ' ' + META[fi].s + ' · 验收标准', 32, py0 + 24);
+      const lines = DATA[dir]['m' + (fi + 1)];
+      ctx.fillStyle = '#262034';
+      ctx.font = '13px ' + SANS;
+      let ly = py0 + 24 + Math.min(34, ph * 0.3);
+      lines.forEach(L => {
+        ctx.fillText('· ' + L, 48, ly);
+        ly += 26;
+      });
+    }
+
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+
+  return {
+    init(canvas) {
+      cv = canvas;
+      onClick = (e) => {
+        rows.forEach((r, i) => {
+          if (e.offsetX >= r.x && e.offsetX <= r.x + r.w && e.offsetY >= r.y && e.offsetY <= r.y + r.h) {
+            checked[dir][i] = !checked[dir][i];
+            focus = i;
+          }
+        });
+      };
+      canvas.addEventListener('click', onClick);
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+      refreshBtns();
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      if (cv && onClick) cv.removeEventListener('click', onClick);
+      onClick = null; cv = null;
+    },
+    setDir(d) { dir = d; refreshBtns(); }
+  };
+})();
+document.getElementById('msA').onclick = () => ARTINX_DEMOS['milestone'].setDir('A');
+document.getElementById('msB').onclick = () => ARTINX_DEMOS['milestone'].setDir('B');
+document.getElementById('msC').onclick = () => ARTINX_DEMOS['milestone'].setDir('C');
+
+// ═══════ 演示三：「这样交作业行不行」判断卡 ═══════
+ARTINX_DEMOS['judge'] = (() => {
+  const CARDS = [
+    { good: false, title: 'AI 代码直接交', why: '能跑但讲不清 = 隐患' },
+    { good: false, title: '一次 commit 交全部', why: '历史看不出开发过程' },
+    { good: false, title: '只调通一次就交', why: '重启一次可能就翻车' },
+    { good: false, title: '提问只有一句话', why: '「电机不转」没人帮得了' },
+    { good: true, title: '画出数据流图', why: '每个环节讲得清 = 加分' },
+    { good: true, title: '小步提交 + README', why: '历史可读，交付物齐全' }
+  ];
+  const state = CARDS.map(() => ({ anim: 0, flipping: false, shown: false }));
+  let raf = null, onClick = null, cv = null, cells = [];
+
+  function layout(w, h) {
+    const pad = 16, gap = 14, top = 10;
+    const cw = (w - pad * 2 - gap * 2) / 3;
+    const ch = (h - top - pad - gap) / 2;
+    cells = CARDS.map((_, i) => ({
+      x: pad + (i % 3) * (cw + gap),
+      y: top + ((i / 3) | 0) * (ch + gap),
+      w: cw, h: ch
+    }));
+  }
+
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    layout(w, h);
+    ctx.clearRect(0, 0, w, h);
+
+    // 顶部提示
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#5A5468';
+    ctx.font = '13px ' + SANS;
+    ctx.fillText('6 张卡：4 张反例 + 2 张正例，点击翻牌看判断', 16, 22);
+
+    CARDS.forEach((c, i) => {
+      const cell = cells[i];
+      const st = state[i];
+      if (st.flipping) {
+        st.anim = clamp(st.anim + 0.065, 0, 1);
+        if (st.anim >= 1) { st.flipping = false; st.shown = !st.shown; st.anim = 0; }
+      }
+      const flip = st.flipping ? st.anim : 0;
+      const scale = Math.abs(Math.cos(Math.PI * flip));
+      const cx = cell.x + cell.w / 2;
+      ctx.save();
+      ctx.translate(cx, cell.y + cell.h / 2);
+      ctx.scale(Math.max(scale, 0.05), 1);
+      ctx.translate(-cx, -(cell.y + cell.h / 2));
+      const showBack = st.flipping ? (flip < 0.5 ? st.shown : !st.shown) : st.shown;
+      if (!showBack) {
+        // 正面
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.4;
+        rr(ctx, cell.x, cell.y, cell.w, cell.h, 14); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = c.good ? G_BRIGHT : '#E3DBFC';
+        ctx.strokeStyle = c.good ? G_DEEP : '#784CF6'; ctx.lineWidth = 1;
+        rr(ctx, cell.x + 12, cell.y + 12, 52, 22, 11); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = c.good ? '#2C4000' : '#5A2FD0';
+        ctx.font = '700 12px ' + SANS;
+        ctx.textAlign = 'center';
+        ctx.fillText(c.good ? '正例' : '反例', cell.x + 12 + 26, cell.y + 12 + 12);
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#262034';
+        ctx.font = '700 17px ' + SANS;
+        wrapLines(ctx, c.title, cell.w - 32).forEach((L, j) => {
+          ctx.fillText(L, cell.x + 16, cell.y + 52 + j * 26);
+        });
+        ctx.fillStyle = '#C9C3DE';
+        ctx.font = '12px ' + SANS;
+        ctx.textAlign = 'right';
+        ctx.fillText('点击翻牌 >', cell.x + cell.w - 16, cell.y + cell.h - 16);
+      } else {
+        // 背面：判断
+        ctx.fillStyle = c.good ? '#F7FDEB' : '#FFF3F5';
+        ctx.strokeStyle = c.good ? '#BFE98A' : '#F0B9C4'; ctx.lineWidth = 1.6;
+        rr(ctx, cell.x, cell.y, cell.w, cell.h, 14); ctx.fill(); ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = c.good ? '#3C6400' : '#B0415B';
+        ctx.font = '800 30px ' + SANS;
+        ctx.fillText(c.good ? '过关' : '不行', cx, cell.y + 42);
+        ctx.fillStyle = '#5A5468';
+        ctx.font = '13px ' + SANS;
+        const whyLines = wrapLines(ctx, c.why, cell.w - 32);
+        whyLines.forEach((L, j) => {
+          ctx.fillText(L, cx, cell.y + 74 + j * 22);
+        });
+        ctx.fillStyle = '#C9C3DE';
+        ctx.font = '12px ' + SANS;
+        ctx.fillText('再点一次翻回 >', cx, cell.y + cell.h - 16);
+      }
+      ctx.restore();
+    });
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+
+  return {
+    init(canvas) {
+      cv = canvas;
+      onClick = (e) => {
+        cells.forEach((cell, i) => {
+          if (e.offsetX >= cell.x && e.offsetX <= cell.x + cell.w &&
+              e.offsetY >= cell.y && e.offsetY <= cell.y + cell.h) {
+            const st = state[i];
+            if (!st.flipping) { st.flipping = true; st.anim = 0; }
+          }
+        });
+      };
+      canvas.addEventListener('click', onClick);
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      if (cv && onClick) cv.removeEventListener('click', onClick);
+      onClick = null; cv = null;
+    }
+  };
+})();
+
+// ═══════ 第 12 页：三个方向对比（HTML 交互卡） ═══════
+(() => {
+  const DETAIL = {
+    A: {
+      name: 'A · 电机速度闭环控制器',
+      rows: [
+        ['任务', '按键设目标转速，PID 闭环跟踪，串口实时显示'],
+        ['里程碑', '① 最小闭环　② 输入与显示　③ 保护与收尾'],
+        ['验收', '±5% 速度跟踪 · 3 秒内稳定 · 连续 5 分钟'],
+        ['知识点', '1.1~1.6 全覆盖（重点 1.4 + 1.5）']
+      ]
+    },
+    B: {
+      name: 'B · 简单单轴云台（Pitch）',
+      rows: [
+        ['任务', '设定目标角度，PID 位置环稳住云台'],
+        ['里程碑', '① 角度反馈　② 位置闭环　③ 限位保护'],
+        ['验收', '±60° 内无震荡 · 误差 ≤2° · 掰动后 1 秒回位'],
+        ['知识点', '1.4 IMU/编码器 + 1.5 位置环 + 1.6']
+      ]
+    },
+    C: {
+      name: 'C · 自选小任务',
+      rows: [
+        ['任务', '任何「输入→逻辑→执行→反馈」闭环小任务'],
+        ['里程碑', '① 最小闭环　② 输入显示　③ 保护收尾'],
+        ['验收', '自拟且必须可测量（提交前与带教对齐）'],
+        ['知识点', '按方案覆盖 1.1~1.6；先交 200 字方案']
+      ]
+    }
+  };
+  function show(key) {
+    const d = DETAIL[key];
+    document.getElementById('dirDetail').innerHTML =
+      '<h3 style="margin:0 0 6px">' + d.name + '</h3>' +
+      d.rows.map(r =>
+        '<p class="small" style="margin:5px 0"><strong>' + r[0] + '：</strong>' + r[1] + '</p>'
+      ).join('');
+    ['A', 'B', 'C'].forEach(k => {
+      document.getElementById('dir' + k).classList.toggle('on', k === key);
+    });
+  }
+  document.getElementById('dirA').onclick = () => show('A');
+  document.getElementById('dirB').onclick = () => show('B');
+  document.getElementById('dirC').onclick = () => show('C');
+  show('A');
+})();
+</script>
+</body>
+</html>

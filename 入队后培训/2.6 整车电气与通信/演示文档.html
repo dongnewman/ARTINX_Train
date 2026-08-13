@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.6 整车电气与通信 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">2.6　整车电气与通信</div>
+      <h1 class="anim" style="animation-delay:.2s">整车电气与通信</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">CAN 总线、整车供电与电磁兼容：原理、结构与排障</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>通信部分</h3>
+        <ul>
+          <li>CAN：广播总线、差分信号、标准帧、ID 仲裁</li>
+          <li>波特率与 120Ω 终端电阻</li>
+          <li>电机与主控通信的 ID 规律</li>
+          <li>UART 与 USB 对比</li>
+        </ul>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>整车电气部分</h3>
+        <ul>
+          <li>电源树：常电与动力电</li>
+          <li>电池、电源管理模块、超级电容</li>
+          <li>接插件、线材与接地三铁律</li>
+          <li>电磁干扰来源与对策</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout anim" style="animation-delay:.3s">
+      学完本节：能对着整车线束图讲清「电从哪来、信号怎么走、故障往哪查」，排障按四类问题「症状→排查→修复」表执行。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：CAN 定义与特性 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">CAN 总线：定义与特性</h2>
+    <div class="card anim" style="animation-delay:.1s">
+      <p>CAN（Controller Area Network，控制器局域网）是 ISO 11898 标准的多主串行总线：所有节点共享一对差分线 CAN_H / CAN_L，以报文广播方式通信。RoboMaster 常用速率 1 Mbps，线缆为 120Ω 特性阻抗双绞线。</p>
+    </div>
+    <table class="anim" style="animation-delay:.2s;margin-top:12px">
+      <tr><th>特性</th><th>说明</th></tr>
+      <tr><td>多主广播</td><td>无主机概念，任意节点可发，所有节点可收</td></tr>
+      <tr><td>差分抗干扰</td><td>用两根线电压差表示 0/1，共模干扰被抵消</td></tr>
+      <tr><td>硬件检错</td><td>CRC 校验、ACK 确认、错误帧，出错自动重发</td></tr>
+      <tr><td>非破坏仲裁</td><td>同时发送时 ID 小者优先，数据不被破坏</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：拓扑与差分信号 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">拓扑与差分信号</h2>
+    <div class="cols">
+      <div class="card anim" style="animation-delay:.1s">
+        <svg viewBox="0 0 300 180" style="width:100%;height:auto;max-height:270px">
+          <line x1="24" y1="90" x2="276" y2="90" stroke="#83BF00" stroke-width="4" stroke-linecap="round"/>
+          <rect x="44" y="30" width="72" height="28" rx="8" fill="#F7F4FE" stroke="#784CF6"/>
+          <text x="80" y="48" font-size="12" text-anchor="middle" fill="#262034">主控</text>
+          <line x1="80" y1="58" x2="80" y2="90" stroke="#784CF6" stroke-width="2"/>
+          <rect x="130" y="116" width="72" height="28" rx="8" fill="#F7F4FE" stroke="#784CF6"/>
+          <text x="166" y="134" font-size="12" text-anchor="middle" fill="#262034">电调 1</text>
+          <line x1="166" y1="116" x2="166" y2="90" stroke="#784CF6" stroke-width="2"/>
+          <rect x="214" y="30" width="72" height="28" rx="8" fill="#F7F4FE" stroke="#784CF6"/>
+          <text x="250" y="48" font-size="12" text-anchor="middle" fill="#262034">电调 2</text>
+          <line x1="250" y1="58" x2="250" y2="90" stroke="#784CF6" stroke-width="2"/>
+          <text x="150" y="170" font-size="11" text-anchor="middle" fill="#5A5468">共享一对双绞线，谁都能听，靠 ID 分辨</text>
+        </svg>
+      </div>
+      <div>
+        <table class="anim" style="animation-delay:.2s">
+          <tr><th>电平状态</th><th>CAN_H</th><th>CAN_L</th><th>压差</th></tr>
+          <tr><td>显性（逻辑 0）</td><td>约 3.5 V</td><td>约 1.5 V</td><td>约 2 V</td></tr>
+          <tr><td>隐性（逻辑 1）</td><td>约 2.5 V</td><td>约 2.5 V</td><td>约 0 V</td></tr>
+        </table>
+        <p class="small muted anim" style="animation-delay:.3s;margin-top:10px">
+          干扰通常同时抬升/拉低两线，压差几乎不变；双绞线让两线受扰更一致。电平为 ISO 11898-2 典型值，以收发器手册为准。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：标准帧结构 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">标准帧结构：固定格式的报文</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>字段</th><th>位宽</th><th>作用</th></tr>
+      <tr><td>SOF 帧起始</td><td>1</td><td>一个显性位，宣布开始发送</td></tr>
+      <tr><td>仲裁 ID</td><td>11</td><td>标识符：地址＋优先级（标准帧）</td></tr>
+      <tr><td>RTR</td><td>1</td><td>区分数据帧/远程帧，数据帧为显性 0</td></tr>
+      <tr><td>DLC</td><td>4</td><td>数据长度码，表示数据段 0~8 字节</td></tr>
+      <tr><td>数据段</td><td>0~64</td><td>有效载荷，各字节含义由上层协议定义</td></tr>
+      <tr><td>CRC</td><td>15</td><td>校验码，收方重算比对，不一致即传错</td></tr>
+      <tr><td>ACK</td><td>1</td><td>发方发隐性 1，收方回显性 0 覆盖，表示收到</td></tr>
+      <tr><td>EOF</td><td>7</td><td>7 个隐性位，宣布帧结束</td></tr>
+    </table>
+    <p class="small muted anim" style="animation-delay:.2s;margin-top:10px">
+      教学简化：省略 IDE 位、保留位与界定符，完整定义见 ISO 11898。位填充：连续 5 个相同位后插入反位，硬件自动完成。
+    </p>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：CAN ID 与仲裁 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">CAN ID：地址与仲裁</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>ID 的两个作用</h3>
+        <ul>
+          <li>地址：只收发给自己的报文（标准帧 11 位，0~2047）</li>
+          <li>优先级：ID 越小越先发送</li>
+        </ul>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>仲裁规则</h3>
+        <ul>
+          <li>线与结构：显性 0 压过隐性 1</li>
+          <li>逐位比较，先出现 0 者胜，败者退让重发</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout anim" style="animation-delay:.3s">
+      例：0x200 与 0x201 同时发送，前 10 位相同，第 11 位 0 胜出。整车应用：反馈帧 ID＝0x200＋电调 ID，主控据此识别来源（以官方手册为准）。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：波特率 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">波特率：全员统一的语速</h2>
+    <div class="card anim" style="animation-delay:.1s">
+      <p>波特率＝每秒传输的位数（bit/s）。总线上所有设备必须一致，否则收方解出乱码；RoboMaster 常用 1 Mbps。一个位由若干时间份额 TQ 组成，具体配置以单片机手册与官方例程为准。</p>
+    </div>
+    <table class="anim" style="animation-delay:.2s;margin-top:12px">
+      <tr><th>检查项</th><th>说明</th></tr>
+      <tr><td>不匹配现象</td><td>收到乱帧、错误帧，或完全收不到数据</td></tr>
+      <tr><td>排查方法</td><td>核对全车设备波特率配置；示波器测位宽验证实际速率</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：终端电阻 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">终端电阻：总线两端的 120Ω</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <p>信号到达导线末端会<em>反射</em>，与后续信号叠加成毛刺。解法：总线物理两端各接 1 个 120Ω，匹配线缆特性阻抗、吸收反射。只有两端各一个，不是每个节点都加。</p>
+      </div>
+      <div>
+        <table class="anim" style="animation-delay:.2s">
+          <tr><th>断电测量 CAN_H-CAN_L</th><th>含义</th></tr>
+          <tr><td>约 60Ω</td><td>正常（两个 120Ω 并联）</td></tr>
+          <tr><td>约 120Ω</td><td>少一个终端电阻</td></tr>
+          <tr><td>接近 0Ω</td><td>两线短路</td></tr>
+          <tr><td>开路</td><td>总线断线</td></tr>
+        </table>
+        <p class="small muted anim" style="animation-delay:.3s;margin-top:10px">类比：水管两端装堵头，防止回波。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：电机与主控通信 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">电机与主控通信：ID 规律</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>报文</th><th>ID 规律</th><th>方向</th></tr>
+      <tr><td>控制帧</td><td><span class="kbd">0x200</span>（全体）或 <span class="kbd">0x1FF</span> / <span class="kbd">0x2FF</span>（分组）</td><td>主控 → 电调</td></tr>
+      <tr><td>反馈帧</td><td><span class="kbd">0x200 + 电调ID</span>（1 号 → 0x201）</td><td>电调 → 主控</td></tr>
+    </table>
+    <div class="callout warn anim" style="animation-delay:.2s;margin-top:12px">
+      字段含义与分组方式以官方手册为准。
+    </div>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:12px">
+      板间通信同样三步对齐：波特率 → ID → 帧格式。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：CAN 常见故障 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">CAN 常见故障速查</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>现象</th><th>可能原因</th><th>排查方法</th></tr>
+      <tr><td>某台电机完全无反馈</td><td>节点 CAN 线断 / 插头松</td><td>量通断，重插接插件</td></tr>
+      <tr><td>上电后全车无通信</td><td>CAN_H/CAN_L 接反 / 波特率不符</td><td>查收发器接线，核对配置</td></tr>
+      <tr><td>通信时好时坏、错误帧</td><td>缺终端电阻 / 线过长 / 干扰</td><td>断电测约 60Ω，缩短线、用双绞</td></tr>
+      <tr><td>新设备接入后全网瘫痪</td><td>波特率或 ID 冲突 / 接反拉死总线</td><td>先单独测试再并入整车</td></tr>
+      <tr><td>能收到但内容全乱</td><td>两端波特率不一致</td><td>示波器或回环测试核对</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：UART 与 USB ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">UART 与 USB：点对点通信</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>维度</th><th>UART</th><th>USB</th><th>CAN（参考）</th></tr>
+      <tr><td>拓扑</td><td>一对一</td><td>一对多</td><td>总线广播</td></tr>
+      <tr><td>速率量级</td><td>115200 bps 常见</td><td>USB 2.0 480 Mbps</td><td>1 Mbps</td></tr>
+      <tr><td>距离</td><td>数米内</td><td>数米内</td><td>数十米</td></tr>
+      <tr><td>整车用途</td><td>调试打印、裁判系统用户串口</td><td>DFU 下载、调试器</td><td>电机、板间</td></tr>
+    </table>
+    <div class="callout anim" style="animation-delay:.2s;margin-top:12px">
+      裁判系统经电源管理模块用户串口向主控上报血量、比赛状态等信息，接线与协议以官方手册为准。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：整车电源树 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">整车电气＝一棵电源树</h2>
+    <div class="cols">
+      <div class="card anim" style="animation-delay:.1s">
+        <svg viewBox="0 0 300 250" style="width:100%;height:auto;max-height:340px">
+          <rect x="110" y="10" width="80" height="30" rx="8" fill="#F7F4FE" stroke="#784CF6"/>
+          <text x="150" y="29" font-size="12" text-anchor="middle" fill="#262034">电池</text>
+          <line x1="150" y1="40" x2="150" y2="58" stroke="#5A2FD0" stroke-width="3"/>
+          <rect x="85" y="58" width="130" height="34" rx="8" fill="#784CF6"/>
+          <text x="150" y="79" font-size="11" text-anchor="middle" fill="#ffffff">电源管理模块 PM</text>
+          <line x1="150" y1="92" x2="150" y2="112" stroke="#5A2FD0" stroke-width="3"/>
+          <line x1="150" y1="112" x2="75" y2="112" stroke="#784CF6" stroke-width="3"/>
+          <line x1="150" y1="112" x2="225" y2="112" stroke="#83BF00" stroke-width="3"/>
+          <line x1="75" y1="112" x2="75" y2="132" stroke="#784CF6" stroke-width="3"/>
+          <rect x="42" y="132" width="66" height="28" rx="8" fill="#E3DBFC" stroke="#784CF6"/>
+          <text x="75" y="150" font-size="11" text-anchor="middle" fill="#512FA3">主控</text>
+          <line x1="75" y1="160" x2="75" y2="180" stroke="#784CF6" stroke-width="3"/>
+          <rect x="32" y="180" width="86" height="28" rx="8" fill="#E3DBFC" stroke="#784CF6"/>
+          <text x="75" y="198" font-size="11" text-anchor="middle" fill="#512FA3">裁判系统</text>
+          <line x1="225" y1="112" x2="225" y2="132" stroke="#83BF00" stroke-width="3"/>
+          <rect x="192" y="132" width="66" height="28" rx="8" fill="#AFFF00" stroke="#83BF00"/>
+          <text x="225" y="150" font-size="11" text-anchor="middle" fill="#2C4000">电调</text>
+          <line x1="225" y1="160" x2="225" y2="180" stroke="#83BF00" stroke-width="3"/>
+          <rect x="192" y="180" width="66" height="28" rx="8" fill="#AFFF00" stroke="#83BF00"/>
+          <text x="225" y="198" font-size="11" text-anchor="middle" fill="#2C4000">电机</text>
+          <rect x="86" y="216" width="128" height="26" rx="8" fill="#AFFF00" fill-opacity=".4" stroke="#83BF00" stroke-dasharray="4 3"/>
+          <text x="150" y="233" font-size="10" text-anchor="middle" fill="#2C4000">超级电容（并接·功率缓冲）</text>
+          <line x1="225" y1="168" x2="214" y2="216" stroke="#83BF00" stroke-width="2" stroke-dasharray="4 3"/>
+          <text x="24" y="21" font-size="10" fill="#784CF6">紫＝常电</text>
+          <text x="24" y="35" font-size="10" fill="#3C6400">绿＝动力电</text>
+        </svg>
+      </div>
+      <div>
+        <div class="card anim" style="animation-delay:.2s">
+          <h3>常电</h3>
+          <p class="small">主控、裁判系统、IMU 等逻辑电路；电流小，必须干净稳定。</p>
+        </div>
+        <div class="card green anim" style="animation-delay:.3s;margin-top:12px">
+          <h3>动力电</h3>
+          <p class="small">电调 → 电机、发射机构；电流大（可达数十安培），波动大。</p>
+        </div>
+      </div>
+    </div>
+    <div class="callout anim" style="animation-delay:.4s">
+      第一原则：强电弱电分家；布线按动力 / 常电 / 信号 / 射频分层，动力线与信号线避免长距离并行。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：电池与电源管理模块 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">电池与电源管理模块</h2>
+    <div class="card anim" style="animation-delay:.1s">
+      <p>电池是全车能量源头，最怕<em>过放</em>与<em>短路</em>；上电前先查电压与插头（型号以战队实际为准）。电源管理模块（PM）是车上的「总电表＋总闸」。</p>
+    </div>
+    <table class="anim" style="animation-delay:.2s;margin-top:12px">
+      <tr><th>PM 官方参数（以官方手册为准）</th><th>数值</th></tr>
+      <tr><td>供电输入</td><td>DC 24 V</td></tr>
+      <tr><td>动力输出</td><td>3 路 24 V：底盘 10 A / 云台 10 A / 发射机构 8 A，合计 20 A</td></tr>
+      <tr><td>常电输出</td><td>5 V / 12 V / 24 V，供裁判系统各模块</td></tr>
+      <tr><td>用户串口</td><td>向主控输出裁判系统信息（血量、状态等）</td></tr>
+      <tr><td>通断控制</td><td>可按裁判系统服务器指令对输出断电</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：超级电容 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">超级电容：动力电上的功率缓冲</h2>
+    <ul style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px">
+      <li>定义：并接在动力电总线上的储能元件，做功率缓冲</li>
+      <li>工作方式：平时充电；电机瞬时大电流时先由电容放电补充，削平电压跌落与尖峰</li>
+      <li>类比：水库平时蓄水，高峰用水时先放水补充</li>
+      <li>效果：减轻电池压降，改善急加速表现，降低主控被拖垮的风险</li>
+      <li>容量与接入位置以战队实际方案为准</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：电调与主控 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">电调与主控：整车角色</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>电调（ESC）</h3>
+        <ul>
+          <li>与电机一对一配套（M3508↔C620、M2006↔C610）</li>
+          <li>挂 CAN 收指令，输出三相动力电</li>
+          <li>动力线粗短、注意散热通风</li>
+          <li>过流/堵转/温度告警必须接入主控逻辑</li>
+        </ul>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>主控（开发板 C 型）</h3>
+        <ul>
+          <li>输入 8~28 V，挂常电支路</li>
+          <li>板载 IMU；2 路 CAN；UART、DBUS、USB</li>
+          <li>经 CAN 发指令收反馈，经串口接裁判系统</li>
+          <li>完整参数以官方手册为准</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：接插件、线材与接地 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">接插件、线材与接地</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>接插件与线材</h3>
+        <ul>
+          <li>动力电用大电流插接件（如 XT30 / XT60，以战队实际为准），防松、防反接</li>
+          <li>插头必须插到位——松动插头是整车故障第一来源</li>
+          <li>AWG 号越小线越粗；大电流走粗线，防发热与压降</li>
+          <li>CAN 线用双绞线</li>
+        </ul>
+      </div>
+      <div>
+        <table class="anim" style="animation-delay:.2s">
+          <tr><th>接地铁律</th><th>做法</th><th>原因</th></tr>
+          <tr><td>一点接地</td><td>各地线汇集公共点</td><td>防地电位漂移</td></tr>
+          <tr><td>必须共地</td><td>设备间地线相连</td><td>信号有参考基准</td></tr>
+          <tr><td>粗细匹配</td><td>地线与正极同粗</td><td>防压降与串扰</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：电磁干扰 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">电磁干扰：来源与对策</h2>
+    <div class="card anim" style="animation-delay:.1s">
+      <p>最大干扰源：电调<em>PWM 大电流开关</em>；其次为发射机构、继电器等开关器件。受害者：图传（雪花）、传感器与通信（数据乱跳）、常电（主控复位、ADC 漂移）。</p>
+    </div>
+    <table class="anim" style="animation-delay:.2s;margin-top:12px">
+      <tr><th>对策</th><th>做法</th><th>原理</th></tr>
+      <tr><td>远离</td><td>图传天线、信号线远离动力线与大电流器件</td><td>干扰随距离快速衰减</td></tr>
+      <tr><td>屏蔽</td><td>信号线用屏蔽线，屏蔽层一端接地</td><td>金属网挡住辐射</td></tr>
+      <tr><td>双绞</td><td>差分信号用双绞线</td><td>两线受扰一致，相减抵消</td></tr>
+      <tr><td>滤波</td><td>电源入口加电容</td><td>吸平电源毛刺</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：其他外设 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">整车其他外设一览</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>外设</th><th>典型作用</th><th>典型接口</th></tr>
+      <tr><td>IMU 惯性测量单元</td><td>姿态角 Yaw / Pitch / Roll</td><td>板载，或 CAN / 串口</td></tr>
+      <tr><td>裁判系统各模块</td><td>血量、状态、图传链路</td><td>模块互联，经用户串口汇总</td></tr>
+      <tr><td>遥控接收机</td><td>操作手指令</td><td>DBUS</td></tr>
+      <tr><td>传感器（测距/光电）</td><td>环境感知</td><td>串口 / IO / ADC</td></tr>
+      <tr><td>灯光、蜂鸣器</td><td>状态指示</td><td>PWM / IO</td></tr>
+    </table>
+    <div class="callout anim" style="animation-delay:.2s;margin-top:12px">
+      接新外设三问：走什么接口？供电是常电还是动力电？协议以哪份手册为准？
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：演示 CAN 帧逐位动画 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：CAN 标准帧逐位动画</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="canbit"></canvas>
+      <div id="canbitInfo" style="min-height:38px;padding:8px 16px;font-size:12.5px;border-top:1px solid var(--line);background:var(--panel);color:var(--purple-deep)">点击字段查看含义，自动播放逐段讲解。</div>
+      <div class="demo-controls">
+        <button class="btn" id="cbPlay">暂停</button>
+        <button class="btn ghost" id="cbReset">重置</button>
+        <span class="small muted">示例帧：ID 0x201，数据 8 字节（字段含义以官方手册为准）</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：演示 终端电阻波形对比 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：终端电阻波形对比</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="termwave"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="twOn">有终端电阻</button>
+        <button class="btn ghost" id="twOff">无终端电阻</button>
+        <span class="small muted">示意波形：无 120Ω 时信号边缘出现反射毛刺。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：演示 电源树交互 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：点击电源树节点</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="powertree"></canvas>
+      <div id="ptInfo" style="min-height:38px;padding:8px 16px;font-size:12.5px;border-top:1px solid var(--line);background:var(--panel);color:var(--purple-deep)">点击任一节点，查看电压与电流走向说明。</div>
+      <div class="demo-controls">
+        <span class="small muted">亮绿＝常电（逻辑电路）</span>
+        <span class="small muted">深绿＝动力电（功率负载）</span>
+        <span class="small muted">流动圆点＝电流方向</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：演示 故障排查卡 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：故障排查卡（点击翻面）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="faultcards"></canvas>
+      <div class="demo-controls">
+        <button class="btn ghost" id="fcReset">全部翻回正面</button>
+        <span class="small muted">正面为症状，背面为排查与修复。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：故障排查：供电与接线 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">故障排查表一：供电与接线</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>症状</th><th>排查</th><th>修复</th></tr>
+      <tr><td>全车无反应，主控不亮</td><td>量电池电压；查总开关/保险与输入接口</td><td>充电换电池；换保险；重插输入</td></tr>
+      <tr><td>大油门电机无力、电压表下掉</td><td>测动力线压降；查线径与长度</td><td>换粗线、缩短线；加超级电容</td></tr>
+      <tr><td>急加速瞬间主控重启</td><td>查常电是否被动力电拖垮；查 PM 告警</td><td>常电动力电分供；加滤波电容</td></tr>
+      <tr><td>某台电机时有时无</td><td>拉动该节点插头与线束</td><td>重插或更换端子，固定线束</td></tr>
+      <tr><td>上电后某路直接报过流</td><td>查正负是否接反、是否短路</td><td>断电重接；量通断后再上电</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 24 页：故障排查：接地与干扰 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">故障排查表二：接地与干扰</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>症状</th><th>排查</th><th>修复</th></tr>
+      <tr><td>传感器读数乱飘、串口乱码</td><td>查两设备是否共地；查地线是否松动</td><td>接好公共地；压紧地线端子</td></tr>
+      <tr><td>接外设后 ADC 读数整体偏移</td><td>查地线回路是否串入大电流</td><td>一点接地，各地线直连公共点</td></tr>
+      <tr><td>图传雪花随电机油门出现</td><td>挪动天线远离动力线对比验证</td><td>天线远离电调；屏蔽线；电源滤波</td></tr>
+      <tr><td>CAN 偶发错误帧、反馈丢失</td><td>干扰源靠近总线做对比测试</td><td>换双绞/屏蔽线；远离动力线</td></tr>
+      <tr><td>程序偶发死机或复位</td><td>观察是否发生在大电流动作时</td><td>常电加滤波电容；信号线屏蔽</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 25 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源</h2>
+    <ul class="anim" style="animation-delay:.1s;flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px">
+      <li><a href="https://zh.wikipedia.org/wiki/%E6%8E%A7%E5%88%B6%E5%99%A8%E5%8D%80%E5%9F%9F%E7%B6%B2%E8%B7%AF" target="_blank" rel="noopener">维基百科：控制器局域网（CAN bus）</a> —— 帧格式、仲裁与 ISO 11898 细节，权威参考。</li>
+      <li><a href="https://www.bilibili.com/video/BV1cuTizBEYe/" target="_blank" rel="noopener">B 站：CAN 协议专题教程（STM32 HAL 实战）</a> —— 23 集系统课程，原理与编程全覆盖。</li>
+      <li><a href="https://www.robomaster.com/zh-CN/products/components/detail/1252" target="_blank" rel="noopener">RoboMaster 官方：电源管理模块 PM01 产品页</a> —— 整车供电参数与使用说明下载。</li>
+      <li><a href="https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c" target="_blank" rel="noopener">RoboMaster 官方：开发板 C 型产品页</a> —— 主控接口清单与官方文档入口。</li>
+    </ul>
+    <p class="small muted anim" style="animation-delay:.2s">以上链接已验证可访问（2026-08）；协议与接线细节以官方手册为准。</p>
+  </section>
+
+  <!-- ══════════════════ 最后一页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>CAN：广播总线，差分抗干扰，ID 仲裁定优先级</li>
+        <li>标准帧＝固定信封：SOF → ID → DLC → 数据 → CRC → ACK → EOF</li>
+        <li>波特率全员统一；两端 120Ω，断电测约 60Ω</li>
+        <li>电源树：常电 / 动力电分家，超级电容做功率缓冲</li>
+        <li>接地三铁律：一点接地 · 共地 · 粗细匹配</li>
+        <li>四类故障「症状→排查→修复」表＝排障第一工具</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（各小节自行编写） ================= */
+/*
+  注册格式：
+  ARTINX_DEMOS['example'] = {
+    init(canvas, slide){ ...每帧动画写在这里... },
+    destroy(){ ...清除定时器/raf... }
+  };
+  提示：
+  - canvas 尺寸随窗口变化，用下方 fit(canvas) 获取 CSS 像素尺寸并处理高清屏
+  - 页面切换到其他页时会自动调用 destroy()，切回时重新 init()
+  - 不要依赖任何外部库，用原生 canvas 即可
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+const FONT = '"Segoe UI","Microsoft YaHei",sans-serif';
+
+// —— 演示 1：CAN 标准帧逐位动画（点击字段查看含义） ——
+ARTINX_DEMOS['canbit'] = (() => {
+  const SEGS = [
+    { name: 'SOF 帧起始', bits: 1,  color: '#83BF00', tc: '#fff',    div: 'rgba(255,255,255,.35)', cells: [0],
+      desc: '1 个显性位（逻辑 0），宣布开始发送。' },
+    { name: '仲裁 ID',  bits: 11, color: '#AFFF00', tc: '#274500', div: 'rgba(38,32,52,.22)', cells: [0,1,0,0,0,0,0,0,0,0,1],
+      desc: '标准帧 11 位标识符：地址兼优先级。本例 0x201＝1 号电调反馈帧（以官方手册为准）。' },
+    { name: 'RTR',      bits: 1,  color: '#83BF00', tc: '#fff',    div: 'rgba(255,255,255,.35)', cells: [0],
+      desc: '远程帧标记位，数据帧为显性 0。' },
+    { name: 'DLC 长度码', bits: 4, color: '#AFFF00', tc: '#274500', div: 'rgba(38,32,52,.22)', cells: [1,0,0,0],
+      desc: '数据长度码，0~8 字节。本例 1000＝8 字节（其前还有 IDE 等控制位）。' },
+    { name: '数据段',  bits: 64, color: '#83BF00', tc: '#fff',    div: 'rgba(255,255,255,.35)', cells: null,
+      desc: '8 字节有效载荷 B0~B7，字段含义由上层协议定义，以官方手册为准。' },
+    { name: 'CRC 校验', bits: 15, color: '#AFFF00', tc: '#274500', div: 'rgba(38,32,52,.22)', cells: null,
+      desc: '15 位校验码，收方重算比对，不一致即传错。' },
+    { name: 'ACK 确认', bits: 1,  color: '#83BF00', tc: '#fff',    div: 'rgba(255,255,255,.35)', cells: [1],
+      desc: '确认位：发送方发隐性 1，收方回显性 0 覆盖，表示收到。' },
+    { name: 'EOF 帧结束', bits: 7, color: '#AFFF00', tc: '#274500', div: 'rgba(38,32,52,.22)', cells: [1,1,1,1,1,1,1],
+      desc: '7 个隐性位，宣布帧结束。' },
+  ];
+  const TOTAL = SEGS.reduce((a, s) => a + s.bits, 0); // 104 位（教学简化示意）
+  let raf = null, cv = null, playing = true, sel = -1, cur = 0, last = 0;
+  let by = 0, bh = 0, rects = [];
+
+  function setInfo(i) {
+    const el = document.getElementById('canbitInfo');
+    if (el) el.innerHTML = '<strong>' + SEGS[i].name + '</strong>　' + SEGS[i].desc;
+  }
+  function resetInfo() {
+    const el = document.getElementById('canbitInfo');
+    if (el) el.innerHTML = '点击字段查看含义，自动播放逐段讲解。';
+  }
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const t = performance.now();
+    if (playing && t - last > 1500) { last = t; cur = (cur + 1) % SEGS.length; setInfo(cur); }
+    ctx.clearRect(0, 0, w, h);
+    bh = Math.max(54, Math.min(96, h * 0.30));
+    by = 34;
+    const x0 = 12, avail = w - 24;
+    let x = x0;
+    rects = SEGS.map(s => { const r = { x, w: avail * s.bits / TOTAL, s }; x += r.w; return r; });
+    // 底部说明
+    ctx.font = '12px ' + FONT;
+    ctx.fillStyle = '#5A5468';
+    ctx.textAlign = 'left';
+    ctx.fillText('显性(0)：H 高 L 低，压差约 2V；隐性(1)：压差约 0V（典型值，以收发器手册为准）', x0, h - 10);
+    ctx.textAlign = 'center';
+    rects.forEach((r, i) => {
+      const s = SEGS[i];
+      const on = playing ? i === cur : i === sel;
+      if (on) { ctx.shadowColor = s.color; ctx.shadowBlur = 16; }
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(r.x, by, r.w - 2, bh, 7); else ctx.rect(r.x, by, r.w - 2, bh);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = on ? '#262034' : 'rgba(38,32,52,.18)';
+      ctx.lineWidth = on ? 2.5 : 1;
+      ctx.stroke();
+      // 位格子分隔线
+      ctx.strokeStyle = s.div;
+      ctx.lineWidth = 1;
+      const n = s.cells ? s.cells.length : (s.bits === 64 ? 8 : 0);
+      for (let k = 1; k < n; k++) {
+        const cx = r.x + (r.w - 2) * k / n;
+        ctx.beginPath(); ctx.moveTo(cx, by + 3); ctx.lineTo(cx, by + bh - 3); ctx.stroke();
+      }
+      ctx.fillStyle = s.tc;
+      ctx.font = '600 12.5px ' + FONT;
+      if (s.cells) {
+        const cw = (r.w - 2) / s.cells.length;
+        if (cw >= 12) s.cells.forEach((b, k) => ctx.fillText(String(b), r.x + cw * k + cw / 2, by + bh / 2 + 4));
+      } else if (s.bits === 64) {
+        const cw = (r.w - 2) / 8;
+        if (cw >= 24) for (let k = 0; k < 8; k++) ctx.fillText('B' + k, r.x + cw * k + cw / 2, by + bh / 2 + 4);
+        else ctx.fillText('8 字节', r.x + (r.w - 2) / 2, by + bh / 2 + 4);
+      } else {
+        ctx.fillText(s.bits + ' bit', r.x + (r.w - 2) / 2, by + bh / 2 + 4);
+      }
+      ctx.font = '700 12.5px ' + FONT;
+      ctx.fillStyle = '#262034';
+      ctx.fillText(s.name, r.x + (r.w - 2) / 2, by - 11);
+      ctx.font = '11px ' + FONT;
+      ctx.fillStyle = '#5A5468';
+      ctx.fillText(s.bits === 64 ? '0~8 字节' : s.bits + ' bit', r.x + (r.w - 2) / 2, by + bh + 15);
+      if (on) {
+        ctx.fillStyle = s.color;
+        ctx.beginPath();
+        ctx.moveTo(r.x + (r.w - 2) / 2 - 6, by + bh + 24);
+        ctx.lineTo(r.x + (r.w - 2) / 2 + 6, by + bh + 24);
+        ctx.lineTo(r.x + (r.w - 2) / 2, by + bh + 31);
+        ctx.closePath(); ctx.fill();
+      }
+    });
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  function onClick(e) {
+    if (!rects.length) return;
+    const x = e.offsetX, y = e.offsetY;
+    for (let i = 0; i < rects.length; i++) {
+      const r = rects[i];
+      if (x >= r.x && x <= r.x + r.w && y >= by - 16 && y <= by + bh + 31) {
+        sel = i; playing = false; setInfo(i);
+        const b = document.getElementById('cbPlay');
+        if (b) b.textContent = '继续';
+        return;
+      }
+    }
+  }
+  return {
+    init(canvas) {
+      cv = canvas;
+      canvas.addEventListener('click', onClick);
+      last = performance.now();
+      setInfo(cur);
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      if (cv) { cv.removeEventListener('click', onClick); cv = null; }
+    },
+    api: {
+      togglePlay() {
+        playing = !playing;
+        if (playing) { sel = -1; last = performance.now(); setInfo(cur); }
+        const b = document.getElementById('cbPlay');
+        if (b) b.textContent = playing ? '暂停' : '继续';
+      },
+      reset() {
+        sel = -1; cur = 0; playing = true; last = performance.now(); resetInfo();
+        const b = document.getElementById('cbPlay');
+        if (b) b.textContent = '暂停';
+      }
+    }
+  };
+})();
+document.getElementById('cbPlay').onclick = () => ARTINX_DEMOS['canbit'].api.togglePlay();
+document.getElementById('cbReset').onclick = () => ARTINX_DEMOS['canbit'].api.reset();
+
+// —— 演示 2：终端电阻波形对比（示波器滚动视图） ——
+ARTINX_DEMOS['termwave'] = (() => {
+  const BITS = [0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0];
+  const BITMS = 500;   // 每 bit 时长（ms）
+  const PXMS = 1.5;    // 每像素对应毫秒
+  let raf = null, term = true, t0 = null;
+
+  function sample(tt) {
+    const T = BITS.length * BITMS;
+    const t2 = ((tt % T) + T) % T;
+    const bi = Math.floor(t2 / BITMS);
+    const dt = t2 - bi * BITMS;
+    const bit = BITS[bi];
+    const rec = 2.5, domH = 3.5, domL = 1.5;
+    let h = bit ? rec : domH;
+    let l = bit ? rec : domL;
+    // 最近一次跳变沿引起的反射振荡：无终端电阻时幅度大、衰减慢
+    const tau = term ? BITMS * 0.05 : BITMS * 0.55;
+    const amp = term ? 0.08 : 1.35;
+    const f = 5.2 / BITMS;
+    const k = bit === 0 ? 1 : -1;
+    const ring = k * amp * Math.exp(-dt / tau) * Math.sin(2 * Math.PI * f * dt);
+    h += ring;
+    l -= ring;
+    return { h, l };
+  }
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    if (t0 === null) t0 = now;
+    ctx.clearRect(0, 0, w, h);
+    const midY = h / 2;
+    const padT = 26;
+    const panelH = midY - padT - 22;
+    const V = (v) => padT + (4 - v) / 3 * panelH;
+    const VL = (v) => midY + 16 + (4 - v) / 3 * panelH;
+    // 网格与参考电平
+    ctx.strokeStyle = '#EEEAF8';
+    ctx.lineWidth = 1;
+    [V(2.5), V(3.5), VL(2.5), VL(1.5)].forEach(y => {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    });
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = '#D5D0E6';
+    [V(2.5), V(3.5), VL(2.5), VL(1.5)].forEach(y => {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    // 标签
+    ctx.textAlign = 'left';
+    ctx.font = '700 12px ' + FONT;
+    ctx.fillStyle = '#2C4000';
+    ctx.fillText('CAN_H', 10, 14);
+    ctx.fillText('CAN_L', 10, midY + 9);
+    ctx.font = '10.5px ' + FONT;
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('3.5V', 8, V(3.5) - 4);
+    ctx.fillText('2.5V', 8, V(2.5) - 4);
+    ctx.fillText('2.5V', 8, VL(2.5) - 4);
+    ctx.fillText('1.5V', 8, VL(1.5) - 4);
+    // 波形：右端为最新
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const tt = now - (w - x) * PXMS;
+        const { h: hv, l: lv } = sample(tt);
+        const y = pass === 0 ? V(hv) : VL(lv);
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = pass === 0 ? '#AFFF00' : '#83BF00';
+      ctx.stroke();
+    }
+    // 状态徽章
+    const label = term ? '终端电阻 120Ω × 2：波形正常' : '缺少终端电阻：反射毛刺';
+    ctx.font = '700 12.5px ' + FONT;
+    const tw = ctx.measureText(label).width;
+    ctx.fillStyle = term ? 'rgba(175,255,0,.45)' : 'rgba(240,185,196,.9)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(w - tw - 28, 6, tw + 18, 22, 11); else ctx.rect(w - tw - 28, 6, tw + 18, 22);
+    ctx.fill();
+    ctx.fillStyle = term ? '#2C4000' : '#8A2A3C';
+    ctx.fillText(label, w - tw - 19, 21);
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  function applyBtns() {
+    const on = document.getElementById('twOn'), off = document.getElementById('twOff');
+    if (!on || !off) return;
+    on.className = 'btn' + (term ? '' : ' ghost');
+    off.className = 'btn' + (term ? ' ghost' : '');
+  }
+  return {
+    init(canvas) { t0 = null; applyBtns(); if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    api: { set(v) { term = v; applyBtns(); } }
+  };
+})();
+document.getElementById('twOn').onclick = () => ARTINX_DEMOS['termwave'].api.set(true);
+document.getElementById('twOff').onclick = () => ARTINX_DEMOS['termwave'].api.set(false);
+
+// —— 演示 3：整车电源树（点击节点看电压/电流走向） ——
+ARTINX_DEMOS['powertree'] = (() => {
+  const DEFS = [
+    { id: 'batt',  title: '电池',           sub: '整车能量源头',           col: 'ink'  },
+    { id: 'pm',    title: '电源管理模块 PM', sub: '总电表 + 总闸 · DC 24V', col: 'dark' },
+    { id: 'mcu',   title: '主控',           sub: '常电 · 发指令收反馈',     col: 'bri'  },
+    { id: 'ref',   title: '裁判系统',       sub: '常电 · 用户串口',         col: 'bri'  },
+    { id: 'esc',   title: '电调 ×N',        sub: '动力电 · 24V',           col: 'dark' },
+    { id: 'motor', title: '电机 ×N',        sub: '动力电 · 大电流',         col: 'dark' },
+    { id: 'cap',   title: '超级电容',       sub: '并接 · 功率缓冲',         col: 'lgt'  },
+  ];
+  const DESC = {
+    batt:  '总源头：整车能量从这里流出。电压与容量以战队实际电池为准。',
+    pm:    '总电表＋总闸：3 路 24V 动力输出（底盘/云台各 10A、发射 8A、合计 20A，以官方手册为准），另供 5V/12V/24V 给裁判系统模块。',
+    mcu:   '常电支路（电流小、必须干净）：主控经 CAN 向电调发指令、收反馈；经 UART 接裁判系统。',
+    ref:   '常电支路：血量与比赛状态经用户串口进主控；裁判系统服务器可远程断电（以官方手册为准）。',
+    esc:   '动力电支路（电流大）：PM 的 24V 送入电调，电调输出三相电流驱动电机。',
+    motor: '动力电支路终点：急加速瞬间电流可达数十安培——所以线要粗、要加功率缓冲。',
+    cap:   '并接在动力电上：平时充电，电机瞬时大电流时先放电补充，削平电压尖峰（容量以战队实际为准）。',
+  };
+  let raf = null, cv = null, sel = null, cache = null;
+
+  function layout(w, h) {
+    const W = f => w * f, H = f => h * f;
+    const mk = (x, y, ww, hh) => ({ x: x - ww / 2, y: y - hh / 2, w: ww, h: hh });
+    const nodes = {};
+    nodes.batt  = mk(W(.30), H(.13), W(.17), H(.11));
+    nodes.pm    = mk(W(.30), H(.35), W(.30), H(.13));
+    nodes.mcu   = mk(W(.13), H(.62), W(.17), H(.11));
+    nodes.ref   = mk(W(.13), H(.84), W(.17), H(.11));
+    nodes.esc   = mk(W(.54), H(.60), W(.17), H(.11));
+    nodes.motor = mk(W(.54), H(.84), W(.17), H(.11));
+    nodes.cap   = mk(W(.82), H(.60), W(.17), H(.12));
+    const edges = [
+      { pts: [[W(.30), nodes.batt.y + nodes.batt.h], [W(.30), nodes.pm.y]], col: '#262034' },
+      { pts: [[W(.30), nodes.pm.y + nodes.pm.h], [W(.30), H(.48)], [W(.13), H(.48)], [W(.13), H(.98)]], col: '#AFFF00' },
+      { pts: [[W(.30), nodes.pm.y + nodes.pm.h], [W(.30), H(.48)], [W(.54), H(.48)], [W(.54), H(.98)]], col: '#83BF00' },
+      { pts: [[nodes.pm.x + nodes.pm.w, nodes.pm.y + nodes.pm.h / 2], [nodes.cap.x, nodes.cap.y + nodes.cap.h / 2]], col: '#83BF00', dash: true },
+    ];
+    return { nodes, edges };
+  }
+  function polyLen(pts) {
+    let L = 0;
+    for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    return L;
+  }
+  function polyAt(pts, d) {
+    for (let i = 1; i < pts.length; i++) {
+      const seg = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      if (d <= seg) {
+        const t = seg === 0 ? 0 : d / seg;
+        return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t,
+                pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t];
+      }
+      d -= seg;
+    }
+    return pts[pts.length - 1];
+  }
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    ctx.clearRect(0, 0, w, h);
+    const L = layout(w, h);
+    cache = L;
+    // 连线
+    L.edges.forEach(e => {
+      ctx.beginPath();
+      ctx.setLineDash(e.dash ? [7, 6] : []);
+      e.pts.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+      ctx.strokeStyle = e.col;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+    // 流动圆点＝电流方向
+    const t = performance.now() / 1000;
+    L.edges.forEach(e => {
+      const len = polyLen(e.pts);
+      const n = Math.max(2, Math.floor(len / 40));
+      const off = (t * 70) % (len / n);
+      for (let i = 0; i < n; i++) {
+        const d = (off + i * (len / n)) % len;
+        const [px, py] = polyAt(e.pts, d);
+        ctx.beginPath();
+        ctx.arc(px, py, 3.4, 0, Math.PI * 2);
+        ctx.fillStyle = e.col;
+        ctx.fill();
+      }
+    });
+    // 节点
+    Object.keys(L.nodes).forEach(id => {
+      const nd = L.nodes[id];
+      const def = DEFS.find(d => d.id === id);
+      const on = sel === id;
+      const fill = def.col === 'dark' ? '#83BF00' : def.col === 'bri' ? '#AFFF00'
+        : def.col === 'lgt' ? 'rgba(175,255,0,.45)' : '#262034';
+      const tc = (def.col === 'dark' || def.col === 'ink') ? '#fff' : '#274500';
+      if (on) { ctx.shadowColor = '#83BF00'; ctx.shadowBlur = 16; }
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(nd.x, nd.y, nd.w, nd.h, 10); else ctx.rect(nd.x, nd.y, nd.w, nd.h);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = on ? '#262034' : 'rgba(38,32,52,.2)';
+      ctx.lineWidth = on ? 3 : 1.5;
+      ctx.stroke();
+      ctx.fillStyle = tc;
+      ctx.textAlign = 'center';
+      ctx.font = '700 13.5px ' + FONT;
+      ctx.fillText(def.title, nd.x + nd.w / 2, nd.y + nd.h / 2 - 2);
+      ctx.font = '10.5px ' + FONT;
+      ctx.globalAlpha = .9;
+      ctx.fillText(def.sub, nd.x + nd.w / 2, nd.y + nd.h / 2 + 15);
+      ctx.globalAlpha = 1;
+    });
+    // 图例
+    ctx.textAlign = 'right';
+    ctx.font = '700 12px ' + FONT;
+    ctx.fillStyle = '#AFFF00';
+    ctx.fillRect(w - 158, 8, 12, 12);
+    ctx.fillStyle = '#262034';
+    ctx.fillText('亮绿＝常电', w - 138, 18);
+    ctx.fillStyle = '#83BF00';
+    ctx.fillRect(w - 158, 26, 12, 12);
+    ctx.fillStyle = '#262034';
+    ctx.fillText('深绿＝动力电', w - 138, 36);
+    ctx.font = '10.5px ' + FONT;
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('圆点流向＝电流方向', w - 12, 52);
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  function onClick(e) {
+    if (!cache) return;
+    const x = e.offsetX, y = e.offsetY;
+    for (const id of Object.keys(cache.nodes)) {
+      const nd = cache.nodes[id];
+      if (x >= nd.x && x <= nd.x + nd.w && y >= nd.y && y <= nd.y + nd.h) {
+        sel = id;
+        const def = DEFS.find(d => d.id === id);
+        const el = document.getElementById('ptInfo');
+        if (el) el.innerHTML = '<strong>' + def.title + '</strong>　' + DESC[id];
+        return;
+      }
+    }
+  }
+  return {
+    init(canvas) {
+      cv = canvas;
+      canvas.addEventListener('click', onClick);
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      if (cv) { cv.removeEventListener('click', onClick); cv = null; }
+    }
+  };
+})();
+
+// —— 演示 4：故障排查卡（点击翻面） ——
+ARTINX_DEMOS['faultcards'] = (() => {
+  const CARDS = [
+    { t: '供电不足', head: '#83BF00', bg: '#FBFAFE',
+      front: ['电机无力', '主控重启', '电压跌落'],
+      back: [
+        { k: '症状', v: '大油门时电压掉、动力弱' },
+        { k: '排查', v: '测压降、看电源管理告警' },
+        { k: '修复', v: '加超级电容、换粗线' },
+      ] },
+    { t: '接地不良', head: '#83BF00', bg: '#FBFAFE',
+      front: ['数据乱跳', '串口乱码', '读数漂移'],
+      back: [
+        { k: '症状', v: '传感器漂、偶发错误帧' },
+        { k: '排查', v: '查共地与地线是否松动' },
+        { k: '修复', v: '一点接地、压紧端子' },
+      ] },
+    { t: '电磁干扰', head: '#83BF00', bg: '#FBFAFE',
+      front: ['图传雪花', '通信偶错', '偶发复位'],
+      back: [
+        { k: '症状', v: '雪花随油门、错误帧变多' },
+        { k: '排查', v: '挪天线远离动力线对比' },
+        { k: '修复', v: '远离、屏蔽、双绞、滤波' },
+      ] },
+  ];
+  const DUR = 220;
+  let raf = null, cv = null;
+  const state = CARDS.map(() => ({ face: 0, anim: null }));
+  let geos = [];
+
+  function startFlip(i, target) {
+    const st = state[i];
+    if (st.anim || st.face === target) return;
+    st.anim = { t0: performance.now(), to: target };
+  }
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    ctx.clearRect(0, 0, w, h);
+    const cw = w * 0.26, ch = h * 0.68;
+    const cy = h * 0.14;
+    geos = [];
+    CARDS.forEach((c, i) => {
+      const cx = w * (0.06 + 0.31 * i);
+      const st = state[i];
+      let p = 1, face = st.face;
+      if (st.anim) {
+        p = (performance.now() - st.anim.t0) / DUR;
+        if (p >= 1) { p = 1; st.face = st.anim.to; st.anim = null; face = st.face; }
+        else face = p >= 0.5 ? st.anim.to : st.face;
+      }
+      const eff = Math.abs(Math.cos(p * Math.PI));
+      geos.push({ x: cx, y: cy, w: cw, h: ch });
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(eff, 1);
+      ctx.translate(-cw / 2, -ch / 2);
+      drawCard(ctx, c, i, face, cw, ch);
+      ctx.restore();
+    });
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  function drawCard(ctx, c, i, face, cw, ch) {
+    ctx.fillStyle = c.bg;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(0, 0, cw, ch, 14); else ctx.rect(0, 0, cw, ch);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(38,32,52,.15)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = c.head;
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(0, 0, cw, 12, 14);
+      ctx.fill();
+      ctx.fillRect(0, 6, cw, 6);
+    } else ctx.fillRect(0, 0, cw, 12);
+    ctx.textAlign = 'center';
+    if (face === 0) {
+      ctx.fillStyle = '#AFFF00';
+      ctx.beginPath();
+      ctx.arc(cw / 2, ch * 0.28, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#83BF00';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#274500';
+      ctx.font = '800 17px ' + FONT;
+      ctx.fillText(String(i + 1), cw / 2, ch * 0.28 + 6);
+      ctx.font = '800 19px ' + FONT;
+      ctx.fillStyle = '#262034';
+      ctx.fillText(c.t, cw / 2, ch * 0.28 + 46);
+      ctx.font = '12.5px ' + FONT;
+      ctx.fillStyle = '#5A5468';
+      c.front.forEach((t, k) => ctx.fillText(t, cw / 2, ch * 0.52 + k * 20));
+      ctx.fillStyle = '#8F87AB';
+      ctx.font = '10.5px ' + FONT;
+      ctx.fillText('点击翻面', cw / 2, ch - 14);
+    } else {
+      ctx.font = '800 16px ' + FONT;
+      ctx.fillStyle = c.head;
+      ctx.fillText(c.t + ' · 处置', cw / 2, 32);
+      c.back.forEach((row, k) => {
+        const y = 62 + k * 42;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#3C6400';
+        ctx.font = '700 11.5px ' + FONT;
+        ctx.fillText(row.k, 14, y);
+        ctx.fillStyle = '#262034';
+        ctx.font = '12.5px ' + FONT;
+        let line = '', yy = y + 16;
+        row.v.split('').forEach(ch => {
+          if (line.length >= 9) { ctx.fillText(line, 14, yy); line = ''; yy += 18; }
+          line += ch;
+        });
+        if (line) ctx.fillText(line, 14, yy);
+        ctx.textAlign = 'center';
+      });
+    }
+  }
+  function onClick(e) {
+    const x = e.offsetX, y = e.offsetY;
+    for (let i = 0; i < geos.length; i++) {
+      const g = geos[i];
+      if (x >= g.x - g.w / 2 && x <= g.x + g.w / 2 && y >= g.y - g.h / 2 && y <= g.y + g.h / 2) {
+        startFlip(i, 1 - state[i].face);
+        return;
+      }
+    }
+  }
+  return {
+    init(canvas) {
+      cv = canvas;
+      canvas.addEventListener('click', onClick);
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      if (cv) { cv.removeEventListener('click', onClick); cv = null; }
+    },
+    api: { resetAll() { CARDS.forEach((_, i) => startFlip(i, 0)); } }
+  };
+})();
+document.getElementById('fcReset').onclick = () => ARTINX_DEMOS['faultcards'].api.resetAll();
+</script>
+</body>
+</html>

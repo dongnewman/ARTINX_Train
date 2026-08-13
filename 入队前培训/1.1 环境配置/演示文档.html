@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.1 环境配置 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">1.1　环境配置</div>
+      <h1 class="anim" style="animation-delay:.2s">把开发环境一次装好</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">8 个工具、两条编译流水线：从第一行代码到点亮第一颗 LED</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图：8 个工具，两条流水线</h2>
+    <div class="grid grid-4" style="flex:1;align-content:center;gap:10px">
+      <div class="card anim" style="animation-delay:.05s;text-align:center"><h3 style="margin:0 0 2px">VS Code</h3><p class="small muted">编辑器</p></div>
+      <div class="card anim" style="animation-delay:.1s;text-align:center"><h3 style="margin:0 0 2px">MSYS2</h3><p class="small muted">包管理器</p></div>
+      <div class="card anim" style="animation-delay:.15s;text-align:center"><h3 style="margin:0 0 2px">GCC</h3><p class="small muted">编译器</p></div>
+      <div class="card anim" style="animation-delay:.2s;text-align:center"><h3 style="margin:0 0 2px">Python</h3><p class="small muted">脚本语言</p></div>
+      <div class="card anim" style="animation-delay:.25s;text-align:center"><h3 style="margin:0 0 2px">CubeMX</h3><p class="small muted">配置工具</p></div>
+      <div class="card anim" style="animation-delay:.3s;text-align:center"><h3 style="margin:0 0 2px">Keil MDK</h3><p class="small muted">IDE</p></div>
+      <div class="card anim" style="animation-delay:.35s;text-align:center"><h3 style="margin:0 0 2px">ST-Link</h3><p class="small muted">烧录 + 调试</p></div>
+      <div class="card anim" style="animation-delay:.4s;text-align:center"><h3 style="margin:0 0 2px">Git</h3><p class="small muted">版本管理</p></div>
+    </div>
+    <div class="callout anim" style="animation-delay:.5s;margin-top:10px">
+      <p style="font-family:var(--mono);font-size:12.5px;line-height:1.9">
+        PC：hello.c → gcc 编译 → hello.exe → 本机运行<br>
+        STM32：main.c → Keil 编译 → main.hex → ST-Link 烧录 → 板子运行
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：三种角色 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">三种角色：编辑器 / 编译器 / IDE</h2>
+    <table class="anim" style="animation-delay:.1s;flex:none">
+      <tr><th>角色</th><th>定义</th><th>类比（一句话）</th><th>本节例子</th></tr>
+      <tr><td><strong>编辑器</strong> Editor</td><td>编写、修改源代码的软件，不负责执行</td><td>笔</td><td>VS Code</td></tr>
+      <tr><td><strong>编译器</strong> Compiler</td><td>把源代码翻译成机器语言（0/1 指令）的程序</td><td>翻译官</td><td>GCC、Arm Compiler</td></tr>
+      <tr><td><strong>IDE</strong> 集成开发环境</td><td>编辑器 + 编译器 + 调试器 + 工程管理的套件</td><td>工具箱</td><td>Keil MDK</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:12px">
+      关系：编辑器负责写，编译器负责翻译，IDE 把整条流水线打包成一个软件。
+    </div>
+    <div class="callout anim" style="animation-delay:.3s;margin-top:8px">
+      拓展：编辑器还有 Vim / Notepad++，编译器还有 Clang / MSVC，IDE 还有 Visual Studio / STM32CubeIDE——先认准本节组合。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：工具全景 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">8 个工具：是什么、怎么验证</h2>
+    <table class="anim" style="animation-delay:.1s;flex:none">
+      <tr><th>工具</th><th>角色</th><th>验证命令 / 方法</th><th>预期结果</th></tr>
+      <tr><td>VS Code</td><td>编辑器</td><td style="font-family:var(--mono)">code --version</td><td>输出版本号</td></tr>
+      <tr><td>MSYS2</td><td>包管理器 + 终端</td><td>开始菜单打开 MSYS2 UCRT64</td><td>出现 $ 提示符</td></tr>
+      <tr><td>GCC</td><td>编译器</td><td style="font-family:var(--mono)">gcc --version</td><td>输出版本信息</td></tr>
+      <tr><td>Python</td><td>脚本语言</td><td style="font-family:var(--mono)">python --version</td><td>输出 Python 3.x</td></tr>
+      <tr><td>Git</td><td>版本管理</td><td style="font-family:var(--mono)">git --version</td><td>输出 git version</td></tr>
+      <tr><td>CubeMX</td><td>图形化配置工具</td><td>New Project 搜索芯片</td><td>看到芯片引脚图</td></tr>
+      <tr><td>Keil MDK</td><td>IDE</td><td>新建工程搜索芯片</td><td>能选到 STM32 型号</td></tr>
+      <tr><td>ST-Link</td><td>烧录调试硬件</td><td>插入后看设备管理器</td><td>出现 STMicroelectronics 设备</td></tr>
+    </table>
+    <p class="small muted anim" style="animation-delay:.2s;margin-top:10px">版本号以实际安装为准；表中命令在 PowerShell 或 MSYS2 UCRT64 终端中执行。</p>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：PC 流水线 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">流水线一：PC 程序的一生</h2>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 0 12px">
+      <div class="card green anim" style="animation-delay:.05s;text-align:center;min-width:128px;padding:10px 8px">
+        <p style="font-family:var(--mono);font-weight:700">hello.c</p><p class="small muted">源码</p>
+      </div>
+      <span class="anim" style="animation-delay:.1s;color:var(--purple);font-weight:800;flex:none">→</span>
+      <div class="card anim" style="animation-delay:.15s;text-align:center;min-width:128px;padding:10px 8px">
+        <p style="font-weight:700">gcc 编译</p><p class="small muted">翻译成机器语言</p>
+      </div>
+      <span class="anim" style="animation-delay:.2s;color:var(--purple);font-weight:800;flex:none">→</span>
+      <div class="card anim" style="animation-delay:.25s;text-align:center;min-width:128px;padding:10px 8px;background:#E3DBFC;border-color:#784CF6">
+        <p style="font-family:var(--mono);font-weight:700">hello.exe</p><p class="small muted">可执行文件</p>
+      </div>
+      <span class="anim" style="animation-delay:.3s;color:var(--purple);font-weight:800;flex:none">→</span>
+      <div class="card green anim" style="animation-delay:.35s;text-align:center;min-width:128px;padding:10px 8px">
+        <p style="font-weight:700">运行</p><p class="small muted">输出 Hello, ARTINX!</p>
+      </div>
+    </div>
+    <div class="cols" style="flex:none;gap:14px">
+      <div class="card anim" style="animation-delay:.4s">
+        <h3>四个阶段</h3>
+        <p class="small">1. 写：VS Code 编写 hello.c<br>
+        2. 编译：终端执行 gcc 命令<br>
+        3. 产物：hello.exe（机器码）<br>
+        4. 运行：终端执行 .\hello.exe</p>
+      </div>
+      <div class="card anim" style="animation-delay:.45s">
+        <h3>命令</h3>
+        <pre style="margin-top:4px">gcc hello.c -o hello.exe
+.\hello.exe</pre>
+        <p class="small muted">编译无输出 = 成功</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：编译报错 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">读编译报错：翻译官的定位信息</h2>
+    <div class="cols" style="gap:14px">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>报错示例（故意删掉一个分号）</h3>
+        <pre style="margin-top:4px">hello.c: In function 'main':
+hello.c:6:19: error: expected
+';' before 'return'</pre>
+        <p class="small muted">格式：文件名:行号:列号: 原因</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>两条铁律</h3>
+        <p class="small" style="line-height:1.9">1. 编译成功时翻译官沉默：没有输出 = 成功，生成 hello.exe。<br>
+        2. 改了源码必须<em>重新编译</em>：.exe 是编译那一刻源码的快照，不重编译输出不会变。</p>
+      </div>
+    </div>
+    <div class="callout warn anim" style="animation-delay:.3s;margin-top:10px">
+      新手第一大坑：改了 printf 里的文字，直接运行 .exe 发现没变——因为忘了重新编译。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：STM32 流水线 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">流水线二：STM32 程序的一生</h2>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 10px">
+      <div class="card green anim" style="animation-delay:.05s;text-align:center;min-width:104px;padding:9px 6px">
+        <p style="font-family:var(--mono);font-weight:700">main.c</p><p class="small muted">源码</p>
+      </div>
+      <span class="anim" style="animation-delay:.1s;color:var(--purple);font-weight:800;flex:none">→</span>
+      <div class="card anim" style="animation-delay:.15s;text-align:center;min-width:104px;padding:9px 6px">
+        <p style="font-weight:700">Keil 编译</p><p class="small muted"><kbd>F7</kbd> 翻译打包</p>
+      </div>
+      <span class="anim" style="animation-delay:.2s;color:var(--purple);font-weight:800;flex:none">→</span>
+      <div class="card anim" style="animation-delay:.25s;text-align:center;min-width:104px;padding:9px 6px;background:#E3DBFC;border-color:#784CF6">
+        <p style="font-family:var(--mono);font-weight:700">main.hex</p><p class="small muted">固件</p>
+      </div>
+      <span class="anim" style="animation-delay:.3s;color:var(--purple);font-weight:800;flex:none">→</span>
+      <div class="card anim" style="animation-delay:.35s;text-align:center;min-width:104px;padding:9px 6px">
+        <p style="font-weight:700">ST-Link 烧录</p><p class="small muted"><kbd>F8</kbd> 写进 Flash</p>
+      </div>
+      <span class="anim" style="animation-delay:.4s;color:var(--purple);font-weight:800;flex:none">→</span>
+      <div class="card green anim" style="animation-delay:.45s;text-align:center;min-width:104px;padding:9px 6px">
+        <p style="font-weight:700">板子运行</p><p class="small muted">LED 亮起</p>
+      </div>
+    </div>
+    <div class="card anim" style="animation-delay:.5s">
+      <p class="small" style="line-height:1.9">
+        · 与 PC 的区别：程序跑在<em>另一块芯片</em>上，多出「烧录」一步；烧录 = 把固件写进单片机 Flash（类比：把歌拷进 MP3）。<br>
+        · 调试：<kbd>Ctrl</kbd>+<kbd>F5</kbd> 进入调试模式，断点暂停、<kbd>F10</kbd> 单步执行、观察变量。
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：ST-Link ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">ST-Link：数据线兼调试器</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>定义与双重身份</h3>
+        <p class="small">ST 官方烧录调试器（硬件），连接电脑与单片机：<br>
+        · 数据线：烧录时把固件经 SWD 接口写进芯片 Flash；<br>
+        · 听诊器：调试时让程序暂停、单步、读变量（类比一句话带过）。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>连接与验证</h3>
+        <p class="small">SWD 四根线：<br>
+        <span style="font-family:var(--mono)">SWDIO</span> 数据、<span style="font-family:var(--mono)">SWCLK</span> 时钟、<span style="font-family:var(--mono)">GND</span> 地、<span style="font-family:var(--mono)">3V3</span> 供电<br>
+        （线序以板子丝印为准，先核对再上电）<br>
+        驱动随 Keil MDK 安装；设备管理器出现 STMicroelectronics 设备即连通。</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:10px">
+      Keil 中启用：Options for Target → Debug → 选择 ST-Link Debugger。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：PATH ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">PATH：系统找程序的「通讯录」</h2>
+    <div class="cols" style="gap:14px">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>定义</h3>
+        <p class="small">PATH 是环境变量，存一串文件夹路径。终端敲命令时，系统按顺序在这些文件夹里找同名程序，找到即运行，找不到报错。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>查找 gcc 的过程</h3>
+        <pre style="margin-top:4px">C:\Windows\System32    无
+C:\Program Files\...   无
+C:\msys64\ucrt64\bin   找到 → 运行</pre>
+        <p class="small muted">修改入口：高级系统设置 → 环境变量 → Path</p>
+      </div>
+    </div>
+    <div class="callout danger anim" style="animation-delay:.3s;margin-top:10px">
+      报错「'gcc' 不是内部或外部命令」= PATH 里没有它所在文件夹；改完 PATH 必须<em>重开终端</em>才生效。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：演示一 · 流水线 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：两条编译流水线</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="pipeline"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="plPC">PC 流程</button>
+        <button class="btn ghost" id="plSTM32">STM32 流程</button>
+        <button class="btn green" id="plPlay">暂停</button>
+        <label>绿块 = 源码　紫块 = 编译产物</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：演示二 · 自检卡 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：装好了吗？自检卡</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="selfcheck"></canvas>
+      <div class="demo-controls">
+        <label>点击上方卡片，查看该工具的验证命令与预期输出</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：演示三 · 报错排查 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：报错了怎么办</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="troubleshoot"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="tbNext">下一步</button>
+        <button class="btn ghost" id="tbReset">重演</button>
+        <label>「不是内部或外部命令」的标准处理流程</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：章节页（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <div class="divider-num anim">PART 2</div>
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">动手实践</div>
+      <h1 class="anim" style="animation-delay:.2s;font-size:44px">安装、验证、跑起来</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">每个工具四步走：下载 → 安装选项 → 验证命令 → 自查点</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：VS Code ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">安装 1/4：VS Code（编辑器）</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>下载与安装选项</h3>
+        <p class="small">官网 <a href="https://code.visualstudio.com" target="_blank" rel="noopener">code.visualstudio.com</a> 下载 Windows 版，一路 Next。<br>
+        附加任务勾选 <em>添加到 PATH</em>；右键菜单「通过 Code 打开」建议勾选。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>验证与使用</h3>
+        <pre style="margin-top:4px">code --version</pre>
+        <p class="small">输出版本号即成功。内置终端：<kbd>Ctrl</kbd>+<kbd>`</kbd> 打开，后续所有命令都在这里跑。</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:10px">
+      功能定位：语法高亮、自动补全、插件扩展；可选装中文语言包（非必需）。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：MSYS2 + GCC ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">安装 2/4：MSYS2 + GCC（编译器）</h2>
+    <div class="cols" style="gap:12px">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>概念</h3>
+        <p class="small">MSYS2：Windows 包管理器 + 类 Unix 工具集（终端 + pacman）。GCC：C 语言编译器（经 MinGW-w64 提供）。<br>
+        安装到 <em>C:\msys64</em>，路径无中文、无空格；官网 <a href="https://www.msys2.org" target="_blank" rel="noopener">www.msys2.org</a>。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>UCRT64 终端内执行</h3>
+        <pre style="margin-top:4px">pacman -Syu
+pacman -S mingw-w64-ucrt-x86_64-gcc</pre>
+        <p class="small muted">第一条更新仓库（按 Y 回车）；更新完按提示重开终端。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.3s">
+        <h3>PATH 与验证</h3>
+        <p class="small">PATH 添加 <em>C:\msys64\ucrt64\bin</em>，改完<em>重开所有终端</em>；</p>
+        <pre style="margin-top:4px">gcc --version</pre>
+        <p class="small muted">输出 gcc (MSYS2) 版本信息即全线打通。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：Git + Python ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">安装 3/4：Git 与 Python</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>Git：版本管理</h3>
+        <p class="small"><a href="https://git-scm.com/download/win" target="_blank" rel="noopener">git-scm.com/download/win</a> 下载 64 位安装包，一路 Next（默认编辑器可选 VS Code）。</p>
+        <pre style="margin-top:6px">git --version</pre>
+        <p class="small muted">输出 git version 即成功；用法在 1.6 节展开。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>Python：脚本语言</h3>
+        <p class="small"><a href="https://www.python.org/downloads/" target="_blank" rel="noopener">python.org/downloads</a> 下载安装包；第一页<em>务必勾选 Add python.exe to PATH</em>，再 Install Now。</p>
+        <pre style="margin-top:6px">python --version</pre>
+        <p class="small muted">漏勾症状：python 命令打开 Microsoft Store。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：Hello World ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">第一个程序：编译并运行</h2>
+    <div class="cols" style="gap:14px">
+      <div class="card anim" style="animation-delay:.1s;flex:1.35">
+        <h3>hello.c</h3>
+        <pre style="margin-top:4px">#include &lt;stdio.h&gt;   <span class="c">/* 引入标准输入输出工具包 */</span>
+
+int main(void) {      <span class="c">/* 程序入口 */</span>
+    printf("Hello, ARTINX!\n");
+    return 0;         <span class="c">/* 正常结束 */</span>
+}</pre>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>编译与运行</h3>
+        <pre style="margin-top:4px">gcc hello.c -o hello.exe
+.\hello.exe</pre>
+        <p class="small">编译无输出 = 成功；运行输出 Hello, ARTINX!</p>
+        <p class="small muted">自查：改文字重编译，输出跟着变；故意删一个分号，读报错行号。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：Keil MDK ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">安装 4/4：Keil MDK（IDE）</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>是什么</h3>
+        <p class="small">单片机集成开发环境：编辑器 + Arm Compiler 编译器 + 调试器 + 工程管理。<br>
+        下载：<a href="https://www.keil.com/download/product/" target="_blank" rel="noopener">keil.com/download/product</a>（需 Arm 账号）；安装路径<em>无中文</em>，自带 ST-Link 驱动。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>许可与支持包</h3>
+        <p class="small">个人学习使用免费 <em>MDK Community</em> 许可（非商业）：<a href="https://www.keil.arm.com/mdk-community/" target="_blank" rel="noopener">keil.arm.com/mdk-community</a>。<br>
+        Pack Installer 中安装对应 STM32 系列的 <em>DFP</em> 芯片支持包。</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:10px">
+      验证：Project → New µVision Project 时，芯片列表能搜到我们的 STM32 型号。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：CubeMX ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">安装 4/4：STM32CubeMX（配置工具）</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>是什么</h3>
+        <p class="small">ST 官方图形化配置工具：选芯片、配引脚与时钟，自动生成初始化代码和 Keil 工程。<br>
+        下载：<a href="https://www.st.com/en/development-tools/stm32cubemx.html" target="_blank" rel="noopener">st.com 官方页面</a>（需 ST 账号）；若提示需要 Java 运行时（JRE），按提示安装 64 位 JRE。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>验证</h3>
+        <p class="small">New Project → 搜索芯片型号 → 看到芯片引脚图即成功。</p>
+        <p class="small muted">详细用法（选引脚、配时钟、生成工程）在 1.3 节展开。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：烧录调试任务 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">任务：烧录并调试第一个程序</h2>
+    <div class="card anim" style="animation-delay:.1s;flex:1;display:flex;flex-direction:column;justify-content:center">
+      <ol>
+        <li>接线：ST-Link 接板子 SWD 口四根线：<span style="font-family:var(--mono)">SWDIO / SWCLK / GND / 3V3</span>（线序以丝印为准）</li>
+        <li>打开示例工程（讲解时提供），<kbd>F7</kbd> 编译，Build Output 显示 0 Error</li>
+        <li>Options for Target → Debug 选 ST-Link Debugger，<kbd>F8</kbd> 下载烧录</li>
+        <li>预期：进度条走完，板子 LED 亮起——代码第一次在芯片里运行</li>
+        <li>调试：<kbd>Ctrl</kbd>+<kbd>F5</kbd> 进入调试，断点暂停、<kbd>F10</kbd> 单步、观察变量</li>
+      </ol>
+    </div>
+    <p class="small muted anim" style="animation-delay:.2s;margin-top:8px">开发板与 ST-Link 由战队统一准备（领取方式讲解时说明）；示例工程结合战队现有工程演示。</p>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：常见问题 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查</h2>
+    <table class="anim" style="animation-delay:.1s;flex:none">
+      <tr><th style="width:34%">现象</th><th style="width:30%">可能原因</th><th>排查方法</th></tr>
+      <tr><td>gcc 不是内部或外部命令</td><td>PATH 没配 / 没重开终端</td><td>查 PATH 有无 C:\msys64\ucrt64\bin；重开终端</td></tr>
+      <tr><td>python 打开 Microsoft Store</td><td>漏勾 Add to PATH</td><td>重装勾选 / 关闭应用执行别名</td></tr>
+      <tr><td>中文输出乱码</td><td>终端代码页非 UTF-8</td><td>执行 chcp 65001；练习先输出英文</td></tr>
+      <tr><td>expected ';' before 'return'</td><td>缺分号等语法错误</td><td>按报错「文件名:行号」定位修改</td></tr>
+      <tr><td>hello.c: No such file</td><td>终端当前目录不对</td><td>dir / ls 看目录，cd 到源码目录</td></tr>
+      <tr><td>改了源码输出没变</td><td>改完没重新编译</td><td>每次改完重新执行 gcc 编译</td></tr>
+      <tr><td>Keil 搜不到 STM32 型号</td><td>没装 DFP 支持包</td><td>Pack Installer 安装对应系列</td></tr>
+      <tr><td>烧录失败</td><td>接线 / 调试器设置</td><td>查四根线；Debug 选 ST-Link Debugger</td></tr>
+      <tr><td>ST-Link 插上无反应</td><td>驱动 / USB 口 / 线</td><td>设备管理器看设备；换口换线</td></tr>
+    </table>
+    <p class="small muted anim" style="animation-delay:.2s;margin-top:8px">更完整排查表与课后自测见 教学内容.md「常见问题与排查」章节。</p>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源（均已验证可访问）</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center;gap:8px">
+      <div class="card white anim" style="animation-delay:.05s;padding:8px 12px">
+        <p style="font-size:13px"><strong>VS Code 官网</strong> <span class="small muted">下载编辑器</span>　<a href="https://code.visualstudio.com" target="_blank" rel="noopener">code.visualstudio.com</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.1s;padding:8px 12px">
+        <p style="font-size:13px"><strong>MSYS2 官网</strong> <span class="small muted">安装向导 + pacman</span>　<a href="https://www.msys2.org" target="_blank" rel="noopener">www.msys2.org</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.15s;padding:8px 12px">
+        <p style="font-size:13px"><strong>Git 官网下载</strong> <span class="small muted">Windows 安装包</span>　<a href="https://git-scm.com/download/win" target="_blank" rel="noopener">git-scm.com/download/win</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.2s;padding:8px 12px">
+        <p style="font-size:13px"><strong>Pro Git 中文版</strong> <span class="small muted">免费在线书</span>　<a href="https://git-scm.com/book/zh/v2" target="_blank" rel="noopener">git-scm.com/book/zh/v2</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.25s;padding:8px 12px">
+        <p style="font-size:13px"><strong>Python 下载页</strong> <span class="small muted">Windows 安装包</span>　<a href="https://www.python.org/downloads/" target="_blank" rel="noopener">python.org/downloads</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.3s;padding:8px 12px">
+        <p style="font-size:13px"><strong>Keil 官方下载</strong> <span class="small muted">MDK-Arm 安装包</span>　<a href="https://www.keil.com/download/product/" target="_blank" rel="noopener">keil.com/download/product</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.35s;padding:8px 12px">
+        <p style="font-size:13px"><strong>MDK Community 许可</strong> <span class="small muted">个人免费激活</span>　<a href="https://www.keil.arm.com/mdk-community/" target="_blank" rel="noopener">keil.arm.com/mdk-community</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.4s;padding:8px 12px">
+        <p style="font-size:13px"><strong>STM32CubeMX 页面</strong> <span class="small muted">ST 官网下载</span>　<a href="https://www.st.com/en/development-tools/stm32cubemx.html" target="_blank" rel="noopener">st.com/stm32cubemx</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>编辑器 = 写，编译器 = 翻译，IDE = 工具箱（Keil MDK）</li>
+        <li>PC：.c → gcc → .exe → 运行；STM32 多一步烧录：.c → Keil → .hex → ST-Link → 板子运行</li>
+        <li>8 个工具全部安装，并用 --version 系列命令逐一验证</li>
+        <li>PATH = 系统找程序的通讯录；改完必须重开终端</li>
+        <li>报错先读「文件名:行号」，再查 PATH / 接线 / 驱动</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        安装步骤与课后自测见 <strong>教学内容.md</strong>，本节结束前完成掌握清单。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（各小节自行编写） ================= */
+/*
+  注册格式：
+  ARTINX_DEMOS['example'] = {
+    init(canvas, slide){ ...每帧动画写在这里... },
+    destroy(){ ...清除定时器/raf... }
+  };
+  提示：
+  - canvas 尺寸随窗口变化，用下方 fit(canvas) 获取 CSS 像素尺寸并处理高清屏
+  - 页面切换到其他页时会自动调用 destroy()，切回时重新 init()
+  - 不要依赖任何外部库，用原生 canvas 即可
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+function rr(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+// 对勾记号（用线条绘制，画布内不使用字符符号）
+function checkMark(ctx, x, y, r, color) {
+  ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x - r * 0.5, y + r * 0.05);
+  ctx.lineTo(x - r * 0.15, y + r * 0.42);
+  ctx.lineTo(x + r * 0.55, y - r * 0.4);
+  ctx.stroke();
+}
+const SANS = '"Segoe UI","Microsoft YaHei",sans-serif';
+const MONO = 'Consolas,"Cascadia Mono",monospace';
+const GREEN = '#AFFF00';   // 荧光绿（亮）
+const GREEN_D = '#83BF00'; // 深绿
+
+// ============ 演示一：工具链流水线（PC / STM32 两条流水线切换） ============
+ARTINX_DEMOS['pipeline'] = (() => {
+  const MODES = {
+    pc: {
+      stages: [
+        { t: '源码', s: 'hello.c' },
+        { t: '编译', s: 'gcc' },
+        { t: '可执行文件', s: 'hello.exe' },
+        { t: '运行', s: '屏幕输出' }
+      ],
+      labels: ['hello.c', 'hello.c', 'hello.exe', 'Hello!'],
+      green: [true, true, false, true],
+      busy: [1],
+      status: ['你写好 hello.c', 'gcc 正在翻译成机器语言', '得到 hello.exe', '运行，输出 Hello!']
+    },
+    stm32: {
+      stages: [
+        { t: '源码', s: 'main.c' },
+        { t: 'Keil 编译', s: 'F7' },
+        { t: '固件', s: 'main.hex' },
+        { t: 'ST-Link 烧录', s: 'SWD 四线' },
+        { t: '板子运行', s: 'LED 亮起' }
+      ],
+      labels: ['main.c', 'main.c', 'main.hex', 'main.hex', 'LED!'],
+      green: [true, true, false, false, true],
+      busy: [1, 3],
+      status: ['你写好 main.c', 'Keil 翻译打包中（点 F7）', '得到固件 main.hex', 'ST-Link 把固件写进 Flash', '芯片执行，LED 亮起']
+    }
+  };
+  let mode = 'pc';
+  let phase = 0, tIn = 0, last = 0, raf = null, running = true;
+  const HOLD = 1300, MOVE = 850;
+
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    const dt = Math.min(60, now - last || 16); last = now;
+    if (running) tIn += dt;
+    const m = MODES[mode], n = m.stages.length;
+    const pad = 28, gap = 52, top = 30, sh = 74;
+    const sw = (w - pad * 2 - gap * (n - 1)) / n;
+    const cx = i => pad + sw / 2 + i * (sw + gap);
+
+    if (tIn >= HOLD + MOVE) {
+      tIn = 0;
+      phase = phase < n - 1 ? phase + 1 : 0;
+    }
+
+    ctx.clearRect(0, 0, w, h);
+    // 阶段间箭头
+    ctx.strokeStyle = '#C9C3DE'; ctx.fillStyle = '#C9C3DE'; ctx.lineWidth = 2;
+    for (let i = 0; i < n - 1; i++) {
+      const y = top + sh / 2;
+      const x1 = pad + sw + i * (sw + gap) + 4, x2 = x1 + gap - 10;
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2 + 8, y); ctx.lineTo(x2, y - 5); ctx.lineTo(x2, y + 5);
+      ctx.closePath(); ctx.fill();
+    }
+    // 阶段盒
+    for (let i = 0; i < n; i++) {
+      const active = i === phase || (tIn >= HOLD && i === phase + 1);
+      const x = pad + i * (sw + gap);
+      ctx.fillStyle = active ? '#E3DBFC' : '#F7F4FE';
+      ctx.strokeStyle = active ? '#784CF6' : '#E8E4F4';
+      ctx.lineWidth = active ? 2.5 : 1.5;
+      rr(ctx, x, top, sw, sh, 14); ctx.fill(); ctx.stroke();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#262034';
+      ctx.font = '700 15px ' + SANS;
+      ctx.fillText(m.stages[i].t, x + sw / 2, top + sh / 2 - 13);
+      ctx.font = '13px ' + MONO;
+      ctx.fillStyle = '#784CF6';
+      ctx.fillText(m.stages[i].s, x + sw / 2, top + sh / 2 + 13);
+    }
+    // 数据块
+    let bx, bi = phase, alpha = 1;
+    if (phase === n - 1 && tIn >= HOLD) {
+      bx = cx(n - 1);
+      alpha = 1 - clamp((tIn - HOLD) / MOVE, 0, 1);
+    } else if (tIn >= HOLD) {
+      const k = clamp((tIn - HOLD) / MOVE, 0, 1);
+      const e = 0.5 - 0.5 * Math.cos(Math.PI * k);
+      bx = cx(phase) + (cx(phase + 1) - cx(phase)) * e;
+      if (k > 0.45) bi = phase + 1;
+    } else {
+      bx = cx(phase);
+    }
+    ctx.globalAlpha = alpha;
+    const g = m.green[bi];
+    const bw = 100, bh = 40, by = top + sh / 2;
+    ctx.fillStyle = g ? GREEN : '#784CF6';
+    ctx.strokeStyle = g ? GREEN_D : '#4A2BD4';
+    ctx.lineWidth = 2;
+    rr(ctx, bx - bw / 2, by - bh / 2, bw, bh, 10); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = g ? '#274500' : '#FFFFFF';
+    ctx.font = '700 14px ' + MONO;
+    ctx.fillText(m.labels[bi], bx, by + 1);
+    // 「处理中」旋转虚线框
+    if (m.busy.includes(bi) && tIn < HOLD) {
+      ctx.setLineDash([5, 5]);
+      ctx.lineDashOffset = -(now / 40) % 10;
+      ctx.strokeStyle = '#784CF6';
+      rr(ctx, bx - bw / 2 - 6, by - bh / 2 - 6, bw + 12, bh + 12, 13); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.globalAlpha = 1;
+    // 状态栏
+    ctx.fillStyle = '#5A5468'; ctx.textAlign = 'center';
+    ctx.font = '600 14px ' + SANS;
+    const st = tIn >= HOLD && phase < n - 1 ? '送入下一环节' : m.status[phase];
+    ctx.fillText(st, w / 2, top + sh + 38);
+    // 图例
+    const ly = h - 24;
+    ctx.font = '12px ' + SANS;
+    const legend = [
+      { c: GREEN, b: GREEN_D, txt: '绿块 = 源码' },
+      { c: '#784CF6', b: '#4A2BD4', txt: '紫块 = 编译产物' }
+    ];
+    let lx = w / 2 - 220;
+    legend.forEach(L => {
+      rr(ctx, lx, ly - 13, 16, 26, 4);
+      ctx.fillStyle = L.c; ctx.fill();
+      ctx.strokeStyle = L.b; ctx.lineWidth = 1; ctx.stroke();
+      ctx.textAlign = 'left'; ctx.fillStyle = '#5A5468';
+      ctx.fillText(L.txt, lx + 24, ly);
+      lx += 140;
+    });
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  function refreshBtns() {
+    const pc = document.getElementById('plPC'), stm = document.getElementById('plSTM32');
+    pc.className = 'btn' + (mode === 'pc' ? '' : ' ghost');
+    stm.className = 'btn' + (mode === 'stm32' ? '' : ' ghost');
+    document.getElementById('plPlay').textContent = running ? '暂停' : '播放';
+  }
+  return {
+    init(canvas) {
+      if (!raf) { last = 0; raf = requestAnimationFrame(() => draw(canvas)); }
+      refreshBtns();
+    },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    setMode(m) { if (mode !== m) { mode = m; phase = 0; tIn = 0; refreshBtns(); } },
+    togglePlay() { running = !running; refreshBtns(); }
+  };
+})();
+document.getElementById('plPC').onclick = () => ARTINX_DEMOS['pipeline'].setMode('pc');
+document.getElementById('plSTM32').onclick = () => ARTINX_DEMOS['pipeline'].setMode('stm32');
+document.getElementById('plPlay').onclick = () => ARTINX_DEMOS['pipeline'].togglePlay();
+
+// ============ 演示二：装好了吗？自检卡 ============
+ARTINX_DEMOS['selfcheck'] = (() => {
+  const TOOLS = [
+    { n: 'VS Code', role: '编辑器', cmd: 'code --version', out: '1.100.3（示例） -> 有版本号 = 装好' },
+    { n: 'GCC', role: '编译器', cmd: 'gcc --version', out: 'gcc (MSYS2) 14.2.0 -> 有版本信息 = 装好' },
+    { n: 'Python', role: '脚本语言', cmd: 'python --version', out: 'Python 3.13.0 -> 有版本号 = 装好' },
+    { n: 'Git', role: '版本管理', cmd: 'git --version', out: 'git version 2.49.0 -> 有版本号 = 装好' },
+    { n: 'MSYS2', role: '工具仓库', cmd: '打开开始菜单 -> MSYS2 UCRT64', out: '出现绿色 $ 提示符 = 装好' },
+    { n: 'Keil MDK', role: 'IDE', cmd: 'Project -> New uVision Project', out: '能搜到我们的 STM32 型号 = 装好' },
+    { n: 'CubeMX', role: '配置工具', cmd: 'New Project -> 搜索芯片型号', out: '能看到芯片引脚图 = 装好' },
+    { n: 'ST-Link', role: '烧录调试', cmd: '插入 ST-Link -> 打开设备管理器', out: '出现 STMicroelectronics 设备 = 装好' }
+  ];
+  let sel = 0, raf = null, onClick = null, cv = null;
+
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    ctx.clearRect(0, 0, w, h);
+    const pad = 16, gap = 12, top0 = 12, panelY = h * 0.60;
+    const cw = (w - pad * 2 - gap * 3) / 4;
+    const ch = (panelY - top0 - gap) / 2;
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < 8; i++) {
+      const col = i % 4, row = (i / 4) | 0;
+      const x = pad + col * (cw + gap), y = top0 + row * (ch + gap);
+      const on = i === sel;
+      ctx.fillStyle = on ? '#E3DBFC' : '#F7F4FE';
+      ctx.strokeStyle = on ? '#784CF6' : '#E8E4F4';
+      ctx.lineWidth = on ? 2.5 : 1.5;
+      rr(ctx, x, y, cw, ch, 12); ctx.fill(); ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#262034';
+      ctx.font = '700 15px ' + SANS;
+      ctx.fillText(TOOLS[i].n, x + cw / 2, y + ch / 2 - 11);
+      ctx.fillStyle = '#5A5468';
+      ctx.font = '12px ' + SANS;
+      ctx.fillText(TOOLS[i].role, x + cw / 2, y + ch / 2 + 13);
+      if (on) {
+        ctx.beginPath(); ctx.arc(x + cw - 16, y + 16, 8, 0, Math.PI * 2);
+        ctx.fillStyle = GREEN; ctx.fill();
+        ctx.strokeStyle = GREEN_D; ctx.lineWidth = 1.5; ctx.stroke();
+        checkMark(ctx, x + cw - 16, y + 16, 6, '#274500');
+      }
+    }
+    // 终端面板
+    const t = TOOLS[sel];
+    const ty = panelY, th = h - panelY - 10;
+    ctx.fillStyle = '#262036';
+    rr(ctx, pad, ty, w - pad * 2, th, 12); ctx.fill();
+    ['#784CF6', GREEN, '#E3DBFC'].forEach((c, i) => {
+      ctx.beginPath(); ctx.arc(pad + 26 + i * 20, ty + 22, 5, 0, Math.PI * 2);
+      ctx.fillStyle = c; ctx.fill();
+    });
+    ctx.textAlign = 'left';
+    const hasPrompt = !t.cmd.startsWith('打') && !t.cmd.startsWith('P') && !t.cmd.startsWith('N') && !t.cmd.startsWith('插');
+    if (hasPrompt) {
+      ctx.font = '14px ' + MONO;
+      ctx.fillStyle = GREEN;
+      ctx.fillText('PS C:\\> ', pad + 24, ty + 52);
+      const pw = ctx.measureText('PS C:\\> ').width;
+      ctx.fillStyle = '#EDE9FA';
+      ctx.fillText(t.cmd, pad + 24 + pw, ty + 52);
+      if ((now / 500 | 0) % 2 === 0) {
+        ctx.fillStyle = '#EDE9FA';
+        ctx.fillRect(pad + 24 + pw + ctx.measureText(t.cmd).width + 4, ty + 44, 9, 15);
+      }
+    } else {
+      ctx.font = '14px ' + MONO;
+      ctx.fillStyle = '#8F87AB';
+      ctx.fillText('$ ' + t.cmd, pad + 24, ty + 52);
+    }
+    ctx.font = '14px ' + SANS;
+    ctx.fillStyle = GREEN;
+    ctx.fillText(t.out, pad + 24, ty + 84);
+    ctx.font = '11px ' + SANS;
+    ctx.fillStyle = '#8F87AB';
+    ctx.fillText('示例输出，版本号以你装到的为准', pad + 24, ty + th - 18);
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  return {
+    init(canvas) {
+      cv = canvas;
+      onClick = (e) => {
+        const { w, h } = fit(canvas);
+        const pad = 16, gap = 12, top0 = 12, panelY = h * 0.60;
+        const cw = (w - pad * 2 - gap * 3) / 4;
+        const ch = (panelY - top0 - gap) / 2;
+        const col = clamp(Math.floor((e.offsetX - pad) / (cw + gap)), 0, 3);
+        const row = clamp(Math.floor((e.offsetY - top0) / (ch + gap)), 0, 1);
+        if (e.offsetX >= pad + col * (cw + gap) && e.offsetX <= pad + col * (cw + gap) + cw &&
+            e.offsetY >= top0 + row * (ch + gap) && e.offsetY <= top0 + row * (ch + gap) + ch) {
+          sel = row * 4 + col;
+        }
+      };
+      canvas.addEventListener('click', onClick);
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      if (cv && onClick) cv.removeEventListener('click', onClick);
+      onClick = null; cv = null;
+    }
+  };
+})();
+
+// ============ 演示三：报错了怎么办（排查流程） ============
+ARTINX_DEMOS['troubleshoot'] = (() => {
+  const STEPS = [
+    { t: '报错', lines: [
+      { p: 'PS> ', txt: 'gcc --version', ty: 'cmd' },
+      { p: '', txt: "'gcc' 不是内部或外部命令", ty: 'err' },
+      { p: '', txt: '通讯录翻遍了，没找到 gcc', ty: 'note' }
+    ] },
+    { t: '查 PATH', lines: [
+      { p: '', txt: '打开：设置 -> 高级系统设置 -> 环境变量', ty: 'txt' },
+      { p: '', txt: '找到 Path，看列表里有没有', ty: 'txt' },
+      { p: '', txt: 'C:\\msys64\\ucrt64\\bin ?', ty: 'mono' }
+    ] },
+    { t: '重开终端', lines: [
+      { p: '', txt: '把 C:\\msys64\\ucrt64\\bin 加进 Path', ty: 'txt' },
+      { p: '', txt: 'PATH 不会立刻生效：关掉所有终端', ty: 'txt' },
+      { p: '', txt: '重新打开，再试一次', ty: 'act' }
+    ] },
+    { t: '再试一次', lines: [
+      { p: 'PS> ', txt: 'gcc --version', ty: 'cmd' },
+      { p: '', txt: 'gcc (MSYS2) 14.2.0', ty: 'ok' },
+      { p: '', txt: '搞定！输出即验证', ty: 'ok' }
+    ] }
+  ];
+  const COLORS = {
+    cmd: '#EDE9FA', prompt: GREEN, err: '#F0B9C4', note: '#8F87AB',
+    txt: '#EDE9FA', mono: '#FFD166', act: '#9FC6FF', ok: GREEN
+  };
+  let step = 0, stepTime = 0, raf = null;
+
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    ctx.clearRect(0, 0, w, h);
+    ctx.textBaseline = 'middle';
+    // 顶部进度条
+    const barY = 8, barH = 6;
+    ctx.fillStyle = '#E8E4F4';
+    rr(ctx, 16, barY, w - 32, barH, 3); ctx.fill();
+    const frac = clamp((now - stepTime) / 1700, 0, 1);
+    let prog = (step + (step === 3 ? 1 : frac)) / 4;
+    ctx.fillStyle = '#784CF6';
+    rr(ctx, 16, barY, (w - 32) * prog, barH, 3); ctx.fill();
+    // 终端
+    const ty = 28, th = h * 0.62 - ty;
+    ctx.fillStyle = '#262036';
+    rr(ctx, 16, ty, w - 32, th, 12); ctx.fill();
+    ['#784CF6', GREEN, '#E3DBFC'].forEach((c, i) => {
+      ctx.beginPath(); ctx.arc(16 + 26 + i * 20, ty + 22, 5, 0, Math.PI * 2);
+      ctx.fillStyle = c; ctx.fill();
+    });
+    // 打字机逐字显示
+    let shown = Math.floor((now - stepTime) / 22);
+    let y = ty + 54;
+    ctx.textAlign = 'left';
+    STEPS[step].lines.forEach(L => {
+      const full = L.p + L.txt;
+      let seg = Math.max(0, Math.min(shown, full.length));
+      shown -= full.length;
+      if (L.p) {
+        ctx.font = '14px ' + MONO;
+        ctx.fillStyle = COLORS.prompt;
+        ctx.fillText(L.p.slice(0, Math.min(seg, L.p.length)), 42, y);
+        const pw = ctx.measureText(L.p).width;
+        const rest = seg - L.p.length;
+        if (rest > 0) {
+          ctx.fillStyle = COLORS[L.ty];
+          ctx.fillText(L.txt.slice(0, rest), 42 + pw, y);
+        }
+        if (seg >= full.length && (now / 500 | 0) % 2 === 0) {
+          ctx.fillStyle = '#EDE9FA';
+          ctx.fillRect(42 + pw + ctx.measureText(L.txt).width + 4, y - 8, 9, 15);
+        }
+      } else if (seg > 0) {
+        ctx.font = L.ty === 'mono' ? '13px ' + MONO : '14px ' + SANS;
+        ctx.fillStyle = COLORS[L.ty];
+        ctx.fillText(L.txt.slice(0, seg), 42, y);
+      }
+      y += 28;
+    });
+    // 底部步骤圆点
+    const n = 4, cy = h * 0.62 + (h - h * 0.62 - 10) / 2 + 6;
+    const cxs = [];
+    for (let i = 0; i < n; i++) cxs.push(w / 2 + (i - 1.5) * (w * 0.20));
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cxs[0], cy); ctx.lineTo(cxs[n - 1], cy); ctx.stroke();
+    for (let i = 0; i < n; i++) {
+      const done = i < step || (i === step && step === 3 && frac >= 1);
+      const curS = i === step;
+      if (done) {
+        ctx.fillStyle = GREEN; ctx.strokeStyle = GREEN_D;
+        ctx.beginPath(); ctx.arc(cxs[i], cy, 13, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        checkMark(ctx, cxs[i], cy, 7, '#274500');
+      } else if (curS) {
+        const pulse = 1 + Math.sin(now / 220) * 0.06;
+        ctx.fillStyle = '#784CF6';
+        ctx.beginPath(); ctx.arc(cxs[i], cy, 13 * pulse, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#FFFFFF'; ctx.font = '700 12px ' + SANS; ctx.textAlign = 'center';
+        ctx.fillText(String(i + 1), cxs[i], cy + 1);
+      } else {
+        ctx.fillStyle = '#E8E4F4'; ctx.strokeStyle = '#C9C3DE';
+        ctx.beginPath(); ctx.arc(cxs[i], cy, 13, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#5A5468'; ctx.font = '700 12px ' + SANS; ctx.textAlign = 'center';
+        ctx.fillText(String(i + 1), cxs[i], cy + 1);
+      }
+      ctx.fillStyle = curS ? '#784CF6' : '#5A5468';
+      ctx.font = (curS ? '700 ' : '') + '13px ' + SANS;
+      ctx.fillText(STEPS[i].t, cxs[i], cy + 34);
+    }
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  function next() {
+    step = step < 3 ? step + 1 : 0;
+    stepTime = performance.now();
+    document.getElementById('tbNext').textContent = step === 3 ? '再来一遍' : '下一步';
+  }
+  function reset() {
+    step = 0; stepTime = performance.now();
+    document.getElementById('tbNext').textContent = '下一步';
+  }
+  return {
+    init(canvas) {
+      stepTime = performance.now();
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+    },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    next,
+    reset
+  };
+})();
+document.getElementById('tbNext').onclick = () => ARTINX_DEMOS['troubleshoot'].next();
+document.getElementById('tbReset').onclick = () => ARTINX_DEMOS['troubleshoot'].reset();
+</script>
+</body>
+</html>

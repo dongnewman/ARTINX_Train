@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.5 PID 与闭环控制 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  全篇无 emoji；封面署名「电控组长 董心宇」，不写课时与前置。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+input[type=checkbox]{accent-color:var(--purple)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">1.5　PID 与闭环控制</div>
+      <h1 class="anim" style="animation-delay:.2s">PID 与闭环控制</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">从「我发多少电流」到「我告诉它跑多快」——第一次把反馈接进控制回路</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>概念</h3>
+        <p>开环与闭环；Target / Current / Error；P / I / D 定义与作用</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>演示</h3>
+        <p>PID 实时仿真器（四种预设）；误差动画；开环与闭环扰动对比</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>实践</h3>
+        <p>电机速度闭环；改目标速度；调参数、读响应曲线</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：开环 vs 闭环 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">开环控制 与 闭环控制</h2>
+    <div class="grid grid-2" style="align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>开环（Open-Loop）</h3>
+        <p>指令直接驱动电机，输出不参与计算；条件一变，转速漂了没人管。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>闭环（Closed-Loop）/ 反馈（Feedback）</h3>
+        <p>测量输出，与目标比较得误差，按误差修正输入，形成回路。</p>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><th></th><th>开环</th><th>闭环</th></tr>
+      <tr><td>依据</td><td>只信指令</td><td>指令 + 实测</td></tr>
+      <tr><td>抗扰动</td><td>差，漂了没人管</td><td>好，自动纠偏</td></tr>
+      <tr><td>成本</td><td>低</td><td>需要传感器与算法</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">类比：蒙眼开车 vs 睁眼开车——闭环多了「看路」这一步。</p>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：演示——开环 vs 闭环 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：开环 vs 闭环（同一扰动）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="openloop"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="btnStep600">0→600 阶跃</button>
+        <button class="btn ghost" id="btnDist">扰动 +200（2.5s）</button>
+        <button class="btn ghost" id="btnOLReset">重置</button>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:8px">同一电机模型、同一目标阶跃：开环按标定值发 600，闭环由 PID 自动纠偏。点「扰动」看谁被打偏。</p>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：闭环五件套 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">闭环五件套：Target / Current / Error / Output</h2>
+    <div class="grid grid-4" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>Target 目标值</h3>
+        <p>期望输出（目标转速 1000 RPM）</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>Current 当前值</h3>
+        <p>传感器测得的实际输出（编码器转速）</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>Error 误差</h3>
+        <p>Target − Current，正负定方向</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.4s">
+        <h3>Output 输出</h3>
+        <p>控制器算出的控制量（电调电流）</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：速度环数据流 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">速度环数据流（衔接 1.4）</h2>
+    <div class="callout" style="text-align:center;margin-top:8px">
+      <span class="chip">Target 目标转速</span> →
+      <span class="chip gray">⊕ 比较</span> ←
+      <span class="chip">编码器转速</span>
+      <span class="chip green">Error</span> →
+      <span class="chip">PID</span> →
+      <span class="chip">Output 电流</span> →
+      <span class="chip">CAN / 电调</span> →
+      <span class="chip">电机</span> →
+      <span class="chip">转速</span>
+    </div>
+    <p class="small muted" style="margin-top:14px">1.4 的「读反馈」与「发控制量」不变，中间只多一步 PID 计算。</p>
+    <div class="callout tip" style="margin-top:10px">控制 = 不断「测差距、消差距」。误差为正则加大输出，为负则减小输出。</div>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：演示——误差动画 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：误差动画（洗澡调水温）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="errorviz"></canvas>
+      <div class="demo-controls">
+        <label>目标温度 <input type="range" id="errTarget" min="30" max="45" step="0.5" value="38"><span id="errTargetV">38°C</span></label>
+        <label><input type="checkbox" id="errAuto" checked> 自动波动</label>
+        <button class="btn ghost" id="btnColdDist">冷水冲击</button>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:8px">绿虚线 = Target，紫线 = Current，阴影 = Error。类比：目标=想要的水温，当前=手摸到的水温，误差=差多少，输出=阀门拧多大。点「冷水冲击」观察误差如何被消掉。</p>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：P 定义 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">P —— 比例（Proportional）</h2>
+    <div class="callout" style="font-size:15px;margin-top:6px">u_P = Kp × e(t)：输出与误差成正比，误差越大输出越大；e = 0 时输出为 0。</div>
+    <ul style="margin-top:14px">
+      <li class="anim" style="animation-delay:.1s">类比一句话：水太凉就多开热水，差越多拧越大。</li>
+      <li class="anim" style="animation-delay:.2s">特性：立即响应、无滞后；Kp 越大越有力。</li>
+      <li class="anim" style="animation-delay:.3s">代价：Kp 过大 → 超调、震荡、啸叫。</li>
+    </ul>
+    <div class="callout warn" style="margin-top:12px">只有 P 会「差一截」，原因与数字示例见下页。</div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：P 的稳态误差 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">为什么只有 P 会「差一截」</h2>
+    <p>维持转速需要持续电流，P 的输出却随误差归零——只能停在「差一点」的平衡点。</p>
+    <div class="callout" style="margin-top:12px;font-family:var(--mono);font-size:13.5px">
+      维持 1000 RPM 需 600 电流：
+      Kp = 2  → e = 300 → 停在 700 RPM
+      Kp = 10 → e = 60  → 停在 940 RPM
+    </div>
+    <p style="margin-top:12px">Kp 越大「差」越小，但永远消不掉——该残余偏差即<em>稳态误差（Steady-State Error）</em>，由 I 负责消灭。</p>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：I 定义 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">I —— 积分（Integral）</h2>
+    <div class="callout" style="font-size:15px;margin-top:6px">u_I = Ki × ∫ e dt：输出与误差对时间的累计成正比，误差存在越久，积分项越大。</div>
+    <ul style="margin-top:14px">
+      <li class="anim" style="animation-delay:.1s">类比一句话：一直差一点，就再拧一点。</li>
+      <li class="anim" style="animation-delay:.2s">作用：消除稳态误差；误差归零后，积分项保留为维持输出所需的值。</li>
+    </ul>
+    <div class="callout danger" style="margin-top:12px">风险：积分饱和（Integral Windup），过冲后难以收回。见下页。</div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：积分饱和 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">积分饱和（Integral Windup）</h2>
+    <ul style="margin-top:10px">
+      <li class="anim" style="animation-delay:.1s">误差长期不归零 → 积分累计过大 → 过冲后回不来。</li>
+      <li class="anim" style="animation-delay:.2s">大阶跃 + 大 Ki：输出顶格、冲过目标、慢慢爬回。</li>
+    </ul>
+    <div class="callout tip" style="margin-top:14px">演示「积分饱和」预设可复现；防线：积分限幅 i_max，2.5 展开进阶方案。</div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：D 定义 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">D —— 微分（Derivative）</h2>
+    <div class="callout" style="font-size:15px;margin-top:6px">u_D = Kd × de/dt：输出与误差变化率成正比，误差收敛越快，「刹车」越强。</div>
+    <ul style="margin-top:14px">
+      <li class="anim" style="animation-delay:.1s">类比一句话：快到了，提前收手。</li>
+      <li class="anim" style="animation-delay:.2s">作用：预测趋势、抑制超调，等效给系统加阻尼。</li>
+      <li class="anim" style="animation-delay:.3s">风险：放大测量噪声（编码器抖动被微分放大），低速明显；能不加就不加。</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：PID 合式 + 参数表 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">PID 完整形式与参数效果</h2>
+    <div class="callout" style="text-align:center;font-size:15px;margin-top:4px">
+      u(t) = Kp·e(t) + Ki·∫ e(τ) dτ + Kd·de(t)/dt　　（现在 · 过去 · 未来）
+    </div>
+    <table style="margin-top:14px">
+      <tr><th>调大</th><th>响应速度</th><th>超调</th><th>稳态误差</th><th>主要副作用</th></tr>
+      <tr><td><strong>Kp</strong></td><td>变快</td><td>可能增大</td><td>减小但消不掉</td><td>过大 → 震荡、啸叫</td></tr>
+      <tr><td><strong>Ki</strong></td><td>略快</td><td>增大</td><td>消除</td><td>积分饱和</td></tr>
+      <tr><td><strong>Kd</strong></td><td>提前量</td><td>减小</td><td>几乎无影响</td><td>放大噪声</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:10px">这张表 + 调参顺序，是本节唯一要求记住的内容。</p>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：演示——PID 仿真器 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：PID 实时仿真器</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="pidsim"></canvas>
+      <div class="demo-controls">
+        <label>Kp <input type="range" id="simKp" min="0" max="20" step="0.05" value="0.3"><span id="simKpV">0.30</span></label>
+        <label>Ki <input type="range" id="simKi" min="0" max="8" step="0.05" value="1"><span id="simKiV">1.00</span></label>
+        <label>Kd <input type="range" id="simKd" min="0" max="3" step="0.05" value="0"><span id="simKdV">0.00</span></label>
+        <label><input type="checkbox" id="simNoise"> 编码器噪声</label>
+      </div>
+      <div class="demo-controls" style="border-top:none;padding-top:0">
+        <button class="btn ghost" id="btnPStable">稳定</button>
+        <button class="btn ghost" id="btnPOver">超调</button>
+        <button class="btn ghost" id="btnPOsc">震荡</button>
+        <button class="btn ghost" id="btnPSat">积分饱和</button>
+        <span style="width:10px"></span>
+        <button class="btn ghost" id="btnT0">目标 0</button>
+        <button class="btn ghost" id="btnT400">目标 400</button>
+        <button class="btn" id="btnT600">目标 600</button>
+        <button class="btn ghost" id="btnT900">目标 900</button>
+        <span style="width:10px"></span>
+        <button class="btn green" id="btnSimReset">重置</button>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:8px">模型 = 两级惯性电机 + 48 ms 测量延迟；离散 PID（dt = 0.004 s），含输出限幅与积分限幅。预设：稳定 / 超调 / 震荡 / 积分饱和。</p>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：调参顺序 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">调参顺序（新手照做）</h2>
+    <div class="grid" style="flex:1;align-content:center;gap:10px">
+      <div class="callout anim" style="animation-delay:.1s"><strong>1</strong>　只留 P：从 0 起步，×1.5 加，直到跟得上</div>
+      <div class="callout anim" style="animation-delay:.2s"><strong>2</strong>　加 I：慢慢加，直到稳态误差 &lt; 2%</div>
+      <div class="callout anim" style="animation-delay:.3s"><strong>3</strong>　冲过头？加一点 D，能不加就不加</div>
+      <div class="callout tip anim" style="animation-delay:.4s"><strong>4</strong>　一次只改一个参数，观察后再动</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：连续 → 离散 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">连续 PID → 离散 PID</h2>
+    <div class="grid grid-2" style="align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>连续形式</h3>
+        <p style="font-family:var(--mono);font-size:13.5px">u(t) = Kp·e(t) + Ki·∫e dt + Kd·de/dt</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>离散形式（周期 dt 固定）</h3>
+        <p style="font-family:var(--mono);font-size:13.5px">u_k = Kp·e_k + Ki·Σ(e_i·dt) + Kd·(e_k − e_(k−1))/dt</p>
+      </div>
+    </div>
+    <ul style="margin-top:14px">
+      <li class="anim" style="animation-delay:.3s">积分 → 累加：每周期把 Ki·e·dt 累进积分项。</li>
+      <li class="anim" style="animation-delay:.4s">微分 → 差分：本次误差减上次误差，再除以 dt。</li>
+      <li class="anim" style="animation-delay:.5s">限幅：积分限幅 i_max 与输出限幅 out_max 都不可省。</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：离散 PID 代码 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">离散 PID 代码（C）</h2>
+<pre style="flex:1;margin-top:6px">
+<span class="k">float</span> <span class="f">PID_Calc</span>(PID_t *pid, <span class="k">float</span> target, <span class="k">float</span> current, <span class="k">float</span> dt)
+{
+    <span class="k">float</span> e = target - current;                <span class="c">/* 误差 */</span>
+    <span class="k">float</span> p = pid->kp * e;                     <span class="c">/* P：比例 */</span>
+    pid->i_term += pid->ki * e * dt;          <span class="c">/* I：积分累加 */</span>
+    <span class="k">if</span> (pid->i_term &gt;  pid->i_max) pid->i_term =  pid->i_max;   <span class="c">/* 积分限幅 */</span>
+    <span class="k">if</span> (pid->i_term &lt; -pid->i_max) pid->i_term = -pid->i_max;
+    <span class="k">float</span> d = pid->kd * (e - pid->last_e) / dt;  <span class="c">/* D：微分差分 */</span>
+    pid->last_e = e;
+    <span class="k">float</span> out = p + pid->i_term + d;           <span class="c">/* 三项求和 */</span>
+    <span class="k">if</span> (out &gt;  pid->out_max) out =  pid->out_max;             <span class="c">/* 输出限幅 */</span>
+    <span class="k">if</span> (out &lt; -pid->out_max) out = -pid->out_max;
+    <span class="k">return</span> out;
+}</pre>
+    <p class="small muted" style="margin-top:8px">调用位置：定时器中断 / 周期任务（如 1 kHz，dt = 0.001f）。真机常用「D 作用于测量值」避开目标跳变冲击，2.5 展开。</p>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：两个伏笔 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">两个「以后细学」的点</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>dt 固定（控制周期）</h3>
+        <p>参数与 dt 配套；PID 放定时器中断，不裸跑 while(1)。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>积分限幅（i_max）</h3>
+        <p>抗积分饱和的第一道防线。</p>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:14px">2.5 展开：抗饱和、微分滤波、串级 PID、前馈。</div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：实践步骤 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">实践：电机速度闭环（45 分钟）</h2>
+    <ol style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px">
+      <li class="anim" style="animation-delay:.1s">加 pid.c / pid.h，编译 0 报错 0 警告</li>
+      <li class="anim" style="animation-delay:.15s">1 ms 中断：读转速 → 算误差 → PID → 发电流</li>
+      <li class="anim" style="animation-delay:.2s">只调 P：跟得上、差一截</li>
+      <li class="anim" style="animation-delay:.25s">加 I：稳态误差 &lt; 2%</li>
+      <li class="anim" style="animation-delay:.3s">阶跃 0→1000→2000→0 看响应</li>
+    </ol>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：读响应曲线 + 加分 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">怎么读响应曲线（+ 加分项）</h2>
+    <div class="cols" style="margin-top:4px">
+      <div>
+        <ul>
+          <li>上升时间、超调量、稳态误差、震荡次数</li>
+          <li>口诀：慢加 P、差加 I、冲加 D、抖减增益</li>
+        </ul>
+      </div>
+      <div>
+        <ul>
+          <li>加分：串口 + Python 画曲线对比仿真</li>
+          <li>安全：电机固定、目标从小到大、异常断电</li>
+        </ul>
+      </div>
+    </div>
+<pre style="margin-top:12px;font-size:12.5px">
+转速 ↑        ╱╲____ 超调
+     │       ╱     ╲___ 稳态
+     │___╱─┴──────────→ 时间
+        上升  调节</pre>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：常见问题 1 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查（上）</h2>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <table>
+        <tr><th>现象</th><th>可能原因</th><th>排查</th></tr>
+        <tr><td>高频抖动 / 啸叫</td><td>Kp 过大</td><td>Kp 减半再试</td></tr>
+        <tr><td>稳定在目标以下一截</td><td>只有 P（稳态误差）</td><td>加 I</td></tr>
+        <tr><td>阶跃后冲过头</td><td>Kp 偏大 / 没加 D</td><td>降 Kp，加一点 D</td></tr>
+        <tr><td>低速时输出抽动</td><td>D 放大编码器噪声</td><td>减小 Kd</td></tr>
+        <tr><td>冲过头半天回不来</td><td>积分饱和</td><td>检查 i_max</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：常见问题 2 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查（下）</h2>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <table>
+        <tr><th>现象</th><th>可能原因</th><th>排查</th></tr>
+        <tr><td>越转越快直到满速</td><td>误差符号反了（正反馈）</td><td>查编码器方向</td></tr>
+        <tr><td>输出一直顶在限幅值</td><td>参数过大或目标超范围</td><td>目标调小、参数缩小</td></tr>
+        <tr><td>每次表现不一样</td><td>控制周期不稳定</td><td>确认在定时器中断调用</td></tr>
+        <tr><td>转速数值乱跳</td><td>换算错误或未滤波</td><td>静止读数应为 0；加滑动平均</td></tr>
+        <tr><td>改小 Kp 没反应</td><td>积分项仍在「记仇」</td><td>调参前清积分</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：术语速查 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节术语速查</h2>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <table>
+        <tr><th>术语</th><th>解释</th></tr>
+        <tr><td>开环 Open-Loop</td><td>输出不参与计算，蒙眼开车</td></tr>
+        <tr><td>闭环 Closed-Loop</td><td>测量 → 比较 → 修正，睁眼开车</td></tr>
+        <tr><td>Target 目标值</td><td>期望输出，如 1000 RPM</td></tr>
+        <tr><td>Current 当前值</td><td>传感器测得的实际输出</td></tr>
+        <tr><td>Error 误差</td><td>Target − Current，正负定方向</td></tr>
+        <tr><td>Output 输出</td><td>控制量，速度环中为电调电流</td></tr>
+        <tr><td>稳态误差</td><td>稳定后的残余偏差，靠 I 消除</td></tr>
+        <tr><td>超调</td><td>阶跃后冲过目标值</td></tr>
+        <tr><td>积分饱和</td><td>积分累计过大，冲出去回不来</td></tr>
+        <tr><td>dt 控制周期</td><td>每次算 PID 的间隔，必须固定</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 24 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源（链接均已验证可访问）</h2>
+    <div class="grid" style="flex:1;align-content:center;gap:8px">
+      <div class="card white anim" style="animation-delay:.1s;padding:8px 14px">
+        <h3 style="margin:0 0 2px">Brian Douglas《PID Control - A brief introduction》</h3>
+        <p class="small muted">YouTube，英文 8 分钟：零数学直觉入门，适合所有人；B 站有中文字幕搬运 av6428788。</p>
+        <p class="small"><a href="https://www.youtube.com/watch?v=UR0hOmjaHp0">youtube.com/watch?v=UR0hOmjaHp0</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.2s;padding:8px 14px">
+        <h3 style="margin:0 0 2px">华南小虎队《从不懂到会用！PID 从理论到实践~》</h3>
+        <p class="small muted">B 站，中文 2 小时，91 万播放：RM 强队出品，理论到代码到调参，适合课后完整跟一遍。</p>
+        <p class="small"><a href="https://www.bilibili.com/video/BV1B54y1V7hp">bilibili.com/video/BV1B54y1V7hp</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.3s;padding:8px 14px">
+        <h3 style="margin:0 0 2px">Brian Douglas × MathWorks《Understanding PID Control》</h3>
+        <p class="small muted">MathWorks 官网，英文 7 集系列：第 1 集 12 分钟；后续讲抗饱和等 2.5 内容。</p>
+        <p class="small"><a href="https://www.mathworks.com/videos/understanding-pid-control-part-1-what-is-pid-control--1527089264373.html">mathworks.com/videos/understanding-pid-control-part-1</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.4s;padding:8px 14px">
+        <h3 style="margin:0 0 2px">维基百科「PID控制器」（中文）</h3>
+        <p class="small muted">公式、调参方法、伪代码齐全：当字典查，适合想追根究底的人。</p>
+        <p class="small"><a href="https://zh.wikipedia.org/wiki/PID%E6%8E%A7%E5%88%B6%E5%99%A8">zh.wikipedia.org/wiki/PID控制器</a></p>
+      </div>
+      <div class="card white anim" style="animation-delay:.5s;padding:8px 14px">
+        <h3 style="margin:0 0 2px">MATLAB《PID Controller Tuning》官方文档</h3>
+        <p class="small muted">PID Tuner / pidtune 自动调参工具索引：2.5 或综合作业再回来看。</p>
+        <p class="small"><a href="https://www.mathworks.com/help/control/pid-controller-design.html">mathworks.com/help/control/pid-controller-design.html</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 最后一页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>闭环 = 测差距、消差距；开环蒙眼，闭环睁眼</li>
+        <li>P 看现在、I 算旧账、D 猜未来</li>
+        <li>调参顺序：先 P、再 I、最后 D</li>
+        <li>dt 固定 + 积分限幅（2.5 展开）</li>
+        <li>课后：速度闭环跑通 + 调参记录 + 自测</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（本小节：开环闭环对比 / 误差动画 / PID 仿真器） ================= */
+/*
+  注册格式：
+  ARTINX_DEMOS['名字'] = { init(canvas, slide){...}, destroy(){...} };
+  - canvas 尺寸随窗口变化，用下方 fit(canvas) 获取 CSS 像素尺寸并处理高清屏
+  - 页面切换到其他页时会自动调用 destroy()，切回时重新 init()
+  - 不要依赖任何外部库，用原生 canvas 即可
+  - 仿真模型：两级惯性电机（电流环 0.04 s + 机械惯性 0.45 s）+ 48 ms 测量延迟，
+    离散 PID：dt = 0.004 s 固定；积分累加 + 限幅；微分差分；输出限幅。
+    演示内颜色统一：荧光绿 #AFFF00（亮）/ 深绿 #83BF00；canvas 文字不用 emoji。
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const C = {
+  purple: '#784CF6', green: '#83BF00', bright: '#AFFF00',
+  ink: '#262034', muted: '#5A5468', lavender: '#E3DBFC', grid: '#EEEAF8',
+  errFill: 'rgba(120,76,246,.14)', distFill: 'rgba(120,76,246,.10)'
+};
+
+/* —— 外部控件 → 仿真 的命令标记（step 内读取后清零） —— */
+let simTargetCmd = null, simResetCmd = false;
+let coldCmd = false;
+let olResetCmd = false, olDistCmd = false;
+
+/* ═══════════ 演示一：开环 vs 闭环对比 ═══════════ */
+ARTINX_DEMOS['openloop'] = (() => {
+  const DT = 0.004, WINDOW = 10, DELAY_N = 12, TAU1 = 0.04, TAU2 = 0.45;
+  let raf = null, lastTs = 0, acc = 0, st = null;
+
+  function resetState() {
+    st = {
+      t: 0, distStart: -1, distDur: 2.5, distVal: 200, target: 600,
+      open: { m: 0, v: 0, vhist: [] },
+      closed: { m: 0, v: 0, iTerm: 0, lastMeas: 0, ring: new Array(DELAY_N).fill(0), ri: 0, vhist: [] }
+    };
+  }
+
+  function step() {
+    if (olResetCmd) { resetState(); olResetCmd = false; }
+    if (olDistCmd) {
+      if (st.distStart < 0 || st.t > st.distStart + st.distDur) st.distStart = st.t;
+      olDistCmd = false;
+    }
+    const dist = (st.t >= st.distStart && st.t < st.distStart + st.distDur) ? st.distVal : 0;
+    // 开环：按标定值发 600，不看结果
+    const outO = 600;
+    st.open.m += (outO - st.open.m) * (DT / TAU1);
+    st.open.v += (st.open.m - dist - st.open.v) * (DT / TAU2);
+    st.open.vhist.push({ t: st.t, v: st.open.v });
+    // 闭环：PID（Kp=0.5 Ki=1.5 Kd=0.1），测量延迟 48 ms
+    const cl = st.closed;
+    cl.ring[cl.ri] = cl.v; cl.ri = (cl.ri + 1) % DELAY_N;
+    const meas = cl.ring[cl.ri];
+    const e = st.target - meas;
+    cl.iTerm = clamp(cl.iTerm + 1.5 * e * DT, -1000, 1000);
+    const d = -(meas - cl.lastMeas) / DT;
+    cl.lastMeas = meas;
+    const outC = clamp(0.5 * e + cl.iTerm + 0.1 * d, 0, 1000);
+    cl.m += (outC - cl.m) * (DT / TAU1);
+    cl.v += (cl.m - dist - cl.v) * (DT / TAU2);
+    cl.vhist.push({ t: st.t, v: cl.v });
+    st.t += DT;
+    while (st.open.vhist.length && st.open.vhist[0].t < st.t - WINDOW) st.open.vhist.shift();
+    while (st.closed.vhist.length && st.closed.vhist[0].t < st.t - WINDOW) st.closed.vhist.shift();
+  }
+
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    ctx.clearRect(0, 0, w, h);
+    const top = 28, bot = h - 24;
+    const gap = 8;
+    const half = (w - 46 - gap) / 2;
+    const L1 = 42, R1 = L1 + half, L2 = R1 + gap, R2 = L2 + half;
+    const t0 = st.t - WINDOW;
+    const yMap = v => top + (1 - v / 1000) * (bot - top);
+    const xMap = (t, L, R) => L + ((t - t0) / WINDOW) * (R - L);
+    ctx.font = '13px "Segoe UI",sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = C.muted; ctx.fillText('开环（无反馈）：按标定值发 600，不看结果', L1, top - 8);
+    ctx.fillStyle = C.purple; ctx.fillText('闭环（PID 反馈）：自动纠偏', L2, top - 8);
+    [[L1, R1], [L2, R2]].forEach(([L, R]) => {
+      ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.font = '11px "Segoe UI",sans-serif';
+      for (let v = 0; v <= 1000; v += 250) {
+        ctx.beginPath(); ctx.moveTo(L, yMap(v)); ctx.lineTo(R, yMap(v)); ctx.stroke();
+        ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.fillText(v, L - 6, yMap(v) + 3);
+      }
+      // 目标线
+      ctx.setLineDash([6, 4]); ctx.strokeStyle = C.green; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(L, yMap(st.target)); ctx.lineTo(R, yMap(st.target)); ctx.stroke();
+      ctx.setLineDash([]);
+    });
+    // 扰动带
+    if (st.distStart >= 0 && st.distStart < st.t) {
+      const x1 = xMap(Math.max(st.distStart, t0), L1, R1);
+      const x2 = xMap(Math.min(st.distStart + st.distDur, st.t), L1, R1);
+      if (x2 > x1) {
+        ctx.fillStyle = C.distFill;
+        ctx.fillRect(x1, top, x2 - x1, bot - top);
+        ctx.fillStyle = C.muted; ctx.textAlign = 'center'; ctx.font = '11px "Segoe UI",sans-serif';
+        ctx.fillText('扰动 +200', Math.max(x1 + 34, Math.min(x2 - 4, R1 - 30)), top + 8);
+      }
+    }
+    const drawCurve = (hist, L, R, color, width) => {
+      if (hist.length < 2) return;
+      ctx.beginPath();
+      hist.forEach((p, i) => { const x = xMap(p.t, L, R), y = yMap(p.v); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = 'round'; ctx.stroke();
+    };
+    drawCurve(st.open.vhist, L1, R1, C.muted, 2.5);
+    drawCurve(st.closed.vhist, L2, R2, C.purple, 2.5);
+    // 当前值读数
+    ctx.font = 'bold 15px "Segoe UI",sans-serif';
+    ctx.textAlign = 'left'; ctx.fillStyle = C.ink;
+    ctx.fillText('当前 ' + st.open.v.toFixed(0), L1 + 6, top + 18);
+    ctx.fillText('当前 ' + st.closed.v.toFixed(0), L2 + 6, top + 18);
+    ctx.font = '11px "Segoe UI",sans-serif'; ctx.fillStyle = C.muted;
+    ctx.fillText('灰 = 开环　紫 = 闭环　绿虚线 = 目标 600', L1, bot + 16);
+  }
+
+  function loop(canvas) {
+    const now = performance.now();
+    if (lastTs) { acc += (now - lastTs) / 1000; acc = Math.min(acc, 0.25); while (acc >= DT) { step(); acc -= DT; } }
+    lastTs = now;
+    draw(canvas);
+    raf = requestAnimationFrame(() => loop(canvas));
+  }
+
+  return {
+    init(canvas) { resetState(); lastTs = 0; acc = 0; if (!raf) raf = requestAnimationFrame(() => loop(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+/* ═══════════ 演示二：误差动画（洗澡调水温） ═══════════ */
+ARTINX_DEMOS['errorviz'] = (() => {
+  const DT = 0.004, WINDOW = 8;
+  const KP = 4, KI = 2, KD = 2.5, TAU1 = 0.3, TAU2 = 0.8, I_MAX = 100, OUT_UP = 100, OUT_LO = -50;
+  let raf = null, lastTs = 0, acc = 0, st = null;
+
+  function resetState() {
+    st = { x1: 0, temp: 20, iTerm: 0, lastMeas: 20, t: 0, distUntil: -1,
+           thist: [], curhist: [], tghist: [] };
+  }
+
+  function step() {
+    if (coldCmd) { st.distUntil = st.t + 1.5; coldCmd = false; }
+    const auto = document.getElementById('errAuto').checked;
+    const tg = auto ? 38 + 3 * Math.sin(st.t / 2.5) : +document.getElementById('errTarget').value;
+    const dist = st.t < st.distUntil ? 8 : 0;   // 冷水冲击：等效 -8 度
+    const e = tg - st.temp;
+    st.iTerm = clamp(st.iTerm + KI * e * DT, -I_MAX, I_MAX);
+    const d = -(st.temp - st.lastMeas) / DT;
+    st.lastMeas = st.temp;
+    const out = clamp(KP * e + st.iTerm + KD * d, OUT_LO, OUT_UP);
+    st.x1 += (out - st.x1) * (DT / TAU1);
+    st.temp += ((20 + 0.5 * st.x1) - dist - st.temp) * (DT / TAU2);
+    st.t += DT;
+    st.thist.push(st.t); st.curhist.push(st.temp); st.tghist.push(tg);
+    while (st.thist.length && st.thist[0] < st.t - WINDOW) { st.thist.shift(); st.curhist.shift(); st.tghist.shift(); }
+  }
+
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    ctx.clearRect(0, 0, w, h);
+    const auto = document.getElementById('errAuto').checked;
+    const tg = auto ? 38 + 3 * Math.sin(st.t / 2.5) : +document.getElementById('errTarget').value;
+    const e = tg - st.temp;
+    const Tmin = 20, Tmax = 46;
+    const ty = v => h - 26 - ((v - Tmin) / (Tmax - Tmin)) * (h - 70);
+    const tx = 64;
+    // ── 左：温度计 ──
+    ctx.strokeStyle = C.lavender; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(tx, ty(Tmax)); ctx.lineTo(tx, ty(Tmin)); ctx.stroke();
+    // 误差阴影（Target 与 Current 之间）
+    ctx.fillStyle = C.errFill;
+    ctx.fillRect(tx - 13, Math.min(ty(tg), ty(st.temp)), 26, Math.abs(ty(tg) - ty(st.temp)));
+    // 当前水温（荧光绿液柱）
+    ctx.fillStyle = 'rgba(175,255,0,.8)';
+    ctx.fillRect(tx - 13, ty(st.temp), 26, ty(Tmin) - ty(st.temp));
+    ctx.strokeStyle = C.green; ctx.lineWidth = 2;
+    ctx.strokeRect(tx - 13, ty(Tmin), 26, ty(Tmax) - ty(Tmin));
+    // Target 标记（紫三角）
+    ctx.fillStyle = C.purple;
+    ctx.beginPath(); ctx.moveTo(tx - 22, ty(tg) - 7); ctx.lineTo(tx - 22, ty(tg) + 7);
+    ctx.lineTo(tx - 14, ty(tg)); ctx.closePath(); ctx.fill();
+    ctx.font = '11px "Segoe UI",sans-serif'; ctx.textAlign = 'right';
+    ctx.fillStyle = C.purple; ctx.fillText('Target ' + tg.toFixed(1) + '°C', tx - 30, ty(tg) + 4);
+    ctx.fillStyle = C.green; ctx.fillText('Current ' + st.temp.toFixed(1) + '°C', tx - 30, Math.min(ty(st.temp) + 26, h - 30));
+    ctx.textAlign = 'center';
+    ctx.fillStyle = C.muted; ctx.fillText('30°C', tx, ty(30) + 14); ctx.fillText('44°C', tx, ty(44) - 4);
+    // 误差大字 + 提示
+    ctx.textAlign = 'left'; ctx.font = 'bold 26px "Segoe UI",sans-serif';
+    ctx.fillStyle = Math.abs(e) < 0.8 ? C.green : C.purple;
+    ctx.fillText('Error ' + (e >= 0 ? '+' : '') + e.toFixed(1) + '°C', tx + 30, 64);
+    ctx.font = '15px "Segoe UI",sans-serif'; ctx.fillStyle = C.muted;
+    ctx.fillText(Math.abs(e) < 0.8 ? '水温刚好，不用拧' : (e > 0 ? '水太凉，开大热水阀' : '水太烫，关小热水阀'), tx + 30, 90);
+    if (st.t < st.distUntil) {
+      ctx.font = 'bold 15px "Segoe UI",sans-serif'; ctx.fillStyle = C.purple;
+      ctx.fillText('冷水冲击中', tx + 30, 116);
+    }
+    // ── 右：时间曲线 + 误差阴影 ──
+    const L = tx + 130, R = w - 16;
+    const yMap = v => h - 26 - ((v - Tmin) / (Tmax - Tmin)) * (h - 70);
+    const t0 = st.t - WINDOW;
+    const X = t => L + ((t - t0) / WINDOW) * (R - L);
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+    for (let v = 20; v <= 46; v += 6) { ctx.beginPath(); ctx.moveTo(L, yMap(v)); ctx.lineTo(R, yMap(v)); ctx.stroke(); }
+    if (st.thist.length > 1) {
+      // 误差阴影：target 与 current 之间
+      ctx.beginPath();
+      st.thist.forEach((t, i) => { const x = X(t); i === 0 ? ctx.moveTo(x, yMap(st.tghist[i])) : ctx.lineTo(x, yMap(st.tghist[i])); });
+      for (let i = st.curhist.length - 1; i >= 0; i--) ctx.lineTo(X(st.thist[i]), yMap(st.curhist[i]));
+      ctx.closePath(); ctx.fillStyle = C.errFill; ctx.fill();
+      // Target 线（深绿虚线）
+      ctx.beginPath();
+      st.thist.forEach((t, i) => { const x = X(t); i === 0 ? ctx.moveTo(x, yMap(st.tghist[i])) : ctx.lineTo(x, yMap(st.tghist[i])); });
+      ctx.setLineDash([7, 5]); ctx.strokeStyle = C.green; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]);
+      // Current 线（紫）
+      ctx.beginPath();
+      st.thist.forEach((t, i) => { const x = X(t); i === 0 ? ctx.moveTo(x, yMap(st.curhist[i])) : ctx.lineTo(x, yMap(st.curhist[i])); });
+      ctx.strokeStyle = C.purple; ctx.lineWidth = 2.5; ctx.stroke();
+    }
+    ctx.font = '11px "Segoe UI",sans-serif'; ctx.fillStyle = C.muted;
+    ctx.textAlign = 'left'; ctx.fillText('── Target（绿虚线）　── Current（紫）　阴影 = Error', L, h - 8);
+    ctx.textAlign = 'right'; ctx.fillText('8 秒窗口', R, h - 8);
+  }
+
+  function loop(canvas) {
+    const now = performance.now();
+    if (lastTs) { acc += (now - lastTs) / 1000; acc = Math.min(acc, 0.25); while (acc >= DT) { step(); acc -= DT; } }
+    lastTs = now;
+    draw(canvas);
+    raf = requestAnimationFrame(() => loop(canvas));
+  }
+
+  return {
+    init(canvas) { resetState(); lastTs = 0; acc = 0; if (!raf) raf = requestAnimationFrame(() => loop(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+/* ═══════════ 演示三：PID 实时仿真器 ═══════════ */
+ARTINX_DEMOS['pidsim'] = (() => {
+  const DT = 0.004, WINDOW = 10, DELAY_N = 12, OUT_MAX = 1000, I_MAX = 1000;
+  const NOISE = 30;
+  let raf = null, lastTs = 0, acc = 0, st = null;
+
+  function resetState() {
+    st = {
+      tau1: 0.04, tau2: 0.45, m: 0, v: 0, iTerm: 0, lastMeas: 0,
+      ring: new Array(DELAY_N).fill(0), ri: 0,
+      target: 600, t: 0, vhist: [], outhist: []
+    };
+  }
+
+  function step() {
+    if (simResetCmd) { resetState(); simResetCmd = false; }
+    if (simTargetCmd !== null) { st.target = simTargetCmd; simTargetCmd = null; }
+    const kp = +document.getElementById('simKp').value;
+    const ki = +document.getElementById('simKi').value;
+    const kd = +document.getElementById('simKd').value;
+    const noisy = document.getElementById('simNoise').checked;
+    // 测量延迟：编码器数据晚 48 ms 才到控制器
+    st.ring[st.ri] = st.v; st.ri = (st.ri + 1) % DELAY_N;
+    const meas = st.ring[st.ri] + (noisy ? (Math.random() * 2 - 1) * NOISE : 0);
+    const e = st.target - meas;
+    // I：积分累加 + 限幅
+    st.iTerm = clamp(st.iTerm + ki * e * DT, -I_MAX, I_MAX);
+    // D：微分差分（作用在测量值上，避免目标跳变时的冲击）
+    const d = -(meas - st.lastMeas) / DT;
+    st.lastMeas = meas;
+    // 输出限幅
+    const out = clamp(kp * e + st.iTerm + kd * d, 0, OUT_MAX);
+    // 电机模型：两级惯性
+    st.m += (out - st.m) * (DT / st.tau1);
+    st.v += (st.m - st.v) * (DT / st.tau2);
+    st.t += DT;
+    st.vhist.push({ t: st.t, v: st.v });
+    st.outhist.push({ t: st.t, o: out });
+    while (st.vhist.length && st.vhist[0].t < st.t - WINDOW) st.vhist.shift();
+    while (st.outhist.length && st.outhist[0].t < st.t - WINDOW) st.outhist.shift();
+  }
+
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    ctx.clearRect(0, 0, w, h);
+    const L = 42, R = w - 10, T = 10;
+    const plotH = (h - 20) * 0.66, plotB = T + plotH;
+    const outB = h - 8, outT = outB - (h - 20) * 0.22;
+    const t0 = st.t - WINDOW;
+    const X = t => L + ((t - t0) / WINDOW) * (R - L);
+    const Yv = v => plotB - (v / 1000) * plotH;
+    const Yo = o => outB - (o / 1000) * (outB - outT);
+    const noisy = document.getElementById('simNoise').checked;
+    // 网格与坐标
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.font = '11px "Segoe UI",sans-serif';
+    for (let v = 0; v <= 1000; v += 250) {
+      ctx.beginPath(); ctx.moveTo(L, Yv(v)); ctx.lineTo(R, Yv(v)); ctx.stroke();
+      ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.fillText(v, L - 6, Yv(v) + 3);
+    }
+    for (let s = 0; s <= WINDOW; s += 2) {
+      const x = X(t0 + s);
+      ctx.beginPath(); ctx.moveTo(x, plotB); ctx.lineTo(x, T); ctx.stroke();
+      ctx.fillStyle = C.muted; ctx.textAlign = 'center'; ctx.fillText(s + 's', x, plotB + 14);
+    }
+    ctx.beginPath(); ctx.moveTo(L, outT); ctx.lineTo(R, outT); ctx.stroke();
+    ctx.fillStyle = C.muted; ctx.textAlign = 'right';
+    ctx.fillText('0', L - 6, outB + 3);
+    ctx.fillText('1000', L - 6, outT + 10);
+    // 目标线（深绿虚线）
+    ctx.setLineDash([7, 5]);
+    ctx.strokeStyle = C.green; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(L, Yv(st.target)); ctx.lineTo(R, Yv(st.target)); ctx.stroke();
+    ctx.setLineDash([]);
+    // 输出限幅线
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = C.lavender;
+    ctx.beginPath(); ctx.moveTo(L, Yo(1000)); ctx.lineTo(R, Yo(1000)); ctx.stroke();
+    ctx.setLineDash([]);
+    // 转速曲线（紫）
+    if (st.vhist.length > 1) {
+      ctx.beginPath();
+      st.vhist.forEach((p, i) => { const x = X(p.t), y = Yv(p.v); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+      ctx.strokeStyle = C.purple; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
+    }
+    // 输出曲线（灰）
+    if (st.outhist.length > 1) {
+      ctx.beginPath();
+      st.outhist.forEach((p, i) => { const x = X(p.t), y = Yo(p.o); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+      ctx.strokeStyle = C.muted; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+    }
+    // 图例与读数
+    ctx.textAlign = 'left'; ctx.font = '12px "Segoe UI",sans-serif';
+    ctx.fillStyle = C.purple; ctx.fillText('── 转速 Current', L + 4, T + 14);
+    ctx.fillStyle = C.green; ctx.fillText('-- 目标 Target ' + st.target, L + 128, T + 14);
+    ctx.fillStyle = C.muted; ctx.fillText('── 输出 Output　┅ 限幅 1000', L + 4, outT - 8);
+    const kp = +document.getElementById('simKp').value;
+    const ki = +document.getElementById('simKi').value;
+    const kd = +document.getElementById('simKd').value;
+    const e = st.target - st.v;
+    ctx.textAlign = 'right';
+    ctx.fillStyle = C.ink;
+    ctx.fillText('Error ' + (e >= 0 ? '+' : '') + e.toFixed(0), R - 6, T + 14);
+    ctx.fillStyle = C.muted;
+    ctx.fillText('iTerm ' + st.iTerm.toFixed(0) + (Math.abs(st.iTerm) >= I_MAX - 0.5 ? '（顶格）' : ''), R - 6, T + 30);
+    ctx.fillText('Kp=' + kp.toFixed(2) + '  Ki=' + ki.toFixed(2) + '  Kd=' + kd.toFixed(2) + (noisy ? '  · 噪声开' : ''), R - 6, T + 46);
+  }
+
+  function loop(canvas) {
+    const now = performance.now();
+    if (lastTs) {
+      acc += (now - lastTs) / 1000;
+      acc = Math.min(acc, 0.25);
+      while (acc >= DT) { step(); acc -= DT; }
+    }
+    lastTs = now;
+    draw(canvas);
+    raf = requestAnimationFrame(() => loop(canvas));
+  }
+
+  return {
+    init(canvas) { resetState(); lastTs = 0; acc = 0; if (!raf) raf = requestAnimationFrame(() => loop(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+/* ── 控件绑定 ── */
+function simSet(kp, ki, kd) {
+  document.getElementById('simKp').value = kp;
+  document.getElementById('simKi').value = ki;
+  document.getElementById('simKd').value = kd;
+  document.getElementById('simKpV').textContent = (+kp).toFixed(2);
+  document.getElementById('simKiV').textContent = (+ki).toFixed(2);
+  document.getElementById('simKdV').textContent = (+kd).toFixed(2);
+}
+['simKp', 'simKi', 'simKd'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    document.getElementById(id + 'V').textContent = (+document.getElementById(id).value).toFixed(2);
+  });
+});
+/* 预设：设好参数并重跑一次阶跃（重新从 0 开始，方便对比） */
+document.getElementById('btnPStable').onclick = () => { simSet(0.3, 1, 0); simResetCmd = true; };
+document.getElementById('btnPOver').onclick  = () => { simSet(0.3, 3, 0); simResetCmd = true; };
+document.getElementById('btnPOsc').onclick    = () => { simSet(16, 0.3, 0); simResetCmd = true; };
+document.getElementById('btnPSat').onclick    = () => { simSet(0.15, 4, 0); simResetCmd = true; };
+document.getElementById('btnT0').onclick   = () => { simTargetCmd = 0; };
+document.getElementById('btnT400').onclick = () => { simTargetCmd = 400; };
+document.getElementById('btnT600').onclick = () => { simTargetCmd = 600; };
+document.getElementById('btnT900').onclick = () => { simTargetCmd = 900; };
+document.getElementById('btnSimReset').onclick = () => { simResetCmd = true; };
+
+document.getElementById('errTarget').addEventListener('input', e => {
+  document.getElementById('errTargetV').textContent = e.target.value + '°C';
+  document.getElementById('errAuto').checked = false;   // 手动拖动即退出自动
+});
+document.getElementById('btnColdDist').onclick = () => { coldCmd = true; };
+
+document.getElementById('btnStep600').onclick = () => { olResetCmd = true; };
+document.getElementById('btnDist').onclick    = () => { olDistCmd = true; };
+document.getElementById('btnOLReset').onclick = () => { olResetCmd = true; };
+
+/* 框架先于注册区执行了 go(cur)：再触发一次，让当前页的演示正确启动 */
+go(cur);
+</script>
+</body>
+</html>

@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.3 单片机初步认识 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">1.3　单片机初步认识</div>
+      <h1 class="anim" style="animation-delay:.2s">单片机初步认识</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">认识 STM32 的内部结构，亲手点亮第一盏灯</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图</h2>
+    <div class="grid grid-4" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>认识单片机</h3>
+        <p class="small">MCU 定义与组成<br>CPU / Flash / RAM 分工<br>上电后的运行流程</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>外设全家桶</h3>
+        <p class="small">GPIO / Timer / PWM<br>UART / CAN / 中断 / DMA<br>各是什么、用在哪</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>CubeMX 实践</h3>
+        <p class="small">四步生成 Keil 工程<br>HAL 三个 GPIO 函数<br>LED 闪烁与按键防抖</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.4s">
+        <h3>本节产出</h3>
+        <p class="small">独立完成<br>「按键控制 LED」<br>小项目</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.5s;margin-top:12px">
+      学习主线：看懂内部结构 → 认识七个外设 → 亲手点亮第一盏灯
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：什么是单片机 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">什么是单片机</h2>
+    <div class="cols">
+      <div>
+        <p class="anim" style="animation-delay:.1s">单片机（MCU，Microcontroller Unit）是把 <em>CPU、存储器和外设</em>集成在一颗芯片上的微型计算机，每秒执行千万到亿条指令，只忠实执行你写的程序——程序是它唯一的工作说明书。</p>
+        <p class="anim small muted" style="animation-delay:.2s">类比：一人公司——一名员工（CPU）配档案柜（Flash）和办公桌（RAM）。</p>
+        <ul class="anim small" style="animation-delay:.3s">
+          <li>电脑 = 多部门大公司；单片机 = 指甲盖大小的迷你公司</li>
+          <li>没有程序，芯片只是通电的石头</li>
+        </ul>
+      </div>
+      <div>
+        <pre class="anim" style="animation-delay:.2s">┌──────────── STM32 芯片（迷你公司）────────────┐
+│ Flash 档案柜：存程序      RAM 办公桌：存变量    │
+│        │                        │             │
+│        ▼                        ▼             │
+│                CPU：执行指令                    │
+│                   │ 总线                      │
+│   GPIO · Timer · UART · CAN · DMA …… 外设      │
+└────────────────────────────────────────────────┘</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：CPU / Flash / RAM ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">CPU · Flash · RAM 分工</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>部件</th><th>职责</th><th>特点</th><th>断电之后</th></tr>
+      <tr><td><strong>CPU</strong></td><td>执行指令、算术、判断</td><td>干活快，没有记忆</td><td>继续工作</td></tr>
+      <tr><td><strong>Flash</strong></td><td>存放程序（机器码）</td><td>容量大、读写较慢</td><td>内容不丢</td></tr>
+      <tr><td><strong>RAM</strong></td><td>存放运行时数据（变量）</td><td>容量小、读写飞快</td><td>全部清空</td></tr>
+    </table>
+    <div class="anim" style="animation-delay:.2s;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <span class="chip">烧录 = 把程序写进 Flash</span>
+      <span class="chip">上电 = 把变量摊到 RAM 开干</span>
+      <span class="chip green">STM32F407 示例：168 MHz · Flash 1 MB · RAM 192 KB</span>
+    </div>
+    <div class="callout anim" style="animation-delay:.3s;margin-top:10px">
+      变量住在 RAM，断电即失；重要数据须主动写入 Flash 保存
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：上电流程 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">上电之后发生了什么</h2>
+    <div class="grid grid-4" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>① 复位</h3>
+        <p class="small">CPU 从 Flash 固定地址<br>取出第一条指令</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>② 初始化</h3>
+        <p class="small">执行 CubeMX 生成的代码：<br>时钟 168 MHz → GPIO → 中断</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>③ 主循环</h3>
+        <p class="small">while(1) 反复执行<br>读按键、判断、翻转 LED</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.4s">
+        <h3>④ 中断插队</h3>
+        <p class="small">串口来数据 / 定时到点<br>打断 → 执行 ISR → 回原位</p>
+      </div>
+    </div>
+    <div class="callout anim" style="animation-delay:.5s;margin-top:12px">
+      初始化只跑一遍，主循环跑一辈子，中断随时插队——单片机程序的标准骨架
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：交互演示 · MCU 框图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 · 芯片内部数据流动</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="mcu"></canvas>
+      <div class="demo-controls">
+        <label>播放速度 <input type="range" id="mcuSpeed" min="2000" max="8000" value="4200" step="100"></label>
+        <span class="small muted">自动循环：Flash 取指令 → CPU 执行 → 总线读写 GPIO</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：外设总览 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">外设总览：七个常客</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>外设</th><th>英文全称</th><th>一句话定义</th><th>机器人里用在哪</th></tr>
+      <tr><td><strong>GPIO</strong></td><td>General Purpose I/O</td><td>引脚可输出高/低电平或读取外界电平</td><td>点灯、按键、控制信号</td></tr>
+      <tr><td><strong>Timer</strong></td><td>Timer</td><td>硬件计数器，到点溢出并触发中断</td><td>控制周期、测速、产生 PWM</td></tr>
+      <tr><td><strong>PWM</strong></td><td>Pulse Width Modulation</td><td>高频开关，用占空比调节平均功率</td><td>电机调速、呼吸灯</td></tr>
+      <tr><td><strong>UART</strong></td><td>Universal Asynchronous Receiver/Transmitter</td><td>两根线异步串行通信</td><td>调试打印、接上位机</td></tr>
+      <tr><td><strong>CAN</strong></td><td>Controller Area Network</td><td>双线差分总线，广播式多机通信</td><td>指挥 RM 电机</td></tr>
+      <tr><td><strong>中断</strong></td><td>Interrupt</td><td>事件触发硬件打断 CPU 执行 ISR</td><td>遥控数据、按键响应</td></tr>
+      <tr><td><strong>DMA</strong></td><td>Direct Memory Access</td><td>硬件自动搬运批量数据，解放 CPU</td><td>数据流搬运</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：GPIO 细节 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">GPIO：开关手脚</h2>
+    <div class="cols">
+      <div>
+        <h3 class="anim" style="animation-delay:.1s">输出模式</h3>
+        <ul class="anim small" style="animation-delay:.15s">
+          <li><strong>推挽输出</strong>（Push-Pull）：主动输出 3.3V / 0V，CubeMX 默认</li>
+          <li><strong>开漏输出</strong>（Open-Drain）：只能拉低，需外接上拉电阻</li>
+        </ul>
+        <h3 class="anim" style="animation-delay:.25s">输入模式</h3>
+        <ul class="anim small" style="animation-delay:.3s">
+          <li><strong>上拉</strong>：内部接 3.3V，悬空读 1——适合按键接 GND</li>
+          <li><strong>下拉</strong>：内部接 GND，悬空读 0</li>
+          <li><strong>浮空</strong>：悬空读到随机值——初学者常见坑</li>
+        </ul>
+      </div>
+      <div>
+        <pre class="anim" style="animation-delay:.2s">输出：MCU ──3.3V / 0V──▶ LED（亮 / 灭）
+输入：按键 ── 0 / 1 ──▶ MCU（读电平）
+
+低电平点亮接法（灌电流）：
+3.3V ──[电阻限流]──▶ LED ── PA5
+PA5 = 0V 时两端有压差，灯亮</pre>
+        <div class="callout anim" style="animation-delay:.3s;margin-top:8px">
+          灯亮不亮看两端压差，不看出高还是低
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：Timer 与 PWM ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">Timer 与 PWM</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>定时器（Timer）</h3>
+        <p class="small">硬件计数器，每来一个时钟脉冲计数值 +1，计满溢出，可自动重装。CPU 不用盯着，到点由中断「叫醒」。</p>
+        <pre style="margin-top:8px">溢出时间 = (PSC + 1) × (ARR + 1) ÷ 定时器时钟</pre>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>脉冲宽度调制（PWM）</h3>
+        <p class="small">引脚高频开/关，占空比 = 高电平时间占比。外界感受到平均效果：占空比 50% ≈ 平均电压 1.65 V。</p>
+        <pre style="margin-top:8px">占空比 = CCR ÷ (ARR + 1) × 100%
+
+20%：▊▁▁▁▁▊▁▁▁▁   80%：▊▊▊▊▁▊▊▊▊▁</pre>
+      </div>
+    </div>
+    <div class="callout anim" style="animation-delay:.3s;margin-top:12px">
+      开关频率需够高（kHz 级），人眼与电机才只感受平均、不见闪烁
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：交互演示 · GPIO 点灯 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 · GPIO 点灯电路</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="gpio"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="gpioToggle">切换引脚电平</button>
+        <span class="small muted">接法：3.3V → 电阻 → LED → 引脚（低电平点亮）</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：交互演示 · PWM ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 · PWM 占空比</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="pwm"></canvas>
+      <div class="demo-controls">
+        <label>占空比 <input type="range" id="pwmDuty" min="0" max="100" value="50"></label>
+        <button class="btn ghost" id="pwm10">10%</button>
+        <button class="btn ghost" id="pwm50">50%</button>
+        <button class="btn ghost" id="pwm90">90%</button>
+        <span class="small muted">占空比越大 → 平均电压越高 → LED 越亮</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：UART 与 CAN ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">UART 与 CAN：两种通信</h2>
+    <div class="cols">
+      <div>
+        <h3 class="anim" style="animation-delay:.1s">UART（通用异步收发器）</h3>
+        <p class="anim small" style="animation-delay:.15s">两根线 TX / RX 交叉连接，双方约定波特率（如 115200）逐位传输，无共享时钟。用于调试打印、连接上位机。</p>
+      </div>
+      <div>
+        <h3 class="anim" style="animation-delay:.2s">CAN（控制器局域网）</h3>
+        <p class="anim small" style="animation-delay:.25s">CAN_H / CAN_L 差分双线，设备并联成总线，按报文 ID 广播收发，自带仲裁与校验，两端接 120 Ω 终端电阻。RM 电机全部走 CAN。</p>
+      </div>
+    </div>
+    <table class="anim" style="animation-delay:.3s;margin-top:10px">
+      <tr><th>对比</th><th>UART</th><th>CAN</th></tr>
+      <tr><td>拓扑</td><td>一对一（对讲机）</td><td>多设备总线（车间广播）</td></tr>
+      <tr><td>抗干扰</td><td>一般，适合短距离低速</td><td>差分信号，抗干扰强</td></tr>
+      <tr><td>典型用途</td><td>调试打印</td><td>电机指令与反馈</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：中断与 DMA ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">中断与 DMA</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>中断（Interrupt）</h3>
+        <p class="small">事件（引脚变化、定时到点、串口收数）发生时，硬件打断 CPU 当前工作，跳去执行中断服务函数（ISR），处理完回到原位。</p>
+        <ul class="small">
+          <li>流程：保存现场 → 执行 ISR → 恢复现场 → 回到原位</li>
+          <li>不同中断有优先级，数值越小越优先</li>
+          <li>轮询 = 反复去门口看；中断 = 敲门才叫</li>
+        </ul>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>DMA（直接存储器访问）</h3>
+        <p class="small">独立于 CPU 的硬件搬运通道：说好源地址、目的地址、长度，自动搬运批量数据，搬完可触发中断通知 CPU。</p>
+        <ul class="small">
+          <li>方向：外设 ↔ 内存</li>
+          <li>典型：遥控器串口连续接收、传感器批量采样</li>
+          <li>CPU 搬运 = 员工亲搬；DMA = 自动传送带</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：交互演示 · 中断 vs 轮询 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 · 轮询 vs 中断</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="irq"></canvas>
+      <div class="demo-controls">
+        <button class="btn green" id="irqSend">快递到了（触发事件）</button>
+        <button class="btn ghost" id="irqReset">重置统计</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：CubeMX 四步 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">CubeMX 四步生成工程</h2>
+    <div class="grid grid-4" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>① 选芯片</h3>
+        <p class="small">Part Number 搜型号<br>双击选中，注意封装后缀<br>示例：STM32F407IG</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>② 配引脚</h3>
+        <p class="small">PA5 → GPIO_Output<br>PA0 → GPIO_Input（上拉）<br>起 User Label：LED / KEY</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>③ 配时钟</h3>
+        <p class="small">HSE 晶振看原理图<br>（常见 8 / 25 MHz）<br>PLL → SYSCLK 168 MHz</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.4s">
+        <h3>④ 生成工程</h3>
+        <p class="small">Toolchain 选 MDK-ARM V5<br>路径全英文<br>GENERATE CODE</p>
+      </div>
+    </div>
+    <div class="callout warn anim" style="animation-delay:.5s;margin-top:12px">
+      自己写的代码放 USER CODE BEGIN/END 之间，重新生成才不会被覆盖
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：HAL GPIO 三件套 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">HAL GPIO 三件套</h2>
+    <pre class="anim" style="animation-delay:.1s"><span class="f">HAL_GPIO_WritePin</span>(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);  <span class="c">/* 写电平：高 3.3V / 低 0V */</span>
+<span class="f">HAL_GPIO_TogglePin</span>(LED_GPIO_Port, LED_Pin);               <span class="c">/* 翻转电平：亮 ↔ 灭 */</span>
+<span class="k">if</span> (<span class="f">HAL_GPIO_ReadPin</span>(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_RESET)
+{  <span class="c">/* 读电平：按键按下（低电平有效） */</span> }</pre>
+    <div class="anim" style="animation-delay:.2s;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <span class="chip">LED_Pin / LED_GPIO_Port 由 CubeMX 按 User Label 生成于 main.h</span>
+      <span class="chip">高电平点亮还是低电平点亮，看硬件电路</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：LED 闪烁 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">LED 闪烁：翻转 + 等待</h2>
+    <pre class="anim" style="animation-delay:.1s"><span class="k">while</span> (<span class="n">1</span>)
+{
+    <span class="f">HAL_GPIO_TogglePin</span>(LED_GPIO_Port, LED_Pin);  <span class="c">/* 电平翻转：亮 ↔ 灭 */</span>
+    <span class="f">HAL_Delay</span>(<span class="n">500</span>);                         <span class="c">/* 等 500 ms：1 Hz 闪烁 */</span>
+}</pre>
+    <div class="anim" style="animation-delay:.2s;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <span class="chip">HAL_Delay 单位：毫秒</span>
+      <span class="chip">100 = 快闪，1000 = 慢闪</span>
+      <span class="chip gray">while(1)：主循环永不停歇</span>
+    </div>
+    <div class="callout anim" style="animation-delay:.3s;margin-top:10px">
+      HAL_Delay 是忙等延时（CPU 空转数数），简单够用；更优做法是定时器，后续章节再学
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：按键防抖 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">按键防抖：按一次只认一次</h2>
+    <svg class="anim" viewBox="0 0 460 60" style="width:100%;max-height:70px;animation-delay:.1s">
+      <polyline points="10,22 150,22 150,10 260,10 260,22 450,22" fill="none" stroke="#8F87AB" stroke-width="2.5" stroke-linecap="round"/>
+      <polyline points="10,42 144,42 150,10 162,32 152,42 166,10 178,32 170,42 254,42 260,10 272,32 262,42 276,10 288,32 280,42 450,42"
+        fill="none" stroke="#784CF6" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="300" y="18" font-size="11" fill="#5A5468">灰：理想按键波形</text>
+      <text x="300" y="38" font-size="11" fill="#784CF6">紫：实际触点弹跳（抖动）</text>
+    </svg>
+    <pre class="anim" style="animation-delay:.2s"><span class="k">if</span> (key_last == <span class="n">1</span> &amp;&amp; key_now == <span class="n">0</span>) {      <span class="c">/* 按下边沿 */</span>
+    <span class="f">HAL_Delay</span>(<span class="n">20</span>);                        <span class="c">/* 等 20 ms，抖动结束 */</span>
+    <span class="k">if</span> (<span class="f">HAL_GPIO_ReadPin</span>(KEY_GPIO_Port, KEY_Pin) == <span class="n">0</span>)
+        <span class="f">HAL_GPIO_TogglePin</span>(LED_GPIO_Port, LED_Pin);
+}
+key_last = key_now;</pre>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:8px">
+      机械触点按下/松开时毫秒级多次通断；主循环太快把每次跳变都读到了。解法：边沿检测 + 20 ms 延时再确认
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：PWM 呼吸灯（选做） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">选做 · PWM 呼吸灯</h2>
+    <div class="cols">
+      <div>
+        <pre class="anim" style="animation-delay:.1s"><span class="f">HAL_TIM_PWM_Start</span>(&amp;htim2, TIM_CHANNEL_1);  <span class="c">/* 启动 PWM */</span>
+<span class="k">int</span> b;
+<span class="k">while</span> (<span class="n">1</span>) {
+    <span class="k">for</span> (b = <span class="n">0</span>; b &lt;= <span class="n">999</span>; b++) {          <span class="c">/* 渐亮 */</span>
+        __HAL_TIM_SET_COMPARE(&amp;htim2, TIM_CHANNEL_1, b);
+        <span class="f">HAL_Delay</span>(<span class="n">1</span>);
+    }
+    <span class="k">for</span> (b = <span class="n">999</span>; b &gt;= <span class="n">0</span>; b--) {          <span class="c">/* 渐暗 */</span>
+        __HAL_TIM_SET_COMPARE(&amp;htim2, TIM_CHANNEL_1, b);
+        <span class="f">HAL_Delay</span>(<span class="n">1</span>);
+    }
+}</pre>
+      </div>
+      <div>
+        <h3 class="anim" style="animation-delay:.2s">CubeMX 配置</h3>
+        <ul class="anim small" style="animation-delay:.25s">
+          <li>PA5 改选 TIM2_CH1</li>
+          <li>Channel1 → PWM Generation CH1</li>
+          <li>PSC = 83，ARR = 999</li>
+          <li>频率 = 定时器时钟 ÷ (83+1) ÷ (999+1) ≈ 1 kHz</li>
+        </ul>
+        <div class="callout anim" style="animation-delay:.3s;margin-top:8px">
+          现象：LED 如呼吸般渐亮渐暗——占空比 0%→100% 来回变化
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：常见问题 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>现象</th><th>可能原因</th><th>排查方法</th></tr>
+      <tr><td>LED_Pin undefined</td><td>引脚没配 / 没起 User Label</td><td>回 CubeMX 检查，重新生成</td></tr>
+      <tr><td>灯怎么都不亮</td><td>接错引脚；低电平点亮却写 SET</td><td>查原理图；万用表量电平</td></tr>
+      <tr><td>按一下灯跳好几下</td><td>没做防抖</td><td>边沿检测 + 20 ms 延时</td></tr>
+      <tr><td>不按键电平乱变</td><td>输入配成浮空</td><td>改内部上拉 / 下拉</td></tr>
+      <tr><td>No target connected</td><td>ST-Link 接线 / 驱动问题</td><td>检查 SWDIO / SWCLK</td></tr>
+      <tr><td>行为全乱、延时不对</td><td>晶振频率填错</td><td>核对原理图重配时钟</td></tr>
+      <tr><td>工程打开是空的</td><td>Toolchain 没选 MDK-ARM V5</td><td>Project Manager 改选</td></tr>
+      <tr><td>路径报错</td><td>含中文或空格</td><td>移到全英文路径</td></tr>
+    </table>
+    <div class="callout anim" style="animation-delay:.2s;margin-top:8px">
+      通用思路：现象 → 假设 → 取证 → 缩小范围（2.7 系统训练）
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：名词速查表 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">名词速查表</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>缩写</th><th>全称</th><th>一句话</th></tr>
+      <tr><td><strong>MCU</strong></td><td>Microcontroller Unit</td><td>集成 CPU/存储/外设的单片机</td></tr>
+      <tr><td><strong>GPIO</strong></td><td>General Purpose Input/Output</td><td>通用输入输出引脚</td></tr>
+      <tr><td><strong>PWM</strong></td><td>Pulse Width Modulation</td><td>用占空比调节平均功率</td></tr>
+      <tr><td><strong>UART</strong></td><td>Universal Asynchronous Receiver/Transmitter</td><td>异步串口，调试打印</td></tr>
+      <tr><td><strong>CAN</strong></td><td>Controller Area Network</td><td>总线通信，指挥电机</td></tr>
+      <tr><td><strong>DMA</strong></td><td>Direct Memory Access</td><td>硬件自动搬运数据</td></tr>
+      <tr><td><strong>ISR</strong></td><td>Interrupt Service Routine</td><td>中断服务函数</td></tr>
+      <tr><td><strong>HAL</strong></td><td>Hardware Abstraction Layer</td><td>ST 官方硬件抽象库</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源</h2>
+    <ul class="anim" style="animation-delay:.1s;line-height:2.05;font-size:14.5px">
+      <li><a href="https://www.st.com/en/microcontrollers-microprocessors/stm32f4-series.html" target="_blank">STM32F4 系列官方产品页</a> —— 选型与数据手册入口</li>
+      <li><a href="https://www.st.com/en/development-tools/stm32cubemx.html" target="_blank">STM32CubeMX 官方页面</a> —— 工具说明与最新版下载</li>
+      <li><a href="https://www.bilibili.com/video/BV18X4y1M763" target="_blank">野火《STM32 HAL 库开发实战指南》视频</a> —— B 站 151 万播放，当字典查</li>
+      <li><a href="https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c" target="_blank">RoboMaster 开发板 C 型官方页面</a> —— 官方开发板介绍（主控同为 F407）</li>
+      <li><a href="https://github.com/RoboMaster/Development-Board-C-Examples" target="_blank">官方 GitHub 示例仓库</a> —— 点灯到整车的渐进示例与教程 PDF</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 最后一页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:1.95">
+        <li>单片机 = CPU + Flash + RAM + 外设，一颗芯片当公司</li>
+        <li>七个外设各管一事：GPIO 手脚、Timer 闹钟、PWM 旋钮、UART 对讲机、CAN 广播、中断敲门、DMA 搬运</li>
+        <li>CubeMX 四步建工程，HAL 三函数点亮第一盏灯</li>
+        <li>按键防抖：边沿检测 + 20 ms 延时，按一次只认一次</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（各小节自行编写） ================= */
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const FONT = '"Segoe UI","Microsoft YaHei",sans-serif';
+const LGREEN = '#AFFF00';   /* 荧光绿（亮） */
+const DGREEN = '#83BF00';   /* 深绿 */
+
+// —— 演示 1：MCU 内部框图动画（Flash 取指令 → CPU 执行 → 总线读写外设） ——
+ARTINX_DEMOS['mcu'] = (() => {
+  let raf = null;
+  const t0 = performance.now();
+  function rr(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function pline(pts, t) {
+    if (pts.length < 2) { return { x: pts[0][0], y: pts[0][1], a: 0 }; }
+    let tot = 0;
+    const len = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      len[i] = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
+      tot += len[i];
+    }
+    let s = clamp(t, 0, 1) * tot;
+    for (let i = 0; i < len.length; i++) {
+      if (s <= len[i]) {
+        const k = len[i] === 0 ? 0 : s / len[i];
+        return {
+          x: pts[i][0] + (pts[i + 1][0] - pts[i][0]) * k,
+          y: pts[i][1] + (pts[i + 1][1] - pts[i][1]) * k,
+          a: Math.atan2(pts[i + 1][1] - pts[i][1], pts[i + 1][0] - pts[i][0])
+        };
+      }
+      s -= len[i];
+    }
+    const p = pts[pts.length - 1];
+    return { x: p[0], y: p[1], a: 0 };
+  }
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    const W = w, H = h;
+    ctx.clearRect(0, 0, W, H);
+    const total = +document.getElementById('mcuSpeed').value;
+    const now = (performance.now() - t0) % total;
+    const phDur = total / 4;
+    const ph = Math.floor(now / phDur);
+    const t = (now % phDur) / phDur;
+    // 芯片外壳
+    rr(ctx, 0.06 * W, 0.05 * H, 0.88 * W, 0.82 * H, 18);
+    ctx.fillStyle = '#F7F4FE'; ctx.fill();
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#512FA3';
+    ctx.font = 'bold 14px ' + FONT;
+    ctx.fillText('STM32 芯片（迷你公司）', 0.07 * W + 12, 0.05 * H + 24);
+    function box(x, y, bw, bh, label, sub) {
+      rr(ctx, x, y, bw, bh, 10);
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.strokeStyle = '#C9C3DE'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#262034'; ctx.font = 'bold 13px ' + FONT;
+      ctx.fillText(label, x + bw / 2, y + bh / 2 - 2);
+      ctx.fillStyle = '#5A5468'; ctx.font = '11px ' + FONT;
+      ctx.fillText(sub, x + bw / 2, y + bh / 2 + 15);
+      ctx.textAlign = 'left';
+    }
+    const cpuX = 0.12 * W, cpuY = 0.42 * H, cpuW = 0.15 * W, cpuH = 0.26 * H;
+    const flX = 0.33 * W, flY = 0.13 * H, fw = 0.17 * W, fh = 0.20 * H;
+    const rmY = 0.56 * H;
+    const busX = 0.57 * W;
+    const gpX = 0.65 * W, gpY = 0.13 * H, gpw = 0.20 * W, gph = 0.15 * H;
+    box(cpuX, cpuY, cpuW, cpuH, 'CPU', '唯一的员工');
+    box(flX, flY, fw, fh, 'Flash', '档案柜 · 存程序');
+    box(flX, rmY, fw, fh, 'RAM', '办公桌 · 临时数据');
+    box(gpX, gpY, gpw, gph, 'GPIO', '开关手脚');
+    box(gpX, 0.33 * H, gpw, gph, 'TIM', '闹钟');
+    box(gpX, 0.53 * H, gpw, gph, 'UART', '对讲机');
+    box(gpX, 0.73 * H, gpw, gph, 'CAN', '广播');
+    // 总线
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(busX, 0.15 * H); ctx.lineTo(busX, 0.86 * H); ctx.stroke();
+    ctx.fillStyle = '#784CF6'; ctx.font = '12px ' + FONT;
+    ctx.fillText('总线', busX + 6, 0.17 * H);
+    // 关键点
+    const cpuC = [cpuX + cpuW / 2, cpuY + cpuH / 2];
+    const flC = [flX + fw / 2, flY + fh / 2];
+    const gpC = [gpX + gpw / 2, gpY + gph / 2];
+    const led = [gpX + gpw + 0.028 * W, gpY + gph / 2];
+    const paths = [
+      [flC, cpuC],
+      [cpuC, cpuC],
+      [[cpuX + cpuW, cpuY + cpuH / 2], [busX, cpuY + cpuH / 2], [busX, gpC[1]], [gpX, gpC[1]]],
+      [gpC, gpC]
+    ];
+    const labels = [
+      '① 取指令：CPU 去 Flash 档案柜拿',
+      '② 执行：CPU 员工埋头干活',
+      '③ 读写外设：经总线送信给 GPIO',
+      '④ 外设响应：LED 亮了，回到 ①'
+    ];
+    const active = ph % 4;
+    // CPU 执行脉冲
+    if (active === 1) {
+      ctx.strokeStyle = '#784CF6';
+      for (let i = 0; i < 3; i++) {
+        const k = (t * 0.9 + i * 0.28) % 0.9;
+        ctx.globalAlpha = 1 - k;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(cpuC[0], cpuC[1], 10 + k * 0.10 * H, 0, 6.283); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    // 外设旁的 LED（收到数据才亮）
+    ctx.beginPath(); ctx.arc(led[0], led[1], 6, 0, 6.283);
+    ctx.fillStyle = active >= 2 ? LGREEN : '#E8E4F4';
+    ctx.fill();
+    ctx.strokeStyle = active >= 2 ? DGREEN : '#C9C3DE'; ctx.lineWidth = 2; ctx.stroke();
+    if (active >= 2) {
+      const g = ctx.createRadialGradient(led[0], led[1], 2, led[0], led[1], 26);
+      g.addColorStop(0, 'rgba(175,255,0,.9)'); g.addColorStop(1, 'rgba(175,255,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(led[0], led[1], 26, 0, 6.283); ctx.fill();
+    }
+    // 数据小球
+    const pt = pline(paths[active], t);
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, 7, 0, 6.283);
+    ctx.fillStyle = active === 1 ? '#784CF6' : LGREEN;
+    ctx.fill();
+    ctx.strokeStyle = DGREEN; ctx.lineWidth = 2; ctx.stroke();
+    // 阶段说明
+    ctx.fillStyle = '#512FA3'; ctx.font = 'bold 14px ' + FONT;
+    ctx.textAlign = 'center';
+    ctx.fillText(labels[active], W / 2, 0.955 * H);
+    ctx.textAlign = 'left';
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+// —— 演示 2：GPIO 点灯电路（切换引脚高低电平，LED 同步亮灭） ——
+ARTINX_DEMOS['gpio'] = (() => {
+  let raf = null;
+  let pinHigh = true;
+  const t0 = performance.now();
+  function pline(pts, t) {
+    let tot = 0;
+    const len = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      len[i] = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
+      tot += len[i];
+    }
+    let s = clamp(t, 0, 0.999) * tot;
+    for (let i = 0; i < len.length; i++) {
+      if (s <= len[i]) {
+        const k = len[i] === 0 ? 0 : s / len[i];
+        return {
+          x: pts[i][0] + (pts[i + 1][0] - pts[i][0]) * k,
+          y: pts[i][1] + (pts[i + 1][1] - pts[i][1]) * k,
+          a: Math.atan2(pts[i + 1][1] - pts[i][1], pts[i + 1][0] - pts[i][0])
+        };
+      }
+      s -= len[i];
+    }
+    const p = pts[pts.length - 1];
+    return { x: p[0], y: p[1], a: 0 };
+  }
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    const W = w, H = h;
+    ctx.clearRect(0, 0, W, H);
+    const mcuX = 0.04 * W, mcuY = 0.24 * H, mcuW = 0.14 * W, mcuH = 0.48 * H;
+    const P = { x: 0.25 * W, y: 0.5 * H };
+    const lx0 = 0.44 * W, lx1 = 0.56 * W;            // LED 两端
+    const RX = 0.70 * W, RY = 0.5 * H;               // 电阻右端
+    const railX = 0.88 * W, railTop = 0.10 * H, railBot = 0.20 * H;
+    // MCU 盒子与引脚
+    ctx.fillStyle = '#F7F4FE'; ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.rect(mcuX, mcuY, mcuW, mcuH); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#512FA3'; ctx.font = 'bold 16px ' + FONT;
+    ctx.textAlign = 'center';
+    ctx.fillText('STM32', mcuX + mcuW / 2, mcuY + mcuH / 2 - 6);
+    ctx.fillStyle = '#262034'; ctx.font = 'bold 12px ' + FONT;
+    ctx.fillText('PA5', mcuX + mcuW / 2, mcuY + mcuH / 2 + 16);
+    ctx.textAlign = 'left';
+    // 3.3V 电源轨
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(railX, railTop); ctx.lineTo(railX, railBot); ctx.stroke();
+    ctx.fillStyle = '#784CF6'; ctx.font = 'bold 14px ' + FONT;
+    ctx.fillText('3.3V', railX + 8, railTop + 16);
+    // 导线分段颜色
+    function seg(a, b, col, lw) {
+      ctx.strokeStyle = col; ctx.lineWidth = lw || 3;
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+    const hi = pinHigh;
+    const v33 = '#784CF6', vMid = '#C9B8FA', vLow = '#5A5468';
+    seg([P.x, P.y], [lx0, P.y], hi ? v33 : vLow);            // 引脚到 LED 负极
+    seg([lx1, P.y], [RX, RY], hi ? v33 : vMid);             // LED 正极到电阻
+    seg([RX, RY], [RX, railBot], v33);                      // 电阻上引线
+    seg([RX, railBot], [railX, railBot], v33);              // 到电源轨
+    // 电阻（锯齿）
+    ctx.strokeStyle = '#262034'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    const zx0 = 0.60 * W;
+    ctx.moveTo(zx0, RY);
+    const n = 7;
+    for (let i = 1; i <= n; i++) {
+      const x = zx0 + (RX - zx0) * i / n;
+      const y = RY + (i % 2 ? -0.035 * H : 0.035 * H);
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(RX, RY);
+    ctx.stroke();
+    ctx.fillStyle = '#5A5468'; ctx.font = '11px ' + FONT;
+    ctx.fillText('电阻', zx0 + 8, RY - 0.05 * H);
+    // LED（二极管符号：三角 + 横线 + 光箭头）
+    ctx.strokeStyle = hi ? '#8F87AB' : DGREEN; ctx.lineWidth = 2.5;
+    ctx.fillStyle = hi ? '#E8E4F4' : LGREEN;
+    ctx.beginPath();
+    ctx.moveTo(lx0, P.y - 0.045 * H);
+    ctx.lineTo(lx1, P.y);
+    ctx.lineTo(lx0, P.y + 0.045 * H);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(lx1, P.y - 0.045 * H); ctx.lineTo(lx1, P.y + 0.045 * H); ctx.stroke();
+    if (!hi) {
+      ctx.strokeStyle = DGREEN; ctx.lineWidth = 2;
+      for (let i = 0; i < 2; i++) {
+        const y0 = P.y - 0.03 * H + i * 0.06 * H;
+        ctx.beginPath(); ctx.moveTo(lx1 + 0.012 * W, y0); ctx.lineTo(lx1 + 0.03 * W, y0); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(lx1 + 0.026 * W, y0 - 0.008 * H); ctx.lineTo(lx1 + 0.032 * W, y0);
+        ctx.lineTo(lx1 + 0.026 * W, y0 + 0.008 * H); ctx.stroke();
+      }
+      // 发光
+      const g = ctx.createRadialGradient((lx0 + lx1) / 2, P.y, 4, (lx0 + lx1) / 2, P.y, 0.06 * H);
+      g.addColorStop(0, 'rgba(175,255,0,.95)'); g.addColorStop(1, 'rgba(175,255,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc((lx0 + lx1) / 2, P.y, 0.06 * H, 0, 6.283); ctx.fill();
+    }
+    // 电流箭头（亮时流动）
+    if (!hi) {
+      const path = [[railX, railBot], [RX, railBot], [RX, RY], [P.x, P.y]];
+      const s = (performance.now() - t0) / 900 % 1;
+      for (let i = 0; i < 3; i++) {
+        const p = pline(path, s + i / 3);
+        ctx.save();
+        ctx.translate(p.x, p.y); ctx.rotate(p.a);
+        ctx.fillStyle = DGREEN;
+        ctx.beginPath();
+        ctx.moveTo(8, 0); ctx.lineTo(-4, -5); ctx.lineTo(-4, 5);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+      ctx.fillStyle = '#5A5468'; ctx.font = 'bold 12px ' + FONT;
+      ctx.fillText('0V（电流流入）', P.x + 8, P.y + 0.05 * H);
+    }
+    // 状态说明
+    ctx.fillStyle = '#512FA3'; ctx.font = 'bold 15px ' + FONT;
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      hi ? 'PA5 = 高电平 3.3V → 两端无电压差，LED 灭' : 'PA5 = 低电平 0V → 有电流流过，LED 亮',
+      W / 2, 0.92 * H
+    );
+    ctx.textAlign = 'left';
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    toggle() { pinHigh = !pinHigh; }
+  };
+})();
+
+// —— 演示 3：PWM 占空比滑块（波形 + 平均电压 + LED 亮度联动） ——
+ARTINX_DEMOS['pwm'] = (() => {
+  let raf = null;
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    const W = w, H = h;
+    ctx.clearRect(0, 0, W, H);
+    const duty = +document.getElementById('pwmDuty').value;
+    const x0 = 0.06 * W, x1 = 0.94 * W, yTop = 0.06 * H, yBot = 0.50 * H;
+    const per = (x1 - x0) / 4;
+    // 参考线与标签
+    ctx.setLineDash([4, 5]);
+    ctx.strokeStyle = '#C9C3DE'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0, yTop); ctx.lineTo(x1, yTop); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x0, yBot); ctx.lineTo(x1, yBot); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#5A5468'; ctx.font = '12px ' + FONT;
+    ctx.fillText('3.3V', x1 + 6, yTop + 4);
+    ctx.fillText('0V', x1 + 6, yBot + 4);
+    // 高电平区域填充
+    ctx.fillStyle = 'rgba(175,255,0,.45)';
+    for (let k = 0; k < 4; k++) {
+      ctx.fillRect(x0 + k * per, yTop, per * duty / 100, yBot - yTop);
+    }
+    // 方波
+    ctx.strokeStyle = '#512FA3'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let k = 0; k < 4; k++) {
+      const xs = x0 + k * per, xh = xs + per * duty / 100, xe = xs + per;
+      ctx.moveTo(xs, yBot); ctx.lineTo(xs, yTop); ctx.lineTo(xh, yTop);
+      ctx.lineTo(xh, yBot); ctx.lineTo(xe, yBot);
+    }
+    ctx.stroke();
+    // 平均电压虚线
+    const yAvg = yBot - (duty / 100) * (yBot - yTop);
+    ctx.setLineDash([7, 6]);
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x0, yAvg); ctx.lineTo(x1, yAvg); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#784CF6'; ctx.font = 'bold 13px ' + FONT;
+    ctx.fillText('平均电压 ' + (duty / 100 * 3.3).toFixed(2) + ' V', x0 + 10, yAvg - 10);
+    // LED 与亮度
+    const b = duty / 100;
+    const lx = 0.5 * W, ly = 0.76 * H, lr = 0.05 * H;
+    const g = ctx.createRadialGradient(lx, ly, lr * 0.4, lx, ly, lr * 2.6);
+    g.addColorStop(0, 'rgba(175,255,0,' + (0.15 + 0.85 * b).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(175,255,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(lx, ly, lr * 2.6, 0, 6.283); ctx.fill();
+    ctx.globalAlpha = 0.25 + 0.75 * b;
+    ctx.beginPath(); ctx.arc(lx, ly, lr, 0, 6.283);
+    ctx.fillStyle = LGREEN; ctx.fill();
+    ctx.strokeStyle = DGREEN; ctx.lineWidth = 2; ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#262034'; ctx.font = 'bold 15px ' + FONT;
+    ctx.textAlign = 'center';
+    ctx.fillText('占空比 ' + duty + '%　·　LED 亮度 ' + Math.round(b * 100) + '%', W / 2, 0.95 * H);
+    ctx.textAlign = 'left';
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+// —— 演示 4：中断 vs 轮询（快递事件：轮询要等，中断立刻响应） ——
+ARTINX_DEMOS['irq'] = (() => {
+  let raf = null;
+  const t0 = performance.now();
+  const POLL_CYCLE = 1800, BUSY = 1500, HANDLE = 600;
+  let pollQ = [], irqQ = [], pollResp = null, pollHandleEnd = 0, irqHandleEnd = 0;
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    const W = w, H = h;
+    ctx.clearRect(0, 0, W, H);
+    const now = performance.now() - t0;
+    panel(ctx, 0.02 * W, 0.47 * W, H, '轮询', '每隔一会儿去门口看一次', now, true);
+    panel(ctx, 0.53 * W, 0.98 * W, H, '中断', '敲门立刻打断去开门', now, false);
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  function panel(ctx, x0, x1, H, title, sub, now, isPoll) {
+    const W = x1 - x0;
+    ctx.fillStyle = '#512FA3'; ctx.font = 'bold 16px ' + FONT;
+    ctx.fillText(title, x0 + 6, 0.12 * H);
+    ctx.fillStyle = '#5A5468'; ctx.font = '12px ' + FONT;
+    ctx.fillText(sub, x0 + 6, 0.18 * H);
+    const bx = x0 + 6, bw = W - 12, by = 0.30 * H, bh = 0.09 * H;
+    ctx.fillStyle = '#F7F4FE'; ctx.strokeStyle = '#C9C3DE'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.fill(); ctx.stroke();
+    if (isPoll) {
+      const t = now % POLL_CYCLE;
+      const handling = now < pollHandleEnd;
+      if (handling) {
+        ctx.fillStyle = LGREEN;
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.fillStyle = DGREEN; ctx.font = 'bold 12px ' + FONT;
+        ctx.fillText('处理快递中…', bx + 10, by + bh / 2 + 4);
+      } else {
+        const busyW = Math.min(t, BUSY) / POLL_CYCLE * bw;
+        ctx.fillStyle = '#784CF6'; ctx.fillRect(bx, by, busyW, bh);
+        if (t > BUSY) {
+          ctx.fillStyle = LGREEN;
+          ctx.fillRect(bx + BUSY / POLL_CYCLE * bw, by, (t - BUSY) / POLL_CYCLE * bw, bh);
+        }
+        ctx.fillStyle = '#5A5468'; ctx.font = '11px ' + FONT;
+        ctx.fillText('忙正事', bx + 8, by + bh / 2 + 4);
+        ctx.fillText('去门口看', bx + busyW + 8, by + bh / 2 + 4);
+      }
+      // 轮询检查点：周期末处理一个等待事件
+      if (!handling && t >= BUSY && pollQ.length > 0) {
+        const cb = Math.floor(now / POLL_CYCLE) * POLL_CYCLE + BUSY;
+        pollResp = Math.max(0, cb - pollQ.shift());
+        pollHandleEnd = now + HANDLE;
+      }
+      // 等待中的快递
+      if (pollQ.length > 0 && !handling) {
+        ctx.font = '15px ' + FONT;
+        ctx.fillText('事件等待中 ' + Math.round(now - pollQ[0]) + ' ms', bx, by + bh + 0.055 * H);
+      }
+      ctx.fillStyle = '#262034'; ctx.font = '13px ' + FONT;
+      ctx.fillText('最近响应：' + (pollResp === null ? '—' : Math.round(pollResp) + ' ms'), bx, by + bh + 0.09 * H);
+    } else {
+      const handling = now < irqHandleEnd;
+      if (handling) {
+        ctx.fillStyle = LGREEN;
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.fillStyle = DGREEN; ctx.font = 'bold 12px ' + FONT;
+        ctx.fillText('被打断！处理快递中…', bx + 10, by + bh / 2 + 4);
+      } else {
+        ctx.fillStyle = '#784CF6';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 12px ' + FONT;
+        ctx.fillText('忙正事…', bx + 10, by + bh / 2 + 4);
+      }
+      // 中断：有事件且空闲，立刻处理
+      if (!handling && irqQ.length > 0) {
+        irqQ.shift();
+        irqHandleEnd = now + HANDLE;
+      }
+      if (irqQ.length > 0 && handling) {
+        ctx.font = '15px ' + FONT;
+        ctx.fillText('排队中 ×' + irqQ.length, bx, by + bh + 0.055 * H);
+      }
+      ctx.fillStyle = '#262034'; ctx.font = '13px ' + FONT;
+      ctx.fillText('最近响应：≈ 0 ms（立刻打断）', bx, by + bh + 0.09 * H);
+    }
+    ctx.font = '11px ' + FONT;
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText(isPoll ? '「去门口看」每 ' + (POLL_CYCLE / 1000) + ' 秒一次，事件到了只能等' : '事件一到硬件立刻打断，处理完回到原位', x0 + 6, 0.56 * H);
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    send() { const now = performance.now() - t0; pollQ.push(now); irqQ.push(now); },
+    reset() { pollQ = []; irqQ = []; pollResp = null; pollHandleEnd = 0; irqHandleEnd = 0; }
+  };
+})();
+
+/* ================= 控件接线 ================= */
+document.getElementById('gpioToggle').onclick = () => ARTINX_DEMOS['gpio'].toggle();
+['pwm10', 'pwm50', 'pwm90'].forEach((id, i) => {
+  document.getElementById(id).onclick = () => { document.getElementById('pwmDuty').value = [10, 50, 90][i]; };
+});
+document.getElementById('irqSend').onclick = () => ARTINX_DEMOS['irq'].send();
+document.getElementById('irqReset').onclick = () => ARTINX_DEMOS['irq'].reset();
+</script>
+</body>
+</html>

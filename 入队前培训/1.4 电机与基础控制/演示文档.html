@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.4 电机与基础控制 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 1.4 电机与基础控制 · 演示文档
+  基于 _internal/SLIDE_TEMPLATE.html 框架复制改写（自包含，无外部依赖）。
+  风格对齐队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">1.4 电机与基础控制</div>
+      <h1 class="anim" style="animation-delay:.2s">让轮子听懂你的命令</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">从 CAN 指令到电机转起来：执行器、反馈与整车通信的第一课</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图</h2>
+    <div class="callout anim" style="animation-delay:.1s;text-align:center;font-size:15px">
+      <span class="kbd">STM32</span> → <span class="kbd">CAN</span> → <span class="kbd">电调</span> → <span class="kbd">电机</span> → <span class="kbd">编码器</span> → <span class="kbd">STM32</span>
+      <span class="small muted">　本节核心回路，所有内容都围绕它展开</span>
+    </div>
+    <table class="anim" style="animation-delay:.15s">
+      <tr><th style="width:88px">模块</th><th>内容</th></tr>
+      <tr><td>零件</td><td>电机 · 电调 · 编码器：定义、关系与参数</td></tr>
+      <tr><td>通信</td><td>CAN 总线、数据帧结构、ID 与仲裁</td></tr>
+      <tr><td>思想</td><td>控制量 vs 反馈量、开环与闭环（引出 1.5 PID）</td></tr>
+      <tr><td>感知</td><td>IMU 与 Yaw / Pitch / Roll 姿态角</td></tr>
+      <tr><td>装备</td><td>M3508 · M2006 · GM6020 三款常用电机</td></tr>
+      <tr><td>实践</td><td>读反馈 → 转起来 → 改方向 → 改控制量</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：电机 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">电机（Motor）：把电能变成转动</h2>
+    <p class="anim" style="animation-delay:.05s">电机是将电能转换为机械能（旋转运动）的执行器，机器人所有轮子与关节的动力来源。可类比肌肉。</p>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:110px">概念</th><th>定义</th><th>要点</th></tr>
+      <tr><td>直流无刷 BLDC</td><td>无碳刷换向的直流电机，换相由电调完成</td><td>寿命长、效率高</td></tr>
+      <tr><td>KV 值</td><td>每伏电压对应的空载转速（rpm/V）</td><td>电压越高转得越快</td></tr>
+      <tr><td>减速箱</td><td>齿轮组，减速比 N:1</td><td>转速 ÷N，扭矩约 ×N</td></tr>
+      <tr><td>堵转（stall）</td><td>负载过大卡死，转速为 0</td><td>电流飙升发热，电调保护</td></tr>
+    </table>
+    <p class="anim" style="animation-delay:.15s">口诀：<em>转得快就没力气，有力气就转不快</em>，减速箱在两者之间做交换。</p>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：电调 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">电调（ESC）：翻译官兼驾驶员</h2>
+    <p class="anim" style="animation-delay:.05s">电调（Electronic Speed Controller，调速器）接收 CAN 数字指令，用 FOC 算法控制三相电流，驱动无刷电机。</p>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>电机</th><th>配套电调</th><th>控制量类型</th><th>控制量含义</th></tr>
+      <tr><td>M3508</td><td>C620（一对一）</td><td>电流 int16</td><td rowspan="2">正负号决定方向，绝对值决定出力</td></tr>
+      <tr><td>M2006</td><td>C610（一对一）</td><td>电流 int16</td></tr>
+      <tr><td>GM6020</td><td>内置驱动器</td><td>电压 int16</td><td>正负号决定方向，绝对值决定出力</td></tr>
+    </table>
+    <ul class="anim" style="animation-delay:.15s">
+      <li>无刷电机需按顺序给三相线换相通电，此工作由电调完成；普通电机靠碳刷，会磨损。</li>
+      <li>FOC（磁场定向控制）：让磁场始终与转子成最佳角度发力，转动平稳高效。</li>
+      <li>电调同时监测温度与过流，异常时自动保护——驾驶员的一面。</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：编码器 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">编码器（Encoder）：电机的里程表</h2>
+    <p class="anim" style="animation-delay:.05s">编码器是装在电机上的角度传感器，测量转角与转速，数据经 CAN 反馈帧上报主控。可类比里程表。</p>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>反馈帧字段</th><th>内容</th><th>说明</th></tr>
+      <tr><td>字节 0~1</td><td>机械角度</td><td>0~8191 对应一圈 0~360°</td></tr>
+      <tr><td>字节 2~3</td><td>转速</td><td>单位 rpm，int16，可负</td></tr>
+      <tr><td>字节 4~5</td><td>实际电流</td><td>跟随控制量，越接近越好</td></tr>
+      <tr><td>字节 6</td><td>温度</td><td>过高应降负载（单位以手册为准）</td></tr>
+    </table>
+    <ul class="anim" style="animation-delay:.15s">
+      <li><strong>增量式</strong>：只数步数，上电不知位置，需校准（M3508 / M2006 配合电调使用）。</li>
+      <li><strong>绝对式</strong>：上电即知绝对位置（GM6020 内置编码器）。</li>
+      <li>反馈约 1 kHz（每 1 ms 一帧），控制周期与之对齐才能闭环。</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：CAN 总线 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">CAN（Controller Area Network）：整车神经总线</h2>
+    <p class="anim" style="animation-delay:.05s">CAN 是汽车工业成熟的总线：一条双绞线挂所有设备，广播收发，常用速率 1 Mbps。可类比班级群聊。</p>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <svg viewBox="0 0 920 300" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">
+        <line x1="70" y1="64" x2="850" y2="64" stroke="#512FA3" stroke-width="5"/>
+        <line x1="70" y1="86" x2="850" y2="86" stroke="#83BF00" stroke-width="5"/>
+        <text x="70" y="54" font-size="14" fill="#5A5468" font-family="Consolas,Menlo,monospace">CAN_H</text>
+        <text x="70" y="112" font-size="14" fill="#5A5468" font-family="Consolas,Menlo,monospace">CAN_L</text>
+        <rect x="42" y="58" width="20" height="34" rx="4" fill="#E3DBFC" stroke="#784CF6" stroke-width="2"/>
+        <rect x="858" y="58" width="20" height="34" rx="4" fill="#E3DBFC" stroke="#784CF6" stroke-width="2"/>
+        <text x="26" y="132" font-size="13" fill="#5A5468">终端电阻</text>
+        <text x="836" y="132" font-size="13" fill="#5A5468">终端电阻</text>
+        <text x="620" y="40" font-size="14" fill="#3C6400" font-weight="700">← 反馈帧（角度 / 转速）</text>
+        <text x="80" y="146" font-size="14" fill="#784CF6" font-weight="700">控制帧（目标电流） →</text>
+        <g font-size="15" font-weight="700" text-anchor="middle" font-family="Segoe UI,Microsoft YaHei,sans-serif">
+          <line x1="160" y1="75" x2="160" y2="162" stroke="#784CF6" stroke-width="2" stroke-dasharray="4 3"/>
+          <rect x="95" y="164" width="130" height="48" rx="12" fill="#784CF6"/>
+          <text x="160" y="193" fill="#fff">STM32 主控</text>
+          <line x1="400" y1="75" x2="400" y2="162" stroke="#784CF6" stroke-width="2" stroke-dasharray="4 3"/>
+          <rect x="335" y="164" width="130" height="48" rx="12" fill="#AFFF00" stroke="#83BF00" stroke-width="2"/>
+          <text x="400" y="193" fill="#2C4000">C620＋电机 1</text>
+          <line x1="640" y1="75" x2="640" y2="162" stroke="#784CF6" stroke-width="2" stroke-dasharray="4 3"/>
+          <rect x="575" y="164" width="130" height="48" rx="12" fill="#AFFF00" stroke="#83BF00" stroke-width="2"/>
+          <text x="640" y="193" fill="#2C4000">C620＋电机 2</text>
+          <line x1="820" y1="75" x2="820" y2="162" stroke="#784CF6" stroke-width="2" stroke-dasharray="4 3"/>
+          <rect x="755" y="164" width="130" height="48" rx="12" fill="#E3DBFC" stroke="#784CF6" stroke-width="2"/>
+          <text x="820" y="193" fill="#5A2FD0">IMU 等设备</text>
+        </g>
+        <g font-size="12" fill="#5A5468" text-anchor="middle">
+          <text x="160" y="232">发 0x200 · 收 0x201~</text>
+          <text x="400" y="232">收 0x200 · 回 0x201</text>
+          <text x="640" y="232">收 0x200 · 回 0x202</text>
+          <text x="820" y="232">自定义 ID</text>
+        </g>
+        <text x="460" y="270" font-size="13" fill="#5A5468" text-anchor="middle">差分信号抗干扰 · 两端需终端电阻防反射 · ID 越小优先级越高</text>
+      </svg>
+    </div>
+    <ul class="anim" style="animation-delay:.15s">
+      <li><strong>ID 双作用</strong>：地址——设备只收发给自己的 ID；优先级——仲裁时 ID 小者先发。</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：CAN 帧结构 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">标准数据帧：8 字节承载一切</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th>段</th><th>长度</th><th>含义</th></tr>
+      <tr><td>SOF 帧起始</td><td>1 位</td><td>广播开始标志</td></tr>
+      <tr><td>ID 仲裁段</td><td>11 位</td><td>地址＋优先级，0~2047</td></tr>
+      <tr><td>控制段 DLC</td><td>4 位</td><td>数据段长度，这里为 8 字节</td></tr>
+      <tr><td>数据段</td><td>0~8 字节</td><td>控制量 / 反馈量，高字节在前（大端）</td></tr>
+      <tr><td>CRC 校验段</td><td>15 位</td><td>收方验算，错误则丢弃</td></tr>
+      <tr><td>EOF 帧结束</td><td>7 位</td><td>ACK 应答＋结束标志</td></tr>
+    </table>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>帧类型</th><th>ID</th><th>数据段</th></tr>
+      <tr><td>控制帧（C620 / C610）</td><td>0x200（ID 1~4）/ 0x1FF（ID 5~8）</td><td>4 组 int16 电流</td></tr>
+      <tr><td>反馈帧（C620 / C610）</td><td>0x200 + 电机ID（如 0x201）</td><td>角度 / 转速 / 电流 / 温度</td></tr>
+      <tr><td>控制帧（GM6020）</td><td>0x1FF / 0x2FF</td><td>4 组 int16 电压</td></tr>
+      <tr><td>反馈帧（GM6020）</td><td>0x204 + 电机ID</td><td>角度 / 转速 / 电流 / 温度</td></tr>
+    </table>
+    <p class="small muted anim" style="animation-delay:.15s">以上约定以官方手册为准；演示页提供帧的逐段展开动画。</p>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：演示 控制回路数据流 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：控制回路数据流</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="dataloop"></canvas>
+      <div class="demo-controls">
+        <label>流速 <input type="range" id="dlSpeed" min="1" max="10" value="3"></label>
+        <button class="btn" id="dlPause">暂停</button>
+        <span class="small muted">数据包跑完一圈 ＝ 一次「发命令 → 收反馈」</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：演示 CAN 帧解剖 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：解剖一条 CAN 帧</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="canframe"></canvas>
+      <div class="demo-controls">
+        <label>扫描间隔 <input type="range" id="cfSpeed" min="300" max="2000" value="1000"></label>
+        <button class="btn" id="cfAuto">暂停</button>
+        <span class="small muted">点击任一字段可锁定查看含义</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：控制量 vs 反馈量 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">控制量 vs 反馈量：命令与实况</h2>
+    <p class="anim" style="animation-delay:.05s">控制量是主控发给执行器的命令（目标电流 / 电压，int16）；反馈量是传感器报回的实际状态（角度、转速、电流、温度）。</p>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>模式</th><th>机制</th><th>受扰动后</th><th>类比</th></tr>
+      <tr><td>开环</td><td>只发命令，不看反馈</td><td>偏了就偏了，无人纠正</td><td>蒙眼开车</td></tr>
+      <tr><td>闭环</td><td>每周期读反馈、算误差、修命令</td><td>自动修正</td><td>睁眼开车</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.15s">
+      <strong>误差 = 目标 − 实际</strong>。闭环的「边看边修」算法即 1.5 节 PID；任务四将现场感受开环局限。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：演示 电机正反转 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：控制量决定转向与出力</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="motor"></canvas>
+      <div class="demo-controls">
+        <label>控制量 <input type="range" id="mvValue" min="-100" max="100" value="40"></label>
+        <button class="btn ghost" id="mvStall">模拟堵转：关</button>
+        <span class="small muted">正＝正转 · 负＝反转 · 开环下负载变化无人纠偏</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：IMU ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">IMU（惯性测量单元）与姿态角</h2>
+    <p class="anim" style="animation-delay:.05s">IMU（Inertial Measurement Unit）集成陀螺仪与加速度计，解算设备当前姿态角。可类比手机里的陀螺仪。</p>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>角度</th><th>动作</th><th>机器人里的用法</th></tr>
+      <tr><td>Yaw 偏航</td><td>左右摇头</td><td>底盘朝向、云台水平旋转</td></tr>
+      <tr><td>Pitch 俯仰</td><td>上下点头</td><td>云台上下打角（最常用）</td></tr>
+      <tr><td>Roll 翻滚</td><td>左右歪头</td><td>车身倾角、坡道检测</td></tr>
+    </table>
+    <ul class="anim" style="animation-delay:.15s">
+      <li>陀螺仪测角速度：响应快但会漂移；加速度计测重力方向，用于纠偏；两者融合得姿态角。</li>
+      <li>不同设备坐标轴定义可能不同，接入新 IMU 先读官方手册确认轴方向与旋转顺序。</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：演示 IMU 姿态 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：Yaw / Pitch / Roll 实时旋转</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="imu"></canvas>
+      <div class="demo-controls">
+        <label>Yaw 摇头 <input type="range" id="imuYaw" min="-180" max="180" value="35"></label>
+        <label>Pitch 点头 <input type="range" id="imuPitch" min="-90" max="90" value="15"></label>
+        <label>Roll 歪头 <input type="range" id="imuRoll" min="-180" max="180" value="0"></label>
+        <button class="btn ghost" id="imuReset">复位</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：三款常用电机 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">RoboMaster 常用电机对比</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th>型号</th><th>减速箱</th><th>配套</th><th>典型用途</th></tr>
+      <tr><td><strong>M3508</strong></td><td>约 19:1 行星减速箱</td><td>C620 电调</td><td>底盘轮 · 摩擦轮（大负载）</td></tr>
+      <tr><td><strong>M2006</strong></td><td>约 36:1</td><td>C610 电调</td><td>云台 · 拨弹机构（中小负载）</td></tr>
+      <tr><td><strong>GM6020</strong></td><td>无减速箱，直驱</td><td>内置驱动器＋编码器</td><td>云台 Yaw / Pitch 直驱</td></tr>
+    </table>
+    <ul class="anim" style="animation-delay:.1s">
+      <li>M3508：约 365 g、24 V 供电，输出轴结实；减速箱需按保养手册定期润滑。</li>
+      <li>M2006：约 90 g，体积小；输出轴由深沟球轴承支撑，不可承受大的轴向力。</li>
+      <li>GM6020：约 468 g，空心轴便于穿线；拨码开关设置 ID 与终端电阻，上电前核对。</li>
+    </ul>
+    <p class="small muted anim" style="animation-delay:.15s">以上为认识性介绍，详细参数一律以官方手册 / 产品页为准。</p>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：动手实践总览 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">动手实践：四个任务</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th style="width:130px">任务</th><th>做什么</th><th>观察点 / 自查点</th></tr>
+      <tr><td>任务一 获取反馈</td><td>解析 0x201 反馈帧并打印</td><td>角度随手动旋转变化，数据不乱跳</td></tr>
+      <tr><td>任务二 控制旋转</td><td>发 0x200，目标电流 3000</td><td>平稳转动，反馈 speed 与控制量同号</td></tr>
+      <tr><td>任务三 修改方向</td><td>控制量取负（−3000）</td><td>反转，反馈 speed 为负</td></tr>
+      <tr><td>任务四 修改控制量</td><td>阶梯 3000→6000→9000→12000</td><td>转速加快；超范围被限幅</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.1s">
+      安全第一：电机架空固定、小电流起步、异响发烫立即断电。上电前确认供电 24 V、CAN 接线、波特率 1 Mbps。
+    </div>
+    <ul class="anim" style="animation-delay:.15s">
+      <li>任务四附加实验：固定 6000 轻捏输出轴，转速骤降——开环局限，1.5 节 PID 正面解决。</li>
+      <li>代码骨架见后两页；战队实际封装的初始化与收发函数（讲解时结合战队现有代码展示）。</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：任务一 代码 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">任务一：获取电机反馈（解析帧）</h2>
+    <ul class="anim" style="animation-delay:.05s">
+      <li>接线：24 V 供电、电调 CAN 线接主控 CAN 口、总线两端终端电阻、波特率 1 Mbps。</li>
+      <li>收到 ID 为 0x201 的帧即解析：数据段 8 字节，高字节在前（大端）。</li>
+    </ul>
+    <pre class="anim" style="animation-delay:.1s"><span class="c">// 解析反馈帧：ID = 0x200 + 电机ID（1 号 → 0x201）</span>
+<span class="k">typedef struct</span> { <span class="k">uint16_t</span> angle; <span class="k">int16_t</span> speed; <span class="k">int16_t</span> current; <span class="k">uint8_t</span> temp; } <span class="n">MotorFB</span>;
+<span class="n">MotorFB</span> <span class="f">parse</span>(<span class="k">uint8_t</span> d[<span class="n">8</span>]) {        <span class="c">// 高字节在前（大端）</span>
+  <span class="n">MotorFB</span> fb;
+  fb.angle   = (d[<span class="n">0</span>] &lt;&lt; <span class="n">8</span>) | d[<span class="n">1</span>];             <span class="c">// 机械角度 0~8191</span>
+  fb.speed   = (<span class="k">int16_t</span>)((d[<span class="n">2</span>] &lt;&lt; <span class="n">8</span>) | d[<span class="n">3</span>]);  <span class="c">// 转速 rpm</span>
+  fb.current = (<span class="k">int16_t</span>)((d[<span class="n">4</span>] &lt;&lt; <span class="n">8</span>) | d[<span class="n">5</span>]);  <span class="c">// 实际电流</span>
+  fb.temp    = d[<span class="n">6</span>];                            <span class="c">// 温度</span>
+  <span class="k">return</span> fb;
+}
+<span class="c">// 主循环：rx = can_receive(); 若 rx.id == 0x201 则 printf(fb)；</span>
+<span class="c">// 战队实际接收 / 打印函数以现有工程为准（讲解时展示）。</span></pre>
+    <p class="anim" style="animation-delay:.15s">自查：ID 正确、角度随手动旋转变化、数据不乱跳（乱跳查波特率与解析错位）。</p>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：任务二 代码 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">任务二：控制电机旋转（发控制帧）</h2>
+    <ul class="anim" style="animation-delay:.05s">
+      <li>控制量：目标电流 int16，正＝正转、负＝反转；起步用小值 3000。</li>
+      <li>控制帧 ID 0x200 一帧控制 ID 1~4 电机，约 1 kHz 周期发送。</li>
+    </ul>
+    <pre class="anim" style="animation-delay:.1s"><span class="c">// 发送控制帧：让 1 号电机以 3000 电流转动</span>
+<span class="k">int16_t</span> current = <span class="n">3000</span>;            <span class="c">// 控制量：正=正转 负=反转</span>
+
+<span class="k">while</span> (<span class="n">1</span>) {
+  <span class="k">uint32_t</span> id   = <span class="n">0x200</span>;           <span class="c">// 发给 ID 1~4（5~8 用 0x1FF）</span>
+  <span class="k">uint8_t</span>  data[<span class="n">8</span>] = {<span class="n">0</span>};
+  data[<span class="n">0</span>] = (current &gt;&gt; <span class="n">8</span>) &amp; <span class="n">0xFF</span>; <span class="c">// 高字节在前（大端）</span>
+  data[<span class="n">1</span>] =  current       &amp; <span class="n">0xFF</span>;
+  <span class="f">can_send</span>(id, data);              <span class="c">// 战队实际发送函数占位</span>
+  <span class="f">delay_1ms</span>();                     <span class="c">// 1 kHz 指令流（以手册为准）</span>
+}</pre>
+    <p class="anim" style="animation-delay:.15s">自查：平稳转动不抖、反馈 speed 与控制量同号、温度不快速上升。</p>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：任务三 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">任务三：修改电机方向</h2>
+    <ul class="anim" style="animation-delay:.05s">
+      <li>改法：控制量取负（+3000 → −3000），重新编译烧录，电机反向旋转。</li>
+      <li>原理：电调把控制量符号翻译成三相电流方向，符号反则转向反。</li>
+      <li>机械装反的纠正：该电机控制量乘 −1（或使用战队封装中的方向参数）。</li>
+      <li>约定：以官方手册「面向输出轴逆时针为正」统一整车方向定义。</li>
+    </ul>
+    <pre class="anim" style="animation-delay:.1s"><span class="k">int16_t</span> current_target = <span class="n">-3000</span>;  <span class="c">// 反转：控制量取负</span>
+<span class="c">// 装反纠正示意：current_target = -original;  // 统一方向</span></pre>
+    <div class="callout warn anim" style="animation-delay:.15s">
+      检查：反转后反馈 speed 为负；整车四轮方向约定一致，否则底盘会「打架」。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：任务四 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">任务四：修改控制量</h2>
+    <ul class="anim" style="animation-delay:.05s">
+      <li>阶梯测试：3000 → 6000 → 9000 → 12000，记录各档反馈 speed 与 current，转速逐档加快。</li>
+      <li>开环实验：固定 6000 轻捏输出轴，转速骤降甚至停转——命令不变，无人纠偏。</li>
+      <li>限幅：控制量超合法范围时电调按上限处理或进入保护，输出不允许无限大。</li>
+    </ul>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>实验</th><th>控制量</th><th>预期现象</th><th>实测记录（转速 / 电流 / 温度）</th></tr>
+      <tr><td>基准</td><td>+3000</td><td>正向平稳转动</td><td></td></tr>
+      <tr><td>反向</td><td>−3000</td><td>反向转动</td><td></td></tr>
+      <tr><td>阶梯</td><td>+6000 / +9000 / +12000</td><td>转速逐档加快</td><td></td></tr>
+      <tr><td>开环</td><td>+6000 并轻捏输出轴</td><td>转速明显下降</td><td></td></tr>
+    </table>
+    <p class="anim" style="animation-delay:.15s">记录开环现象：这是 1.5 节 PID 要解决的第一个问题。</p>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：常见问题 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查</h2>
+    <p class="anim" style="animation-delay:.05s">心法：现象 → 分层 → 假设 → 验证。按供电层、通信层、指令层、机械层逐层排除。</p>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>现象</th><th>可能原因</th><th>排查方法</th></tr>
+      <tr><td>电机完全不动</td><td>供电 / CAN 线 / 控制量 0 / ID 错</td><td>查指示灯 → 换线 → 打印发出的帧</td></tr>
+      <tr><td>收不到反馈帧</td><td>波特率不对 / 缺终端电阻 / ID 看错</td><td>核对 1 Mbps；补终端电阻；确认 0x200+ID</td></tr>
+      <tr><td>电机转了但方向反</td><td>控制量符号 / 安装约定不一致</td><td>控制量取负再试，统一整车方向</td></tr>
+      <tr><td>转速忽快忽慢</td><td>发送周期不稳 / 总线冲突 / 供电不足</td><td>稳定 1 kHz 发送；量供电电压</td></tr>
+      <tr><td>发烫 / 有焦味</td><td>电流过大 / 满载 / 堵转</td><td>立即断电，查机械卡阻，降控制量</td></tr>
+      <tr><td>转着转着停了</td><td>堵转保护 / CAN 掉线超时保护</td><td>查卡阻与 CAN 线是否松动压断</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源（自学用）</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th>资源</th><th>用途</th></tr>
+      <tr><td><a href="https://www.robomaster.com/zh-CN/products/components/general/M3508" target="_blank" rel="noopener">M3508 官方产品页</a></td><td>参数 + 官方文档下载入口（含 C620 电调说明）</td></tr>
+      <tr><td><a href="https://rm-static.djicdn.com/tem/3724/RoboMaster%20M3508%E7%9B%B4%E6%B5%81%E6%97%A0%E5%88%B7%E5%87%8F%E9%80%9F%E7%94%B5%E6%9C%BA%E4%BF%9D%E5%85%BB%E6%89%8B%E5%86%8C.pdf" target="_blank" rel="noopener">M3508 保养手册（PDF）</a></td><td>19:1 减速箱润滑与保养</td></tr>
+      <tr><td><a href="https://rm-static.djicdn.com/tem/17348/RoboMaster%20GM6020%E7%9B%B4%E6%B5%81%E6%97%A0%E5%88%B7%E7%94%B5%E6%9C%BA%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E20231013.pdf" target="_blank" rel="noopener">GM6020 使用说明（PDF）</a></td><td>云台电机 CAN 协议 / 拨码设 ID</td></tr>
+      <tr><td><a href="https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c" target="_blank" rel="noopener">开发板 C 型产品页</a></td><td>主控板接口参数与常见问题</td></tr>
+      <tr><td><a href="https://bbs.robomaster.com/" target="_blank" rel="noopener">RoboMaster 官方社区</a></td><td>官方论坛 · 文章 / 问答 / 开源专栏</td></tr>
+      <tr><td><a href="https://www.csselectronics.com/pages/can-bus-simple-intro-tutorial" target="_blank" rel="noopener">CSS Electronics：CAN 入门</a></td><td>帧结构 / ID / 仲裁图解（英文）</td></tr>
+    </table>
+    <p class="small muted anim" style="animation-delay:.1s">链接均为官方或经典稳定资源，编写时已逐一验证可访问。</p>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>电机（肌肉）· 电调（翻译官兼驾驶员）· 编码器（里程表）</li>
+        <li>CAN：一条总线 + ID 广播，指令与反馈都是 8 字节标准帧</li>
+        <li>控制量是命令，反馈量是实况；开环蒙眼，闭环睁眼</li>
+        <li>M3508 底盘 · M2006 机构 · GM6020 云台</li>
+        <li>IMU：Yaw 摇头 / Pitch 点头 / Roll 歪头</li>
+        <li>动手：读反馈 → 转起来 → 改方向 → 改控制量</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（1.4 电机与基础控制） ================= */
+/* 配色：荧光绿 #AFFF00（亮）/ 深绿 #83BF00；品牌紫 #784CF6 / #512FA3。
+   canvas 文本不使用 emoji，仅用 → · × 等普通符号。 */
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const padSign = v => (v >= 0 ? '+' : '') + v;
+
+// 圆角矩形路径辅助
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// —— 演示 1：控制回路数据流循环动画（STM32→CAN→电调→电机→编码器→STM32） ——
+const dlState = { paused: false };
+ARTINX_DEMOS['dataloop'] = (() => {
+  let raf = null, dist = 0, last = 0;
+  const NODES = [
+    { n: 'STM32',   x: .14, y: .32, t: 0 },
+    { n: 'CAN 总线', x: .50, y: .14, t: 1 },
+    { n: '电调',     x: .86, y: .32, t: 0 },
+    { n: '电机',     x: .80, y: .76, t: 1 },
+    { n: '编码器',   x: .20, y: .76, t: 0 }
+  ];
+  const LINKS = [
+    { a: 0, b: 1, lab: 'CAN 控制帧：目标电流' },
+    { a: 1, b: 2, lab: '总线广播，ID 匹配才收' },
+    { a: 2, b: 3, lab: '三相电流（FOC）' },
+    { a: 3, b: 4, lab: '转子转动 → 编码器计数' },
+    { a: 4, b: 0, lab: 'CAN 反馈帧：角度 / 转速' }
+  ];
+  const segLens = LINKS.map(L => Math.hypot(NODES[L.b].x - NODES[L.a].x, NODES[L.b].y - NODES[L.a].y));
+  const TOTAL = segLens.reduce((s, v) => s + v, 0);
+  function pos(d) {
+    d = ((d % TOTAL) + TOTAL) % TOTAL;
+    for (let i = 0; i < LINKS.length; i++) {
+      if (d <= segLens[i]) {
+        const t = segLens[i] === 0 ? 0 : d / segLens[i];
+        const A = NODES[LINKS[i].a], B = NODES[LINKS[i].b];
+        return { x: A.x + (B.x - A.x) * t, y: A.y + (B.y - A.y) * t, link: i };
+      }
+      d -= segLens[i];
+    }
+    return { x: NODES[0].x, y: NODES[0].y, link: 0 };
+  }
+  function draw(cv) {
+    const { w, h, ctx } = fit(cv);
+    const now = performance.now();
+    const dt = last ? (now - last) / 1000 : 0;
+    last = now;
+    if (!dlState.paused) dist += dt * (+document.getElementById('dlSpeed').value) * 0.55;
+    ctx.clearRect(0, 0, w, h);
+    const P = NODES.map(nd => ({ x: nd.x * w, y: nd.y * h }));
+    LINKS.forEach((L, i) => {
+      const A = P[L.a], B = P[L.b];
+      ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+      const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+      const ang = Math.atan2(B.y - A.y, B.x - A.x);
+      ctx.fillStyle = '#C9C3DE';
+      ctx.beginPath();
+      ctx.moveTo(mx + 8 * Math.cos(ang), my + 8 * Math.sin(ang));
+      ctx.lineTo(mx - 6 * Math.cos(ang - .5), my - 6 * Math.sin(ang - .5));
+      ctx.lineTo(mx - 6 * Math.cos(ang + .5), my - 6 * Math.sin(ang + .5));
+      ctx.closePath(); ctx.fill();
+    });
+    P.forEach((p, i) => {
+      const nd = NODES[i];
+      const bw = 104;
+      ctx.fillStyle = nd.t === 0 ? '#784CF6' : '#AFFF00';
+      rr(ctx, p.x - bw / 2, p.y - 24, bw, 48, 12);
+      ctx.fill();
+      if (nd.t === 1) { ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 2; ctx.stroke(); }
+      ctx.fillStyle = nd.t === 0 ? '#fff' : '#2C4000';
+      ctx.font = '700 15px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(nd.n, p.x, p.y);
+    });
+    const p = pos(dist);
+    const px = p.x * w, py = p.y * h;
+    ctx.beginPath(); ctx.arc(px, py, 14, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(175,255,0,.30)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#AFFF00'; ctx.fill();
+    ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI * 2); ctx.stroke();
+    const lab = LINKS[p.link].lab;
+    ctx.font = '700 15px "Segoe UI","Microsoft YaHei",sans-serif';
+    const tw = ctx.measureText('→ ' + lab).width;
+    ctx.fillStyle = 'rgba(38,32,52,.88)';
+    rr(ctx, w / 2 - tw / 2 - 18, h - 38, tw + 36, 30, 15);
+    ctx.fill();
+    ctx.fillStyle = '#AFFF00';
+    ctx.textAlign = 'center';
+    ctx.fillText('→ ' + lab, w / 2, h - 23);
+    raf = requestAnimationFrame(() => draw(cv));
+  }
+  return {
+    init(cv) { if (!raf) { last = 0; raf = requestAnimationFrame(() => draw(cv)); } },
+    destroy() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+  };
+})();
+document.getElementById('dlPause').onclick = (e) => {
+  dlState.paused = !dlState.paused;
+  e.currentTarget.textContent = dlState.paused ? '继续' : '暂停';
+};
+
+// —— 演示 2：CAN 数据帧逐段展开（帧起始→ID→控制段→数据段→CRC→帧结束） ——
+const cfState = { lock: -1, paused: false };
+ARTINX_DEMOS['canframe'] = (() => {
+  let raf = null, curSeg = 0, lastSweep = 0, segRects = [];
+  const SEGS = [
+    { t: '帧起始',   bits: '0',                      d: 'SOF：1 个显性位，广播开始', wgt: 1.1 },
+    { t: 'ID 仲裁段', bits: '010 0000 0000',          d: '11 位 ID＝地址＋优先级；0x200＝控制帧', wgt: 2.3 },
+    { t: '控制段',   bits: '1000',                    d: 'DLC＝数据长度，这里是 8 字节', wgt: 1.3 },
+    { t: '数据段',   bits: '0B B8 00 00 00 00 00 00', d: '8 字节控制量：0x0BB8＝3000（1 号电机）', wgt: 3.4 },
+    { t: 'CRC 段',   bits: '1101 0110 1001 011',      d: '15 位校验（示意值）：收方验算，错则丢弃', wgt: 1.7 },
+    { t: '帧结束',   bits: '1 1 1 …',                 d: 'ACK 应答＋帧结束，一轮收发完成', wgt: 1.0 }
+  ];
+  function draw(cv) {
+    const { w, h, ctx } = fit(cv);
+    const now = performance.now();
+    const ms = +document.getElementById('cfSpeed').value;
+    if (!cfState.paused && cfState.lock < 0 && now - lastSweep > ms) {
+      curSeg = (curSeg + 1) % SEGS.length;
+      lastSweep = now;
+    }
+    ctx.clearRect(0, 0, w, h);
+    const active = cfState.lock >= 0 ? cfState.lock : curSeg;
+    const gap = 10, x0 = 24, y0 = h * .26, bh = 82;
+    const totalW = SEGS.reduce((s, g) => s + g.wgt, 0);
+    let x = x0;
+    segRects = [];
+    SEGS.forEach((g, i) => {
+      const cw = (w - x0 * 2 - gap * (SEGS.length - 1)) * (g.wgt / totalW);
+      const on = i === active;
+      ctx.fillStyle = on ? 'rgba(120,76,246,.12)' : '#F7F4FE';
+      ctx.strokeStyle = on ? '#784CF6' : '#E8E4F4';
+      ctx.lineWidth = on ? 3 : 1.5;
+      rr(ctx, x, y0, cw, bh, 10); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = on ? '#784CF6' : '#5A5468';
+      ctx.font = '700 14px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(g.t, x + cw / 2, y0 + 22);
+      ctx.font = '600 12.5px Consolas,Menlo,monospace';
+      ctx.fillStyle = '#262034';
+      ctx.fillText(g.bits, x + cw / 2, y0 + 54);
+      segRects.push({ x, y: y0, w: cw, h: bh, i });
+      x += cw + gap;
+    });
+    const g = SEGS[active];
+    ctx.fillStyle = '#262036';
+    rr(ctx, x0, h - 58, w - x0 * 2, 40, 12); ctx.fill();
+    ctx.fillStyle = '#AFFF00';
+    ctx.font = '700 14.5px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('→ ' + g.t + '：' + g.d, x0 + 18, h - 38);
+    raf = requestAnimationFrame(() => draw(cv));
+  }
+  return {
+    init(cv) {
+      cv.onclick = (e) => {
+        const r = cv.getBoundingClientRect();
+        const mx = e.clientX - r.left, my = e.clientY - r.top;
+        const hit = segRects.find(s => mx >= s.x && mx <= s.x + s.w && my >= s.y && my <= s.y + s.h);
+        if (hit) {
+          cfState.lock = hit.i;
+          cfState.paused = true;
+          document.getElementById('cfAuto').textContent = '自动扫描';
+        } else {
+          cfState.lock = -1;
+          cfState.paused = false;
+          document.getElementById('cfAuto').textContent = '暂停';
+        }
+      };
+      if (!raf) { lastSweep = performance.now(); raf = requestAnimationFrame(() => draw(cv)); }
+    },
+    destroy() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+  };
+})();
+document.getElementById('cfAuto').onclick = (e) => {
+  cfState.paused = !cfState.paused;
+  cfState.lock = -1;
+  e.currentTarget.textContent = cfState.paused ? '自动扫描' : '暂停';
+};
+
+// —— 演示 3：IMU 姿态（伪 3D 立方体，Yaw / Pitch / Roll 实时旋转） ——
+ARTINX_DEMOS['imu'] = (() => {
+  let raf = null;
+  const D2R = Math.PI / 180;
+  const VERTS = [
+    [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
+    [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]
+  ];
+  const FACES = [
+    [0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [2, 3, 7, 6], [1, 2, 6, 5], [0, 3, 7, 4]
+  ];
+  // v' = Rz(yaw)·Ry(pitch)·Rx(roll)·v
+  function rotV(v, yaw, pitch, roll) {
+    const sy = Math.sin(yaw * D2R), cy = Math.cos(yaw * D2R);
+    const sp = Math.sin(pitch * D2R), cp = Math.cos(pitch * D2R);
+    const sr = Math.sin(roll * D2R), cr = Math.cos(roll * D2R);
+    const x = v[0], y = v[1], z = v[2];
+    const y1 = y * cr - z * sr, z1 = y * sr + z * cr;          // Rx(roll)
+    const x2 = x * cp + z1 * sp, z2 = -x * sp + z1 * cp;       // Ry(pitch)
+    return [x2 * cy - y1 * sy, x2 * sy + y1 * cy, z2];        // Rz(yaw)
+  }
+  function proj(x, y, z, cx, cy, k, f) {
+    const s = f / (f + z);
+    return [cx + x * s * k, cy - y * s * k];
+  }
+  function draw(cv) {
+    const { w, h, ctx } = fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    const yaw = +document.getElementById('imuYaw').value;
+    const pitch = +document.getElementById('imuPitch').value;
+    const roll = +document.getElementById('imuRoll').value;
+    const cx = w * .44, cy = h * .53, k = Math.min(w, h) * .21, f = 3.2;
+    ctx.strokeStyle = '#E3DBFC'; ctx.lineWidth = 2;
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    for (let i = 0; i <= 48; i++) {
+      const t = i / 48 * Math.PI * 2;
+      const p = proj(Math.cos(t) * 1.7, -1.4, Math.sin(t) * 1.7, cx, cy, k, f);
+      i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const pts = VERTS.map(v => rotV(v, yaw, pitch, roll));
+    const ps = pts.map(p => proj(p[0], p[1], p[2], cx, cy, k, f));
+    const fs = FACES.map(face => {
+      const a = pts[face[0]], b = pts[face[1]], c = pts[face[2]];
+      const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+      const vv = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+      const n = [u[1] * vv[2] - u[2] * vv[1], u[2] * vv[0] - u[0] * vv[2], u[0] * vv[1] - u[1] * vv[0]];
+      const zAvg = (pts[face[0]][2] + pts[face[1]][2] + pts[face[2]][2] + pts[face[3]][2]) / 4;
+      return { face, n, z: zAvg };
+    }).sort((A, B) => A.z - B.z);
+    const L = [0.3, -0.4, 0.85];
+    fs.forEach(F => {
+      const nl = Math.hypot(F.n[0], F.n[1], F.n[2]) || 1;
+      const d = Math.abs(F.n[0] * L[0] + F.n[1] * L[1] + F.n[2] * L[2]) / nl;
+      const bright = clamp(.35 + d * .55, 0, 1);
+      ctx.beginPath();
+      F.face.forEach((vi, i) => {
+        i ? ctx.lineTo(ps[vi][0], ps[vi][1]) : ctx.moveTo(ps[vi][0], ps[vi][1]);
+      });
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(120,76,246,' + (.30 + .55 * bright).toFixed(2) + ')';
+      ctx.fill();
+      ctx.strokeStyle = '#512FA3'; ctx.lineWidth = 1.5; ctx.stroke();
+    });
+    const axes = [
+      { v: [1, 0, 0], c: '#784CF6', t: 'X · Pitch 点头' },
+      { v: [0, 1, 0], c: '#83BF00', t: 'Y · Roll 歪头' },
+      { v: [0, 0, 1], c: '#512FA3', t: 'Z · Yaw 摇头' }
+    ];
+    axes.forEach(ax => {
+      const o = proj(0, 0, 0, cx, cy, k, f);
+      const e = rotV(ax.v, yaw, pitch, roll);
+      const p1 = proj(e[0] * 2.3, e[1] * 2.3, e[2] * 2.3, cx, cy, k, f);
+      ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(p1[0], p1[1]);
+      ctx.strokeStyle = ax.c; ctx.lineWidth = 3; ctx.stroke();
+      const ang = Math.atan2(p1[1] - o[1], p1[0] - o[0]);
+      ctx.beginPath();
+      ctx.moveTo(p1[0] + 9 * Math.cos(ang), p1[1] + 9 * Math.sin(ang));
+      ctx.lineTo(p1[0] - 6 * Math.cos(ang - .45), p1[1] - 6 * Math.sin(ang - .45));
+      ctx.lineTo(p1[0] - 6 * Math.cos(ang + .45), p1[1] - 6 * Math.sin(ang + .45));
+      ctx.closePath();
+      ctx.fillStyle = ax.c; ctx.fill();
+      ctx.font = '700 13px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(ax.t, p1[0] + 10, p1[1]);
+    });
+    ctx.font = '700 16px Consolas,Menlo,monospace';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#262034';
+    ctx.fillText('Yaw   ' + padSign(yaw) + '°', 24, 30);
+    ctx.fillStyle = '#784CF6';
+    ctx.fillText('Pitch ' + padSign(pitch) + '°', 24, 56);
+    ctx.fillStyle = '#83BF00';
+    ctx.fillText('Roll  ' + padSign(roll) + '°', 24, 82);
+    raf = requestAnimationFrame(() => draw(cv));
+  }
+  return {
+    init(cv) { if (!raf) raf = requestAnimationFrame(() => draw(cv)); },
+    destroy() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+  };
+})();
+document.getElementById('imuReset').onclick = () => {
+  document.getElementById('imuYaw').value = 0;
+  document.getElementById('imuPitch').value = 0;
+  document.getElementById('imuRoll').value = 0;
+};
+
+// —— 演示 4：电机正反转（控制量正负 → 正转/反转，附堵转模拟） ——
+const mvState = { stall: false, angle: 0 };
+ARTINX_DEMOS['motor'] = (() => {
+  let raf = null, last = 0;
+  function draw(cv) {
+    const { w, h, ctx } = fit(cv);
+    const now = performance.now();
+    const dt = last ? Math.min((now - last) / 1000, .05) : 0;
+    last = now;
+    const v = +document.getElementById('mvValue').value;   // -100 ~ 100
+    const stalled = mvState.stall;
+    if (!stalled) mvState.angle += v * dt * .07;
+    ctx.clearRect(0, 0, w, h);
+    const cx = w * .30, cy = h * .52, R = Math.min(h * .36, w * .24);
+    ctx.beginPath(); ctx.arc(cx, cy, R + 16, 0, Math.PI * 2);
+    ctx.fillStyle = '#F7F4FE'; ctx.fill();
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 3; ctx.stroke();
+    if (stalled && Math.floor(now / 250) % 2 === 0) {
+      ctx.beginPath(); ctx.arc(cx, cy, R + 24, 0, Math.PI * 2);
+      ctx.strokeStyle = '#512FA3'; ctx.lineWidth = 4; ctx.stroke();
+    }
+    const jit = stalled ? Math.sin(now / 30) * .02 : 0;
+    const a = mvState.angle + jit;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = stalled ? 'rgba(120,76,246,.25)' : 'rgba(175,255,0,.30)';
+    ctx.fill();
+    ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 2; ctx.stroke();
+    for (let i = 0; i < 3; i++) {
+      const sa = a + i * Math.PI * 2 / 3;
+      ctx.beginPath(); ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(sa) * R, cy + Math.sin(sa) * R);
+      ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 5; ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+    ctx.fillStyle = '#512FA3'; ctx.fill();
+    if (v !== 0 && !stalled) {
+      ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R + 30, -Math.PI * .75, -Math.PI * .25, v < 0);
+      ctx.stroke();
+      const ta = v > 0 ? -Math.PI * .25 : -Math.PI * .75;
+      const tx = cx + Math.cos(ta) * (R + 30), ty = cy + Math.sin(ta) * (R + 30);
+      ctx.beginPath();
+      ctx.moveTo(tx + (v > 0 ? -10 : 10), ty - 5);
+      ctx.lineTo(tx + (v > 0 ? 6 : -6), ty);
+      ctx.lineTo(tx + (v > 0 ? -10 : 10), ty + 5);
+      ctx.closePath();
+      ctx.fillStyle = '#83BF00'; ctx.fill();
+    }
+    ctx.fillStyle = '#5A5468';
+    ctx.font = '600 13px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('电机＋编码器', cx, cy + R + 42);
+    const px = w * .60;
+    const cur = Math.round(v / 100 * 16384);
+    const amp = stalled ? 20.0 : Math.abs(v / 100 * 20);
+    const dir = stalled ? '堵转！' : v > 0 ? '正转' : v < 0 ? '反转' : '停止';
+    const rows = [
+      ['控制量（int16）', String(cur)],
+      ['≈ 电流（A，示意）', amp.toFixed(1)],
+      ['转向', dir]
+    ];
+    rows.forEach((r, i) => {
+      const yy = h * .22 + i * 48;
+      ctx.textAlign = 'left';
+      ctx.font = '600 15px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillStyle = '#5A5468';
+      ctx.fillText(r[0], px, yy);
+      ctx.font = '700 26px Consolas,Menlo,monospace';
+      ctx.fillStyle = i === 2 ? (stalled ? '#512FA3' : '#784CF6') : '#262034';
+      ctx.fillText(r[1], px, yy + 22);
+    });
+    if (stalled) {
+      ctx.fillStyle = '#512FA3';
+      ctx.font = '700 15px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillText('转速掉到 0，电流飙升 → 电调保护', px, h * .80);
+    } else {
+      ctx.fillStyle = '#5A5468';
+      ctx.font = '600 14px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillText('开环：负载变化无人纠偏（下节闭环解决）', px, h * .80);
+    }
+    raf = requestAnimationFrame(() => draw(cv));
+  }
+  return {
+    init(cv) { if (!raf) { last = 0; raf = requestAnimationFrame(() => draw(cv)); } },
+    destroy() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+  };
+})();
+document.getElementById('mvStall').onclick = (e) => {
+  mvState.stall = !mvState.stall;
+  e.currentTarget.textContent = mvState.stall ? '模拟堵转：开' : '模拟堵转：关';
+};
+
+// 直接通过 URL 锚点（如 #/7）打开时，补一次初始化让当前页演示启动
+go(cur);
+</script>
+</body>
+</html>

@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.6 Git 与 AI 工具使用 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">1.6　工具使用</div>
+      <h1 class="anim" style="animation-delay:.2s">Git 与 AI 工具使用</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">给代码建立存档与回滚能力，让 AI 作为副驾驶参与开发</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>Git · 版本控制</h3>
+        <ul>
+          <li>仓库 / 提交 / 分支 / 克隆四个概念</li>
+          <li>最小工作流：每步作用与后悔药</li>
+          <li>团队协作规范、冲突处理</li>
+        </ul>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>AI 工具 · 辅助开发</h3>
+        <ul>
+          <li>三类工具与适用场景</li>
+          <li>正确姿势七步与提问模板</li>
+          <li>AI 改完：diff 审查、编译、实机验证</li>
+        </ul>
+      </div>
+    </div>
+    <p class="small muted anim" style="animation-delay:.3s;margin-top:10px">四个交互演示：提交历史动画 / AI 开发闭环 / git diff 可视化 / 判断卡</p>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：Git 定义 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">Git 是什么：版本控制系统</h2>
+    <div class="cols">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>定义</h3>
+        <p>Git 是分布式版本控制系统（Version Control System，VCS）：对项目文件持续记录快照（commit），支持查看、对比、回退到任意历史版本。</p>
+        <p class="small muted">类比一句话：给代码做「存档」，随时读档。</p>
+      </div>
+      <div>
+        <table class="anim" style="animation-delay:.2s">
+          <tr><th>开发痛点</th><th>Git 的答案</th></tr>
+          <tr><td>改坏了想回退</td><td>回到任意一个旧提交</td></tr>
+          <tr><td>不知道改了什么</td><td>每次提交记录改动与说明</td></tr>
+          <tr><td>多人改同一项目</td><td>各自分支开发，最后合并</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：四个核心概念 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">四个核心概念</h2>
+    <table class="anim" style="animation-delay:.1s;flex:1">
+      <tr><th>概念</th><th>定义</th><th>一句话类比</th></tr>
+      <tr><td>仓库 Repository</td><td>被 Git 管理的项目目录，历史快照存于 .git</td><td>存档文件夹</td></tr>
+      <tr><td>提交 Commit</td><td>项目的一次快照，记录谁 / 何时 / 改了什么 / 为什么</td><td>存档点</td></tr>
+      <tr><td>分支 Branch</td><td>从主线分出的独立开发线，互不影响，可合并</td><td>平行世界</td></tr>
+      <tr><td>克隆 clone</td><td>把远程仓库（含全部历史）完整拷贝到本地</td><td>拷贝别人的存档</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：三区模型 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">一次提交经过三个区</h2>
+    <div class="cols">
+      <div class="anim" style="animation-delay:.1s">
+        <pre>工作区（正在编辑的文件）
+   │  git add     挑选改动
+   ▼
+暂存区（购物车：待提交内容）
+   │  git commit  拍快照
+   ▼
+版本库（.git 中的提交历史）</pre>
+      </div>
+      <div>
+        <ul class="anim" style="animation-delay:.2s">
+          <li><strong>工作区</strong>：正在改的文件，未存档</li>
+          <li><strong>暂存区</strong>：add 挑选的内容，一次提交一个主题</li>
+          <li><strong>版本库</strong>：commit 生成的快照序列</li>
+        </ul>
+        <div class="callout tip anim" style="animation-delay:.3s;margin-top:10px"><strong>.gitignore</strong>：把编译产物（Objects/、Listings/、*.o、*.uvguix）写入，add 时自动忽略。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：最小工作流 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">最小可用工作流</h2>
+    <table class="anim" style="animation-delay:.1s;flex:1">
+      <tr><th>步骤</th><th>命令</th><th>作用</th><th>后悔药（撤销）</th></tr>
+      <tr><td>1</td><td>git init</td><td>当前目录变为仓库</td><td>删除 .git 目录</td></tr>
+      <tr><td>2</td><td>git add .</td><td>改动加入暂存区</td><td>git restore --staged .</td></tr>
+      <tr><td>3</td><td>git commit -m "说明"</td><td>生成一条快照</td><td>git reset HEAD~1（未 push）</td></tr>
+      <tr><td>4</td><td>git remote add origin 地址</td><td>绑定远程仓库（一次）</td><td>git remote remove origin</td></tr>
+      <tr><td>5</td><td>git push -u origin main</td><td>上传到远程</td><td>git revert 编号（不删历史）</td></tr>
+      <tr><td>6</td><td>git pull</td><td>下载并合并远程更新</td><td>拉前先 commit / stash</td></tr>
+    </table>
+    <div class="callout warn anim" style="animation-delay:.2s;margin-top:10px">已 push 的提交视为已发布，禁止强制改写远程历史；<code>git reset --hard</code> 会抹掉工作区改动，新手禁用。</div>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：查看命令与 status ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">三个查看命令与状态解读</h2>
+    <div class="cols">
+      <div class="anim" style="animation-delay:.1s">
+        <pre>git status
+      当前分支 / 改动状态
+git log --oneline --graph
+      提交历史与分支图
+git diff
+      与上次提交的逐行差异</pre>
+      </div>
+      <div>
+        <pre class="anim" style="animation-delay:.2s">On branch main
+Changes to be committed:
+        new file:   Core/Inc/motor.h
+Changes not staged for commit:
+        modified:   Core/Src/motor.c</pre>
+        <p class="small muted anim" style="animation-delay:.3s;margin-top:8px">习惯：commit 前先 git status 确认暂存区内容。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：演示 提交历史动画 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：提交历史动画</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="gitHistory"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="gbCommit">+ commit</button>
+        <button class="btn green" id="gbBranch">开分支</button>
+        <button class="btn" id="gbMerge">merge</button>
+        <button class="btn ghost" id="gbReset">重置</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：分支 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">分支 Branch：独立开发线</h2>
+    <div class="cols">
+      <div>
+        <pre class="anim" style="animation-delay:.1s">main:  C1 ─ C2 ─ C3 ── M1（合并）
+                      /
+exp:                  E1（试验改动）</pre>
+        <p class="small muted anim" style="animation-delay:.2s;margin-top:8px">exp 上提交不影响 main；merge 后改动进入 main，exp 分支本身仍在。</p>
+      </div>
+      <div>
+        <ul class="anim" style="animation-delay:.3s">
+          <li>在分支上试验激进方案，改坏即删</li>
+          <li>多人各自分支开发，互不干扰</li>
+          <li>切换分支时未提交改动会跟随</li>
+          <li>main 保持稳定可运行，验证后合并</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：协作规范 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">团队协作规范五条</h2>
+    <ol class="anim" style="animation-delay:.1s;flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px">
+      <li><strong>小步提交</strong>：一次 commit 只做一件事，好定位、好回滚</li>
+      <li><strong>提交信息动词开头</strong>：fix: 修复云台 pitch 抖动（feat / fix / docs / refactor）</li>
+      <li><strong>push 之前先 pull</strong>：先合并队友更新，避免 push 被拒</li>
+      <li><strong>不直接 push 到 main</strong>：分支开发 + 合并，团队走 Pull Request 审查</li>
+      <li><strong>冲突先看 diff</strong>：两个分支改了同一处，商量后解决再提交</li>
+    </ol>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：冲突处理 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">合并冲突：别慌，先看 diff</h2>
+    <div class="cols">
+      <div class="anim" style="animation-delay:.1s">
+        <pre>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+target = 3000;   // 你改的
+=======
+target = 4000;   // 队友改的
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; exp</pre>
+      </div>
+      <div>
+        <p class="anim" style="animation-delay:.2s">冲突 = 两个分支改了同一处，Git 不替你决定，只标记位置。</p>
+        <ul class="anim" style="animation-delay:.3s">
+          <li>与队友商量保留哪个版本</li>
+          <li>删除 &lt;&lt;&lt;&lt;&lt;&lt;&lt; / ======= / &gt;&gt;&gt;&gt;&gt;&gt;&gt; 三行标记</li>
+          <li>add + commit 完成合并</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：PART 2 章节页（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <div class="divider-num">02</div>
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">PART 2</div>
+      <h1 class="anim" style="animation-delay:.15s">AI 工具：副驾驶</h1>
+      <div class="cover-divider anim" style="animation-delay:.25s"></div>
+      <div class="sub anim" style="animation-delay:.35s">AI 辅助开发，不代替开发者对系统的理解和判断</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：AI 工具三类 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">AI 编程工具三类</h2>
+    <table class="anim" style="animation-delay:.1s;flex:1">
+      <tr><th>类型</th><th>代表</th><th>适用场景</th></tr>
+      <tr><td>对话式 Coding Agent</td><td>Claude Code / Cursor</td><td>读整个工程，跨文件改功能</td></tr>
+      <tr><td>IDE 插件</td><td>GitHub Copilot / Cline</td><td>补全、选中解释、小块改写</td></tr>
+      <tr><td>网页版对话</td><td>DeepSeek / Kimi / ChatGPT</td><td>查资料、解释报错、写小段代码</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:10px">选型：入门先用网页版，再装 IDE 插件，跨文件大活用 Agent；工具迭代快，学类型不背产品名。</div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：正确姿势七步 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">AI 正确姿势七步</h2>
+    <div class="cols">
+      <div>
+        <ol class="anim" style="animation-delay:.1s">
+          <li>先自己读一遍代码</li>
+          <li>带上下文向 AI 描述问题</li>
+          <li>让 AI 先解释、给方案</li>
+          <li>确认方案后再让它改</li>
+          <li>git diff 逐行看改动</li>
+          <li>编译 0 error</li>
+          <li>实机验证，不通过回到 2</li>
+        </ol>
+      </div>
+      <div>
+        <div class="callout warn anim" style="animation-delay:.2s">三个误区：让 AI 重写整个文件；不追问直接采纳；查完资料不核对硬件手册。</div>
+        <div class="callout tip anim" style="animation-delay:.3s;margin-top:10px">AI 是副驾驶，你是驾驶员：方向盘和刹车在自己手里。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：提问模板 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">提问模板（直接套用）</h2>
+    <pre class="anim" style="animation-delay:.1s;flex:1">「逐段解释这段代码，只解释、不要修改」+ 贴代码
+
+「编译报错如下，我已试过 XX。按可能性列出原因
+  和排查步骤」+ 贴完整报错 + 相关代码
+
+「现象：电机上电不转，CAN 灯正常。列 5 个可能
+  原因，按可能性排序，说明怎么逐项验证」
+
+「在 set_speed 里加 ±5000 速度限幅，保持现有
+  风格，最小改动。改完说明改了什么、为什么」
+
+「你刚说原因是 XX，依据是什么？我怎么自己验证？」</pre>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：演示 AI 开发闭环 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：AI 辅助开发闭环</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="aiLoop"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="alPause">暂停</button>
+        <button class="btn ghost" id="alReset">重置</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：演示 git diff 可视化 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：git diff 可视化</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="gitDiff"></canvas>
+      <div class="demo-controls">
+        <label>案例</label>
+        <button class="btn" id="gdCaseA">案例A · AI 改对了</button>
+        <button class="btn ghost" id="gdCaseB">案例B · AI 改错了</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：AI 修改检查清单 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">AI 改完必须做的四步</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>必须动作清单</h3>
+        <ol>
+          <li>git diff 逐行审查，看不懂就问或删</li>
+          <li>编译 0 error</li>
+          <li>实机验证：先空载低速，再正常工况</li>
+          <li>确认后才 commit</li>
+        </ol>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>典型 bug 与正反例</h3>
+        <p>AI 常见问题：条件写反、单位搞错、边界漏掉、顺手删掉错误处理分支。</p>
+        <p class="small">反例：不看 diff 直接烧录，if (target &lt; MAX) 把限幅写成放大；正例：diff 发现被删的保护分支，要求加回，验证后才提交。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：判断卡 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">判断：AI 改对了吗？</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card white anim" style="animation-delay:.1s">
+        <h3>案例一：AI 加的两行限幅</h3>
+        <pre>if (t > 5000)  t = 5000;
+if (t < -5000) t = -5000;</pre>
+        <p style="margin-top:8px">
+          <button class="btn" id="qz1Ok">改对了</button>
+          <button class="btn ghost" id="qz1Bad">有 bug</button>
+        </p>
+        <p class="small" id="qz1Ans" style="margin-top:8px;min-height:18px">&nbsp;</p>
+      </div>
+      <div class="card white anim" style="animation-delay:.2s">
+        <h3>案例二：AI 改完的另一个版本</h3>
+        <pre>if (t < 5000)  t = 5000;
+if (t > -5000) t = -5000;</pre>
+        <p style="margin-top:8px">
+          <button class="btn" id="qz2Ok">改对了</button>
+          <button class="btn ghost" id="qz2Bad">有 bug</button>
+        </p>
+        <p class="small" id="qz2Ans" style="margin-top:8px;min-height:18px">&nbsp;</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：常见问题 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查</h2>
+    <table class="anim" style="animation-delay:.1s;flex:1">
+      <tr><th>现象</th><th>原因与处理</th></tr>
+      <tr><td>git 不是内部或外部命令</td><td>重装并勾选 Add to PATH，重开终端</td></tr>
+      <tr><td>push 被拒（non-fast-forward）</td><td>先 git pull 再 push</td></tr>
+      <tr><td>合并冲突出现 &lt;&lt;&lt;&lt;&lt;&lt;&lt;</td><td>保留正确版本、删标记、add + commit</td></tr>
+      <tr><td>commit 完才发现改错了</td><td>未 push 用 reset HEAD~1；已 push 用 revert</td></tr>
+      <tr><td>误提交编译产物</td><td>写 .gitignore，再 git rm -r --cached 目录</td></tr>
+      <tr><td>在 main 上改了才发现该开分支</td><td>git switch -c 新分支，改动跟随</td></tr>
+      <tr><td>AI 给的代码编译一堆错</td><td>带完整报错追问；自己读懂每一行</td></tr>
+      <tr><td>AI 方案看着合理但不敢改</td><td>开试验分支验证，通过再合并</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center;gap:10px">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>Pro Git 中文版 · 官方书</h3>
+        <p class="small">系统学 Git，先读第 1~3 章（起步 / 基础 / 分支）</p>
+        <p class="small"><a href="https://git-scm.com/book/zh/v2">git-scm.com/book/zh/v2</a></p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>GitHub 官方 Hello World</h3>
+        <p class="small">网页 15 分钟走完 建仓库、分支、提交、合并 全流程</p>
+        <p class="small"><a href="https://docs.github.com/zh/get-started/start-your-journey/hello-world">docs.github.com/zh/get-started/hello-world</a></p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>廖雪峰 Git 教程</h3>
+        <p class="small">中文入门经典，边看边敲</p>
+        <p class="small"><a href="https://liaoxuefeng.com/books/git/introduction/index.html">liaoxuefeng.com/books/git</a></p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>Learn Git Branching</h3>
+        <p class="small">网页闯关练分支，提交树动画，支持中文</p>
+        <p class="small"><a href="https://learngitbranching.js.org/">learngitbranching.js.org</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>Git：仓库、提交、分支、克隆；init → add → commit → push / pull</li>
+        <li>协作：小步提交、信息规范、分支进 main、冲突看 diff</li>
+        <li>AI：三类工具、正确姿势七步、diff 审查 + 编译 + 实机验证</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        <strong>AI 用于辅助开发，不代替开发者对系统的理解和判断。</strong>
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（各小节自行编写） ================= */
+/*
+  注册格式：
+  ARTINX_DEMOS['example'] = {
+    init(canvas, slide){ ...每帧动画写在这里... },
+    destroy(){ ...清除定时器/raf... }
+  };
+  提示：
+  - canvas 尺寸随窗口变化，用下方 fit(canvas) 获取 CSS 像素尺寸并处理高清屏
+  - 页面切换到其他页时会自动调用 destroy()，切回时重新 init()
+  - 不要依赖任何外部库，用原生 canvas 即可
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+// 圆角矩形辅助
+function rr(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/* ---------- 演示 1：Git 提交历史动画（commit / 分支 / merge，节点可点击） ---------- */
+ARTINX_DEMOS['gitHistory'] = (() => {
+  let raf = null, canvas = null;
+  const S = {
+    commits: [], mainOrder: 0, expOrder: 0, current: 'main',
+    branchPoint: null, lastMain: null, lastExp: null, merged: false,
+    seq: 0, selected: null, hint: '', hintT: 0
+  };
+  const MSGS = ['init: 1.5 PID 工程', 'feat: 速度环+编码器', 'fix: CAN 超时重发'];
+  const R = 16;
+
+  function layout(w, h) {
+    const pos = {};
+    const mainIds = S.commits.filter(c => c.branch !== 'exp');
+    const step = Math.min(118, Math.max(64, (w - 150) / Math.max(4, mainIds.length)));
+    let mx = 0, bpX = 0;
+    for (const c of mainIds) {
+      pos[c.id] = { x: 90 + mx * step, y: h * 0.40 };
+      mx++;
+      if (c.id === S.branchPoint) bpX = pos[c.id].x;
+    }
+    let ex = 0;
+    for (const c of S.commits) {
+      if (c.branch === 'exp') {
+        ex++;
+        pos[c.id] = { x: Math.min(w - 60, bpX + ex * step), y: h * 0.72 };
+      }
+    }
+    return pos;
+  }
+
+  function flash(m) { S.hint = m; S.hintT = performance.now(); }
+
+  function commit() {
+    const n = ++S.seq;
+    if (S.current === 'exp') {
+      S.expOrder++;
+      const c = { id: 'E' + n, msg: 'exp: 激进 PID 参数', branch: 'exp',
+                  parents: S.lastExp ? [S.lastExp] : [], born: performance.now() };
+      S.commits.push(c); S.lastExp = c.id; S.selected = c.id;
+    } else {
+      S.mainOrder++;
+      const c = { id: 'C' + n, msg: MSGS[Math.min(S.mainOrder - 1, MSGS.length - 1)], branch: 'main',
+                  parents: S.lastMain ? [S.lastMain] : [], born: performance.now() };
+      S.commits.push(c); S.lastMain = c.id; S.selected = c.id;
+    }
+    syncBtns();
+  }
+
+  function branch() {
+    if (S.branchPoint || !S.lastMain) { flash('先要有主线提交，才能开分支'); return; }
+    S.branchPoint = S.lastMain;
+    S.current = 'exp';
+    flash('已开 exp 平行世界，点 +commit 在分支上提交');
+    syncBtns();
+  }
+
+  function merge() {
+    if (!S.lastExp || S.merged) { flash(S.lastExp ? '已经合并过了' : '先在 exp 分支上 commit 一次'); return; }
+    const n = ++S.seq;
+    S.mainOrder++;
+    const c = { id: 'M' + n, msg: 'merge: 合并 exp 分支', branch: 'merge',
+                parents: [S.lastMain, S.lastExp], born: performance.now() };
+    S.commits.push(c); S.lastMain = c.id; S.merged = true; S.current = 'main'; S.selected = c.id;
+    flash('merge：exp 的成果并入 main');
+    syncBtns();
+  }
+
+  function reset() {
+    S.commits = []; S.mainOrder = 0; S.expOrder = 0; S.current = 'main';
+    S.branchPoint = null; S.lastMain = null; S.lastExp = null; S.merged = false;
+    S.seq = 0; S.selected = null; S.hint = '';
+    syncBtns();
+  }
+
+  function syncBtns() {
+    const gb = document.getElementById('gbBranch');
+    const gm = document.getElementById('gbMerge');
+    if (gb) gb.style.opacity = (S.branchPoint || !S.lastMain) ? 0.45 : 1;
+    if (gm) gm.style.opacity = (!S.lastExp || S.merged) ? 0.45 : 1;
+  }
+
+  function draw() {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    ctx.clearRect(0, 0, w, h);
+    const pos = layout(w, h);
+
+    // 连线（先画线再画节点）
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    for (const c of S.commits) {
+      if (!pos[c.id]) continue;
+      for (const p of c.parents) {
+        if (!pos[p]) continue;
+        const par = S.commits.find(x => x.id === p);
+        ctx.strokeStyle = (par && par.branch === 'exp') ? '#83BF00' : '#E3DBFC';
+        ctx.beginPath();
+        ctx.moveTo(pos[p].x, pos[p].y + R);
+        ctx.lineTo(pos[c.id].x, pos[c.id].y - R);
+        ctx.stroke();
+      }
+    }
+
+    // 分支名标签
+    const firstMain = S.commits.find(c => c.branch === 'main' || c.branch === 'merge');
+    if (firstMain && pos[firstMain.id]) {
+      chipTxt(ctx, 'main', pos[firstMain.id].x - 12, h * 0.40 - R - 34, '#E3DBFC', '#4A2BD4');
+    }
+    const firstExp = S.commits.find(c => c.branch === 'exp');
+    if (firstExp && pos[firstExp.id]) {
+      chipTxt(ctx, 'exp', pos[firstExp.id].x - 10, h * 0.72 - R - 34, 'rgba(175,255,0,.5)', '#2C4000');
+    }
+
+    // 节点
+    for (const c of S.commits) {
+      const p = pos[c.id];
+      const t = Math.min(1, (now - (c.born || 0)) / 260);
+      const sc = t < 1 ? 0.5 + 0.5 * (1 - Math.pow(1 - t, 3)) : 1;
+      const r = R * sc;
+      let fill = '#784CF6', ink = '#FFFFFF', border = '#4A2BD4';
+      if (c.branch === 'exp') { fill = '#AFFF00'; ink = '#2C4000'; border = '#83BF00'; }
+      else if (c.branch === 'merge') { fill = '#E3DBFC'; ink = '#4A2BD4'; border = '#784CF6'; }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = fill; ctx.fill();
+      ctx.strokeStyle = border; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.fillStyle = ink;
+      ctx.font = 'bold 12px Consolas, monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(c.id, p.x, p.y + 1);
+    }
+
+    // HEAD 标签
+    const tipId = S.current === 'exp' ? S.lastExp : S.lastMain;
+    if (tipId && pos[tipId]) {
+      const p = pos[tipId];
+      ctx.font = 'bold 12px "Microsoft YaHei", sans-serif';
+      const tw = ctx.measureText('HEAD').width + 16;
+      ctx.fillStyle = '#262034';
+      rr(ctx, p.x - tw / 2, p.y - R - 36, tw, 22, 11); ctx.fill();
+      ctx.fillStyle = '#AFFF00';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('HEAD', p.x, p.y - R - 25);
+    }
+
+    // 顶部提示
+    ctx.font = '13px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('按顺序点按钮看历史生长 · 点节点看提交信息', 14, 12);
+    if (S.hint && now - S.hintT < 2600) {
+      const tw = ctx.measureText(S.hint).width;
+      ctx.fillStyle = '#FFF3F5';
+      rr(ctx, 14, 36, tw + 24, 28, 9); ctx.fill();
+      ctx.strokeStyle = '#F0B9C4'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = '#262034';
+      ctx.fillText(S.hint, 26, 42);
+    }
+
+    // 选中节点的信息框
+    if (S.selected && pos[S.selected]) {
+      const c = S.commits.find(x => x.id === S.selected);
+      const p = pos[S.selected];
+      const txt = c.id + '  ' + c.msg + '（' + (c.branch === 'exp' ? 'exp 分支' : 'main 分支') + '）';
+      ctx.font = '13px "Microsoft YaHei", sans-serif';
+      const tw = ctx.measureText(txt).width;
+      const bw = tw + 28, bh = 34;
+      let bx = p.x - bw / 2, by = p.y + R + 26;
+      bx = clamp(bx, 8, w - bw - 8);
+      by = clamp(by, 8, h - bh - 8);
+      ctx.fillStyle = '#FFFFFF';
+      rr(ctx, bx, by, bw, bh, 10); ctx.fill();
+      ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#262034';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(txt, bx + 14, by + bh / 2 + 1);
+    }
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function chipTxt(ctx, txt, x, y, bg, ink) {
+    ctx.font = 'bold 12px "Microsoft YaHei", sans-serif';
+    const tw = ctx.measureText(txt).width;
+    ctx.fillStyle = bg;
+    rr(ctx, x, y, tw + 16, 22, 11); ctx.fill();
+    ctx.fillStyle = ink;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(txt, x + 8, y + 11);
+  }
+
+  function onClick(e) {
+    const { w, h } = fit(e.target);
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    const pos = layout(w, h);
+    let hit = null;
+    for (let i = S.commits.length - 1; i >= 0; i--) {
+      const p = pos[S.commits[i].id];
+      if (p && Math.hypot(x - p.x, y - p.y) < 20) { hit = S.commits[i].id; break; }
+    }
+    S.selected = hit;
+  }
+
+  return {
+    init(c) {
+      canvas = c;
+      c.onclick = onClick;
+      syncBtns();
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      if (canvas) canvas.onclick = null;
+      canvas = null;
+    },
+    commit, branch, merge, reset
+  };
+})();
+
+/* ---------- 演示 2：AI 辅助开发闭环（环状动画 + 不通过返回） ---------- */
+ARTINX_DEMOS['aiLoop'] = (() => {
+  let raf = null, canvas = null;
+  let paused = false, tAcc = 0, last = 0;
+  const NAMES = ['需求', 'AI 生成', 'diff 审查', '编译', '实机验证'];
+  const ANGS = [-90, -18, 54, 126, 198].map(d => d * Math.PI / 180);
+  let legs = [];
+  function legDur(l) { return l.type === 'arc' ? 0.9 : 1.1; }
+  function buildLegs() {
+    legs = [];
+    for (let r = 0; r < 2; r++) {
+      for (let i = 0; i < 4; i++) legs.push({ type: 'arc', a: i, b: i + 1 });
+      legs.push({ type: 'red' });
+    }
+    for (let i = 0; i < 4; i++) legs.push({ type: 'arc', a: i, b: i + 1 });
+    legs.push({ type: 'green' });
+  }
+  buildLegs();
+
+  function reset() {
+    buildLegs();
+    tAcc = 0; paused = false;
+    last = performance.now();
+    const pb = document.getElementById('alPause');
+    if (pb) pb.textContent = '暂停';
+  }
+  function togglePause() {
+    paused = !paused;
+    last = performance.now();
+    const pb = document.getElementById('alPause');
+    if (pb) pb.textContent = paused ? '继续' : '暂停';
+  }
+
+  function bez(p0, c1, c2, p1, t) {
+    const u = 1 - t;
+    return {
+      x: u*u*u*p0.x + 3*u*u*t*c1.x + 3*u*t*t*c2.x + t*t*t*p1.x,
+      y: u*u*u*p0.y + 3*u*u*t*c1.y + 3*u*t*t*c2.y + t*t*t*p1.y
+    };
+  }
+  function arrowHead(ctx, from, to, col) {
+    const ang = Math.atan2(to.y - from.y, to.x - from.x);
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(to.x, to.y);
+    ctx.lineTo(to.x - 10 * Math.cos(ang - 0.45), to.y - 10 * Math.sin(ang - 0.45));
+    ctx.lineTo(to.x - 10 * Math.cos(ang + 0.45), to.y - 10 * Math.sin(ang + 0.45));
+    ctx.closePath(); ctx.fill();
+  }
+
+  function draw() {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    if (!paused) tAcc += now - last;
+    last = now;
+    ctx.clearRect(0, 0, w, h);
+
+    const cx = w * 0.34, cy = h * 0.52;
+    const ry = Math.max(60, h * 0.32);
+    const rx = Math.min(w * 0.20, ry * 1.45);
+    const pts = ANGS.map(a => ({ x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry }));
+    const finalP = { x: Math.min(w - 90, w * 0.82), y: cy };
+
+    // 推进腿
+    let li = 0, rem = tAcc;
+    while (li < legs.length) {
+      const d = legDur(legs[li]) + 0.5;
+      if (rem >= d) { rem -= d; li++; } else break;
+    }
+    const done = li >= legs.length;
+    const redDone = legs.slice(0, Math.min(li, legs.length)).filter(l => l.type === 'red').length;
+
+    // 圆环
+    ctx.strokeStyle = '#E3DBFC';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 红色「不通过返回」路径（实机验证 → AI 生成）
+    const rc1 = { x: pts[4].x * 0.15 + cx * 0.85, y: pts[4].y * 0.15 + cy * 0.85 };
+    const rc2 = { x: pts[1].x * 0.15 + cx * 0.85, y: pts[1].y * 0.15 + cy * 0.85 };
+    ctx.strokeStyle = '#F0B9C4';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([7, 6]);
+    ctx.beginPath();
+    ctx.moveTo(pts[4].x, pts[4].y);
+    ctx.bezierCurveTo(rc1.x, rc1.y, rc2.x, rc2.y, pts[1].x, pts[1].y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    arrowHead(ctx, bez(pts[4], rc1, rc2, pts[1], 0.88), bez(pts[4], rc1, rc2, pts[1], 0.93), '#F0B9C4');
+
+    // 绿色「通过」路径（实机验证 → 合并提交）
+    const gc1 = { x: pts[4].x + (pts[4].x - cx) * 0.5, y: pts[4].y + (pts[4].y - cy) * 0.4 };
+    const gc2 = { x: finalP.x - 40, y: finalP.y };
+    ctx.strokeStyle = '#83BF00';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(pts[4].x, pts[4].y);
+    ctx.bezierCurveTo(gc1.x, gc1.y, gc2.x, gc2.y, finalP.x, finalP.y);
+    ctx.stroke();
+    arrowHead(ctx, bez(pts[4], gc1, gc2, finalP, 0.88), bez(pts[4], gc1, gc2, finalP, 0.93), '#83BF00');
+
+    // 当前圆点位置
+    let dot = pts[0];
+    if (!done) {
+      const leg = legs[li];
+      const t = clamp(rem / legDur(leg), 0, 1);
+      if (leg.type === 'arc') {
+        const a = ANGS[leg.a] + (ANGS[leg.b] - ANGS[leg.a]) * t;
+        dot = { x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry };
+      } else if (leg.type === 'red') {
+        dot = bez(pts[4], rc1, rc2, pts[1], t);
+      } else {
+        dot = bez(pts[4], gc1, gc2, finalP, t);
+      }
+    } else {
+      dot = finalP;
+    }
+
+    // 五个环节节点
+    for (let i = 0; i < 5; i++) {
+      const p = pts[i];
+      const arrived = i === 0 || legs.slice(0, li).some(l => l.type === 'arc' && l.b === i);
+      const atNode = !done && Math.hypot(dot.x - p.x, dot.y - p.y) < 14;
+      let fill = '#FFFFFF', ink = '#262034';
+      if (arrived && !atNode) fill = '#E3DBFC';
+      if (atNode) { fill = '#784CF6'; ink = '#FFFFFF'; }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 24, 0, Math.PI * 2);
+      ctx.fillStyle = fill; ctx.fill();
+      ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 2.5; ctx.stroke();
+      if (atNode) {
+        const pr = 24 + 6 + 4 * Math.sin(now / 150);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, pr, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(120,76,246,.45)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.fillStyle = ink;
+      ctx.font = 'bold 12px "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(NAMES[i], p.x, p.y + 1);
+    }
+
+    // 终点节点「合并提交」
+    ctx.beginPath();
+    ctx.arc(finalP.x, finalP.y, 26, 0, Math.PI * 2);
+    ctx.fillStyle = '#AFFF00'; ctx.fill();
+    ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = '#2C4000';
+    ctx.font = 'bold 12px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('合并', finalP.x, finalP.y - 7);
+    ctx.fillText('提交', finalP.x, finalP.y + 7);
+
+    // 状态面板
+    let status;
+    if (done) status = '全部通过，成果合并提交';
+    else {
+      const leg = legs[li];
+      const round = redDone + 1;
+      if (leg.type === 'red') status = '第 ' + round + ' 轮 · 实机验证不通过 → 返回修改';
+      else if (leg.type === 'green') status = '第 3 轮 · 实机验证通过 → 合并提交';
+      else status = '第 ' + round + ' 轮 · 正在 ' + NAMES[leg.b];
+    }
+    ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    const tw = ctx.measureText(status).width;
+    ctx.fillStyle = '#FFFFFF';
+    rr(ctx, 12, 10, tw + 28, 32, 10); ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = '#262034';
+    ctx.fillText(status, 26, 18);
+
+    // 图例
+    ctx.font = '12px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#F0B9C4';
+    rr(ctx, 12, h - 24, 14, 14, 4); ctx.fill();
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('不通过 · 返回修改', 32, h - 21);
+    ctx.fillStyle = '#83BF00';
+    rr(ctx, 152, h - 24, 14, 14, 4); ctx.fill();
+    ctx.fillText('通过 · 合并提交', 172, h - 21);
+
+    // 运动的圆点
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, 9, 0, Math.PI * 2);
+    ctx.fillStyle = '#AFFF00'; ctx.fill();
+    ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 2.5; ctx.stroke();
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  return {
+    init(c) {
+      canvas = c;
+      if (!raf) { last = performance.now(); raf = requestAnimationFrame(draw); }
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      canvas = null;
+    },
+    reset, togglePause
+  };
+})();
+
+/* ---------- 演示 3：git diff 可视化（两版并排，新增绿底/删除红底，切换案例） ---------- */
+ARTINX_DEMOS['gitDiff'] = (() => {
+  let raf = null, canvas = null, caseIdx = 0;
+  const CTX = [
+    { t: 'ctx', v: 'void set_speed(int16_t t)' },
+    { t: 'ctx', v: '{' },
+    { t: 'ctx', v: '    if (motor_offline()) return;' },
+    { t: 'ctx', v: '    motor_target = t;' },
+    { t: 'ctx', v: '}' }
+  ];
+  const CASES = [
+    {
+      name: '案例 A：AI 只加了限幅',
+      verdict: 'AI 改对了',
+      good: true,
+      rows: [
+        { l: CTX[0], r: CTX[0] },
+        { l: CTX[1], r: CTX[1] },
+        { l: CTX[2], r: CTX[2] },
+        { l: { t: 'sp', v: '' }, r: { t: 'add', v: '    if (t > 5000)  t = 5000;' } },
+        { l: { t: 'sp', v: '' }, r: { t: 'add', v: '    if (t < -5000) t = -5000;' } },
+        { l: CTX[3], r: CTX[3] },
+        { l: CTX[4], r: CTX[4] }
+      ]
+    },
+    {
+      name: '案例 B：条件写反 + 删保护',
+      verdict: 'AI 改错了',
+      good: false,
+      rows: [
+        { l: CTX[0], r: CTX[0] },
+        { l: CTX[1], r: CTX[1] },
+        { l: { t: 'del', v: '    if (motor_offline()) return;' }, r: { t: 'sp', v: '' } },
+        { l: { t: 'sp', v: '' }, r: { t: 'add', v: '    if (t < 5000)  t = 5000;' } },
+        { l: { t: 'sp', v: '' }, r: { t: 'add', v: '    if (t > -5000) t = -5000;' } },
+        { l: CTX[3], r: CTX[3] },
+        { l: CTX[4], r: CTX[4] }
+      ]
+    }
+  ];
+
+  function draw() {
+    const { w, h, ctx } = fit(canvas);
+    const cs = CASES[caseIdx];
+    ctx.clearRect(0, 0, w, h);
+    const pad = 20;
+    const colW = (w - pad * 3) / 2;
+    const top = 58;
+    const lineH = Math.min(30, (h - top - 26) / cs.rows.length);
+
+    // 表头
+    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#262034';
+    ctx.fillText('修改前', pad, 14);
+    ctx.fillText('修改后（AI 改完）', pad * 2 + colW, 14);
+
+    // 案例名 + 结论
+    ctx.font = '13px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText(cs.name, pad, 34);
+    const vt = cs.verdict;
+    const vw = ctx.measureText(vt).width;
+    const vx = pad * 2 + colW;
+    ctx.fillStyle = cs.good ? 'rgba(175,255,0,.20)' : '#FFF3F5';
+    rr(ctx, vx, 32, vw + 24, 24, 12); ctx.fill();
+    ctx.strokeStyle = cs.good ? '#83BF00' : '#F0B9C4';
+    ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = cs.good ? '#3C6400' : '#4A2BD4';
+    ctx.fillText(vt, vx + 12, 37);
+
+    // 代码行
+    ctx.font = '13px Consolas, "Cascadia Mono", monospace';
+    for (let i = 0; i < cs.rows.length; i++) {
+      const row = cs.rows[i];
+      const y = top + i * lineH;
+      const bh = lineH - 3;
+      drawCell(row.l, pad, y, colW, bh);
+      drawCell(row.r, pad * 2 + colW, y, colW, bh);
+    }
+
+    // 底部提示
+    ctx.font = '12px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('绿底 = 新增行 · 红底 = 删除行 —— 切换案例，逐行找不同', pad, h - 20);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function drawCell(cell, x, y, cw, bh) {
+    const ctx = canvas.getContext('2d');
+    if (cell.t === 'add') ctx.fillStyle = 'rgba(175,255,0,.16)';
+    else if (cell.t === 'del') ctx.fillStyle = '#FFF3F5';
+    else if (cell.t === 'sp') ctx.fillStyle = '#FBFAFE';
+    else ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x, y, cw, bh);
+    if (cell.t === 'add' || cell.t === 'del' || cell.t === 'sp') {
+      ctx.strokeStyle = cell.t === 'add' ? '#83BF00' : (cell.t === 'del' ? '#F0B9C4' : '#E8E4F4');
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, cw - 1, bh - 1);
+    }
+    if (cell.t !== 'sp') {
+      ctx.fillStyle = '#262034';
+      ctx.fillText(cell.v, x + 10, y + (bh - 13) / 2);
+    }
+  }
+
+  function setCase(i) {
+    caseIdx = clamp(i, 0, CASES.length - 1);
+    const a = document.getElementById('gdCaseA');
+    const b = document.getElementById('gdCaseB');
+    if (a && b) {
+      a.className = caseIdx === 0 ? 'btn' : 'btn ghost';
+      b.className = caseIdx === 1 ? 'btn' : 'btn ghost';
+    }
+  }
+
+  return {
+    init(c) {
+      canvas = c;
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      canvas = null;
+    },
+    setCase
+  };
+})();
+
+/* ---------- 按钮接线 ---------- */
+document.getElementById('gbCommit').onclick = () => ARTINX_DEMOS['gitHistory'].commit();
+document.getElementById('gbBranch').onclick = () => ARTINX_DEMOS['gitHistory'].branch();
+document.getElementById('gbMerge').onclick = () => ARTINX_DEMOS['gitHistory'].merge();
+document.getElementById('gbReset').onclick = () => ARTINX_DEMOS['gitHistory'].reset();
+document.getElementById('alPause').onclick = () => ARTINX_DEMOS['aiLoop'].togglePause();
+document.getElementById('alReset').onclick = () => ARTINX_DEMOS['aiLoop'].reset();
+document.getElementById('gdCaseA').onclick = () => ARTINX_DEMOS['gitDiff'].setCase(0);
+document.getElementById('gdCaseB').onclick = () => ARTINX_DEMOS['gitDiff'].setCase(1);
+
+/* ---------- 演示 4：判断卡（DOM 交互，无 canvas） ---------- */
+(function () {
+  function bind(okId, badId, ansId, rightMsg, wrongMsg, rightIsOk) {
+    const ok = document.getElementById(okId);
+    const bad = document.getElementById(badId);
+    const ans = document.getElementById(ansId);
+    if (!ok || !bad || !ans) return;
+    function show(right) {
+      ans.textContent = right ? rightMsg : wrongMsg;
+      ans.style.color = right ? '#3C6400' : '#784CF6';
+    }
+    ok.onclick = () => show(rightIsOk);
+    bad.onclick = () => show(!rightIsOk);
+  }
+  bind('qz1Ok', 'qz1Bad', 'qz1Ans',
+    '判断正确：上限、下限都正确', '再看一遍：条件没有反', true);
+  bind('qz2Ok', 'qz2Bad', 'qz2Ans',
+    '判断正确：条件写反，还删了保护', '再看一遍：< 应为 >', false);
+})();
+</script>
+</body>
+</html>

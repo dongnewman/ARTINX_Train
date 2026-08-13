@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.4 运动学与坐标系 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⇱</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">2.4　运动学与坐标系</div>
+      <h1 class="anim" style="animation-delay:.2s">让车看懂方向</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">三种坐标系 · 麦克纳姆轮解算 · 云台角度控制</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>坐标系</h3>
+        <p>世界系 / 机器人系 / 云台系<br>2×2 旋转矩阵与坐标变换<br>Yaw / Pitch / Roll 定义</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>底盘</h3>
+        <p>麦轮单轮受力原理<br>四轮组合与解算公式<br>全向轮 / 舵轮对比</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>云台</h3>
+        <p>相对角 / 绝对角 / 多圈编码器<br>位置环 / 速度环<br>视觉目标到云台角度链路</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.4s;margin-top:14px">本节含 4 个交互演示：坐标系关系、麦轮 8 方向、云台 Yaw/Pitch、单轮受力分解。公式与演示符号完全一致，可对照验证。</div>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：三种坐标系 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">三种坐标系：以谁为基准说话</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>坐标系</th><th>基准与定义</th><th>谁在用</th></tr>
+      <tr><td><strong>世界坐标系</strong> World</td><td>场地固定不动，如俯视地图</td><td>视觉、裁判系统、导航</td></tr>
+      <tr><td><strong>机器人坐标系</strong> Robot</td><td>原点在车体，X 轴 = 车头方向</td><td>底盘控制、IMU 输出</td></tr>
+      <tr><td><strong>云台坐标系</strong> Gimbal</td><td>原点在云台，X 轴 = 炮口方向</td><td>云台控制、射击</td></tr>
+    </table>
+    <div class="callout anim" style="animation-delay:.2s;margin-top:14px">同一个矢量在不同系里坐标不同：车转 30°，世界系里的敌人坐标不变，机器人系里的坐标就跟着变。类比：地图、车上的人、云台上的人，都能指到同一个目标，但「前、左、右」含义不同。</div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：坐标变换与旋转矩阵 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">坐标变换：2×2 旋转矩阵</h2>
+    <pre class="anim" style="animation-delay:.1s">机器人系 → 世界系：
+[ x_w ]   [ cosθ  −sinθ ] [ x_r ]
+[ y_w ] = [ sinθ   cosθ ] [ y_r ]
+θ = 车头相对世界系 X 轴的夹角，逆时针为正</pre>
+    <div class="grid grid-2" style="margin-top:12px">
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>手算验证</h3>
+        <p>θ = 90°：车头 (1,0) → 世界系 (0,1)；车正前方 2 m 的点 (2,0) → (0,2)。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>用途</h3>
+        <p>视觉给出世界系目标，经旋转矩阵转进机器人系、云台系，才能算出瞄准角。</p>
+      </div>
+    </div>
+    <div class="callout anim" style="animation-delay:.4s;margin-top:12px">比赛还约定场地坐标系（红方/蓝方视角），原理相同，仅零点和方向定义不同；矩阵就是「把机器人系的地图转 θ 度对齐到世界系」。</div>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：演示一 坐标系关系 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示一：坐标系关系（拖动滑块）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="coords"></canvas>
+      <div class="demo-controls">
+        <label>车头角度 θ <input type="range" id="coTh" min="0" max="360" value="90"></label>
+        <label>云台偏角 φ <input type="range" id="coPh" min="-90" max="90" value="45"></label>
+        <span class="small muted">观察「车→目标」矢量在三套系中的坐标读数</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：Yaw / Pitch / Roll ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">Yaw / Pitch / Roll：三个姿态角</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s;text-align:center">
+        <svg viewBox="0 0 220 120" width="100%" height="86">
+          <rect x="60" y="42" width="100" height="52" rx="10" fill="#F7F4FE" stroke="#784CF6" stroke-width="3"/>
+          <polygon points="110,42 96,20 124,20" fill="#784CF6"/>
+          <path d="M 150 18 A 40 40 0 0 1 160 56" fill="none" stroke="#AFFF00" stroke-width="6" stroke-linecap="round"/>
+          <polygon points="164,58 152,60 158,46" fill="#83BF00"/>
+        </svg>
+        <span class="chip">Yaw 偏航</span>
+        <p class="small">车头左右摆：原地转、小陀螺</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s;text-align:center">
+        <svg viewBox="0 0 220 120" width="100%" height="86">
+          <rect x="60" y="56" width="100" height="34" rx="9" fill="#F7F4FE" stroke="#784CF6" stroke-width="3"/>
+          <line x1="110" y1="56" x2="110" y2="24" stroke="#784CF6" stroke-width="8" stroke-linecap="round"/>
+          <path d="M 150 66 A 46 46 0 0 1 150 22" fill="none" stroke="#AFFF00" stroke-width="6" stroke-linecap="round"/>
+          <polygon points="150,16 140,28 160,28" fill="#83BF00"/>
+        </svg>
+        <span class="chip">Pitch 俯仰</span>
+        <p class="small">炮口抬高 / 压低（点头）</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s;text-align:center">
+        <svg viewBox="0 0 220 120" width="100%" height="86">
+          <rect x="80" y="42" width="60" height="52" rx="9" fill="#F7F4FE" stroke="#784CF6" stroke-width="3" transform="rotate(-18 110 68)"/>
+          <path d="M 170 104 A 58 58 0 0 0 172 42" fill="none" stroke="#AFFF00" stroke-width="6" stroke-linecap="round"/>
+          <polygon points="176,36 162,42 178,50" fill="#83BF00"/>
+        </svg>
+        <span class="chip">Roll 翻滚</span>
+        <p class="small">车体左右倾斜（侧翻）</p>
+      </div>
+    </div>
+    <div class="callout anim" style="animation-delay:.4s;margin-top:14px">右手定则：右手握轴、拇指指向轴正方向，四指弯曲方向为正。IMU（惯性测量单元）实时输出这三个角，是云台「反向补偿」的数据来源。</div>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：麦轮单轮原理 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">麦轮单轮：45° 辊子的作用</h2>
+    <div class="cols" style="flex:1">
+      <div class="card anim" style="animation-delay:.1s;justify-content:center;text-align:center">
+        <svg viewBox="0 0 240 220" width="100%" height="215">
+          <circle cx="120" cy="110" r="82" fill="#F7F4FE" stroke="#784CF6" stroke-width="4"/>
+          <defs><clipPath id="wclip"><circle cx="120" cy="110" r="80"/></clipPath></defs>
+          <g stroke="#C9C3DE" stroke-width="7" stroke-linecap="round" clip-path="url(#wclip)">
+            <line x1="44" y1="118" x2="104" y2="178"/><line x1="74" y1="118" x2="134" y2="178"/>
+            <line x1="104" y1="118" x2="164" y2="178"/><line x1="134" y1="118" x2="194" y2="178"/>
+            <line x1="164" y1="118" x2="224" y2="178"/>
+          </g>
+          <line x1="120" y1="110" x2="182" y2="48" stroke="#784CF6" stroke-width="6" stroke-linecap="round"/>
+          <polygon points="188,42 172,50 186,60" fill="#784CF6"/>
+          <line x1="120" y1="110" x2="120" y2="50" stroke="#83BF00" stroke-width="5" stroke-dasharray="8 5"/>
+          <polygon points="120,42 112,56 128,56" fill="#83BF00"/>
+          <line x1="120" y1="110" x2="182" y2="110" stroke="#AFFF00" stroke-width="5" stroke-dasharray="8 5"/>
+          <polygon points="190,110 176,103 176,117" fill="#AFFF00"/>
+          <text x="148" y="36" font-size="13" fill="#784CF6" font-weight="700">合力（斜 45°）</text>
+          <text x="86" y="38" font-size="13" fill="#83BF00" font-weight="700">前分量</text>
+          <text x="164" y="104" font-size="13" fill="#83BF00" font-weight="700">侧分量</text>
+        </svg>
+      </div>
+      <div style="justify-content:center;gap:12px">
+        <div class="callout anim" style="animation-delay:.2s">定义：轮毂外圈斜 45° 装一圈小辊子（roller），辊子可绕自身轴自由转动。</div>
+        <div class="callout anim" style="animation-delay:.3s">轮子正转时摩擦被辊子「掰」成斜 45° 力，分解为前进分量 + 侧移分量——横移力量的来源。</div>
+        <div class="callout anim" style="animation-delay:.4s">沿辊子方向的分量被辊子空转「吃掉」，不传给车身。</div>
+        <div class="callout tip anim" style="animation-delay:.5s">45° 是关键：0° 是普通轮只有前后力；90° 是全向轮只有左右力；45° 两边各占一半。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：演示四 受力分解 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示四：单轮受力分解</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="force"></canvas>
+      <div class="demo-controls">
+        <label>轮速 <input type="range" id="fSpd" min="-100" max="100" value="60"></label>
+        <span class="small muted">正转：合力斜前 45°；反转：整体反向</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：四轮组合 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">四轮组合：核心是「抵消」</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s;text-align:center">
+        <svg viewBox="0 0 200 130" width="100%" height="98">
+          <rect x="52" y="28" width="96" height="74" rx="12" fill="#F7F4FE" stroke="#784CF6" stroke-width="3"/>
+          <g font-size="22" fill="#83BF00" text-anchor="middle"><text x="70" y="42">↑</text><text x="130" y="42">↑</text><text x="70" y="96">↑</text><text x="130" y="96">↑</text></g>
+        </svg>
+        <p class="small">前进：四轮同向同速，左右分力两两抵消</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s;text-align:center">
+        <svg viewBox="0 0 200 130" width="100%" height="98">
+          <rect x="52" y="28" width="96" height="74" rx="12" fill="#F7F4FE" stroke="#784CF6" stroke-width="3"/>
+          <g font-size="22" text-anchor="middle"><text x="70" y="42" fill="#784CF6">↓</text><text x="130" y="42" fill="#83BF00">↑</text><text x="70" y="96" fill="#83BF00">↑</text><text x="130" y="96" fill="#784CF6">↓</text></g>
+        </svg>
+        <p class="small">横移：对角同转、邻轮反向，前后分力抵消</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s;text-align:center">
+        <svg viewBox="0 0 200 130" width="100%" height="98">
+          <rect x="52" y="28" width="96" height="74" rx="12" fill="#F7F4FE" stroke="#784CF6" stroke-width="3"/>
+          <g font-size="22" text-anchor="middle"><text x="70" y="42" fill="#784CF6">↓</text><text x="130" y="42" fill="#83BF00">↑</text><text x="70" y="96" fill="#784CF6">↓</text><text x="130" y="96" fill="#83BF00">↑</text></g>
+        </svg>
+        <p class="small">旋转：左轮反转、右轮正转，只剩力矩原地转</p>
+      </div>
+    </div>
+    <div class="callout anim" style="animation-delay:.4s;margin-top:14px">斜移 = 前进 + 横移按比例叠加。要前进就抵消左右分量，要横移就抵消前后分量，要旋转就抵消平动分量。</div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：布置与约定 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">麦轮布置与符号约定</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>X 型与 O 型布置</h3>
+        <p>X 型（对角同型）：左前 = 右后为 A 型、右前 = 左后为 B 型；O 型（左右同型）公式符号图案不同。全队必须统一一种并写进注释，混装会出现「横移变斜线」。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>本节统一约定</h3>
+        <p>机器人系 X 前、Y 左、Z 上（右手系）；ω 正 = 俯视逆时针（左转）；a、b = 轮子到车中心的纵向、横向距离，旋转项系数为 (a+b)。</p>
+      </div>
+    </div>
+    <div class="callout anim" style="animation-delay:.3s;margin-top:14px">演示与代码全部采用本页约定；讲解时结合战队现有代码对照符号。</div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：解算公式 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">麦轮解算：目标速度 → 四个轮速</h2>
+    <pre class="anim" style="animation-delay:.1s">V1(左前) = Vx − Vy − ω·(a+b)
+V2(右前) = Vx + Vy + ω·(a+b)
+V3(左后) = Vx + Vy − ω·(a+b)
+V4(右后) = Vx − Vy + ω·(a+b)</pre>
+    <ul class="anim" style="margin-top:10px;animation-delay:.2s">
+      <li>平移项：Vx 四轮全同号；Vy 左前/右后为负、右前/左后为正（对角同号、邻轮异号）</li>
+      <li>旋转项：右前/右后为正、左前/左后为负，车向左转</li>
+      <li>严格推导多一个 √2 系数（45° 分解代价），工程上作整体比例，由速度环 PID 补偿</li>
+    </ul>
+    <div class="callout warn anim" style="animation-delay:.3s;margin-top:10px">速度溢出：前进 + 横移 + 旋转同时拉满时某轮速可达上限 2 倍。处理：四个轮速等比例缩小（方向比例不变，轨迹不变形）。</div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：解算代码 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">解算代码骨架（C 语言）</h2>
+    <pre class="anim" style="animation-delay:.1s"><span class="c">/* 约定：X 前、Y 左、ω 逆时针为正；1=左前 2=右前 3=左后 4=右后 */</span>
+<span class="k">typedef struct</span> { <span class="k">float</span> vx, vy, vw; } <span class="n">ChassisVel</span>;      <span class="c">/* 目标速度 */</span>
+<span class="k">typedef struct</span> { <span class="k">float</span> w1, w2, w3, w4; } <span class="n">WheelSpd</span>;     <span class="c">/* 四轮速 */</span>
+
+<span class="n">WheelSpd</span> <span class="f">mecanum_solve</span>(<span class="n">ChassisVel</span> v, <span class="k">float</span> a, <span class="k">float</span> b)
+{
+    <span class="n">WheelSpd</span> w;
+    <span class="k">float</span> k = a + b;                 <span class="c">/* 旋转项公共系数 */</span>
+    w.w1 = v.vx - v.vy - v.vw * k;   <span class="c">/* 左前 */</span>
+    w.w2 = v.vx + v.vy + v.vw * k;   <span class="c">/* 右前 */</span>
+    w.w3 = v.vx + v.vy - v.vw * k;   <span class="c">/* 左后 */</span>
+    w.w4 = v.vx - v.vy + v.vw * k;   <span class="c">/* 右后 */</span>
+    <span class="k">return</span> w;
+}
+<span class="c">/* 限幅：任一超限则四个等比例缩小 */</span></pre>
+    <div class="callout anim" style="animation-delay:.2s;margin-top:12px">不用背公式——平移看「对角同号」图案，旋转看「右正左负」。完整可编译代码见教学内容.md 任务二。</div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：演示二 麦轮 8 方向 ══════════════════ -->
+  <section class="slide" id="slide-mecanum">
+    <h2 class="anim">演示二：麦轮 8 方向（核心）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="mecanum"></canvas>
+      <div class="demo-controls">
+        <button class="btn ghost" style="padding:5px 12px;font-size:12.5px" data-dir="1,0,0">前</button>
+        <button class="btn ghost" style="padding:5px 12px;font-size:12.5px" data-dir="-1,0,0">后</button>
+        <button class="btn ghost" style="padding:5px 12px;font-size:12.5px" data-dir="0,1,0">左</button>
+        <button class="btn ghost" style="padding:5px 12px;font-size:12.5px" data-dir="0,-1,0">右</button>
+        <button class="btn ghost" style="padding:5px 12px;font-size:12.5px" data-dir=".707,.707,0">左前</button>
+        <button class="btn ghost" style="padding:5px 12px;font-size:12.5px" data-dir=".707,-.707,0">右前</button>
+        <button class="btn ghost" style="padding:5px 12px;font-size:12.5px" data-dir="-.707,.707,0">左后</button>
+        <button class="btn ghost" style="padding:5px 12px;font-size:12.5px" data-dir="-.707,-.707,0">右后</button>
+        <button class="btn ghost" style="padding:5px 12px;font-size:12.5px" data-dir="0,0,1">顺转</button>
+        <button class="btn ghost" style="padding:5px 12px;font-size:12.5px" data-dir="0,0,-1">逆转</button>
+        <button class="btn" style="padding:5px 12px;font-size:12.5px" data-dir="0,0,0">停</button>
+        <span class="small muted">键盘 WASD 平移 · QE 旋转 · X 停</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：全向轮与舵轮 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">另两种全向方案：全向轮与舵轮</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th></th><th>麦克纳姆轮</th><th>全向轮 Omni</th><th>舵轮 Steering</th></tr>
+      <tr><td><strong>结构</strong></td><td>轮毂 + 45° 斜辊子</td><td>轮毂 + 90° 竖辊子</td><td>普通轮 + 转向电机</td></tr>
+      <tr><td><strong>安装</strong></td><td>四轮平行，如普通车</td><td>3~4 轮按角度斜装</td><td>四轮各带转向机构</td></tr>
+      <tr><td><strong>横移</strong></td><td>支持，任意方向</td><td>支持，任意方向</td><td>支持，但先转轮、有延迟</td></tr>
+      <tr><td><strong>优点</strong></td><td>装车简单，赛场主流</td><td>结构简单、侧向力大</td><td>抓地好、负载大、越障强</td></tr>
+      <tr><td><strong>缺点</strong></td><td>辊子交替接地略颠、怕滑</td><td>接地不连续、震动大</td><td>结构复杂、控制最麻烦</td></tr>
+      <tr><td><strong>解算</strong></td><td>线性公式（本节）</td><td>类似向量分解</td><td>转向角需反三角函数</td></tr>
+    </table>
+    <div class="callout anim" style="animation-delay:.2s;margin-top:12px">步兵 / 英雄用麦轮；工程取弹小车常用舵轮（负载重、需精确对准）。舵轮转向角还需满足各轮转向圆共圆心的几何约束。</div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：云台角度 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">云台角度：相对角与绝对角</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>相对角</h3>
+        <p>云台相对车体转的角度；由云台 Yaw / Pitch 电机编码器测量；上电归零，掉电即忘。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>绝对角</h3>
+        <p>云台相对场地的指向；编码器 + 底盘 IMU Yaw 合成；车怎么转，炮口指向不受影响。</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:14px">
+      <span style="font-family:var(--mono)">绝对角 = 相对角 + 底盘Yaw</span>　例：底盘 Yaw = +30°，云台要指正前方（0°），相对角应打到 −30°，即「反向补偿」。<span class="chip gray" style="margin-left:8px">多圈编码器：累计圈数，超过一圈不丢角度</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：演示三 云台 Yaw/Pitch ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示三：云台 Yaw / Pitch</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="gimbal"></canvas>
+      <div class="demo-controls">
+        <label>底盘 Yaw <input type="range" id="gmCh" min="-180" max="180" value="30"></label>
+        <label>云台相对角 <input type="range" id="gmRel" min="-180" max="180" value="-30"></label>
+        <label>Pitch <input type="range" id="gmPt" min="-30" max="30" value="15"></label>
+        <span class="small muted">左：俯视图　右：侧视图</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：位置控制 vs 速度控制 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">云台控制：位置环与速度环</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>位置控制</h3>
+        <p>目标：转到某个角度（°）；反馈：编码器角度。用于云台瞄准、舵轮转向角。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>速度控制</h3>
+        <p>目标：保持角速度（°/s）；反馈：角度差分。用于底盘轮速、云台跟随时。</p>
+      </div>
+    </div>
+    <div class="callout anim" style="animation-delay:.3s;margin-top:14px">串级结构：位置环（外环）输出目标角速度，速度环（内环）执行——「想去 30°，先算出该用多快冲过去，快到再减速」；2.5 节展开。底盘通常只跑速度环：摇杆给出的就是速度指令。</div>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：视觉→云台链路 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">视觉目标到云台角度：完整链路</h2>
+    <ol class="anim" style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;animation-delay:.1s">
+      <li>视觉在世界系给出敌人方位角 target_world（相对场地）</li>
+      <li>减底盘 Yaw（IMU）→ 得到敌人相对车头的角度</li>
+      <li>减云台当前相对角 → 得到云台还差多少度</li>
+      <li>位置环输出目标角速度，速度环执行</li>
+      <li>每一步用回绕函数包到 (−180°, 180°]，防止跨圈跳变</li>
+    </ol>
+    <pre class="anim" style="animation-delay:.2s"><span class="k">float</span> <span class="f">wrap180</span>(<span class="k">float</span> d){ <span class="k">while</span>(d&gt;180)d-=360; <span class="k">while</span>(d&lt;=-180)d+=360; <span class="k">return</span> d; }
+<span class="k">float</span> rel = <span class="f">wrap180</span>(target_world - chassis_yaw);   <span class="c">/* 世界目标 → 云台相对角 */</span></pre>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：常见问题 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>现象</th><th>可能原因</th><th>排查方法</th></tr>
+      <tr><td>横移走成斜线 / 原地转圈</td><td>某轮装反（A/B 型装错）或公式符号反</td><td>纸笔推符号；单独给 Vy 看是否纯横移</td></tr>
+      <tr><td>原地旋转时车会漂移</td><td>轮径不一致、摩擦不同、系数不统一</td><td>空转校准轮径；查限幅后比例</td></tr>
+      <tr><td>满速前进时轨迹变形</td><td>速度溢出没限幅</td><td>检查每周期是否调等比例限幅</td></tr>
+      <tr><td>云台上电自转 / 乱甩</td><td>零位没初始化、补偿符号反</td><td>上电标零；核对「绝对角 = 相对角 + 底盘Yaw」符号</td></tr>
+      <tr><td>云台角度转到一圈时跳变</td><td>编码器单圈回绕没处理</td><td>用 wrap180 统一回绕到 (−180°, 180°]</td></tr>
+      <tr><td>麦轮在滑场地上走不直</td><td>辊子打滑，开环速度控制兜不住</td><td>加底盘 IMU 反馈（调车章节展开）</td></tr>
+    </table>
+    <div class="callout anim" style="animation-delay:.2s;margin-top:12px">排查思路：先隔离（单给 Vx / Vy / ω），再对照符号图案定位是「装反」还是「算反」。</div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源</h2>
+    <div class="grid" style="flex:1;align-content:center;gap:14px">
+      <div class="card white anim" style="animation-delay:.1s">
+        <a href="https://en.wikipedia.org/wiki/Mecanum_wheel" target="_blank" rel="noopener">Mecanum wheel · Wikipedia</a>
+        <span class="muted small">—— 麦轮发明史、结构与横移图解（英文），查原理细节用</span>
+      </div>
+      <div class="card white anim" style="animation-delay:.2s">
+        <a href="https://www.bilibili.com/video/BV19W411h7if" target="_blank" rel="noopener">麦克纳姆轮平移原理 · RoboMaster 官方（B 站）</a>
+        <span class="muted small">—— 官方科普，四轮组合怎么拼出平移讲得很直观</span>
+      </div>
+      <div class="card white anim" style="animation-delay:.3s">
+        <a href="https://github.com/RoboMaster/Development-Board-C-Examples" target="_blank" rel="noopener">RoboMaster/Development-Board-C-Examples · GitHub</a>
+        <span class="muted small">—— 官方开发板 C 型例程，17.chassis_task / 19.gimbal_task 为工程级写法</span>
+      </div>
+      <div class="card white anim" style="animation-delay:.4s">
+        <a href="https://github.com/RoboMaster/Development-Board-C-Examples/blob/master/RoboMaster%E5%BC%80%E5%8F%91%E6%9D%BFC%E5%9E%8B%E5%B5%8C%E5%85%A5%E5%BC%8F%E8%BD%AF%E4%BB%B6%E6%95%99%E7%A8%8B%E6%96%87%E6%A1%A3.pdf" target="_blank" rel="noopener">RoboMaster 开发板 C 型教程文档 · 官方 PDF</a>
+        <span class="muted small">—— 官方教程，底盘 / 云台章节对照源码看</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>三个坐标系各以什么为基准，旋转矩阵怎么「翻译」</li>
+        <li>麦轮 = 45° 辊子 + 抵消图案，公式符号与演示一致</li>
+        <li>相对角 / 绝对角：车转多少，云台反着补多少</li>
+        <li>位置管「转多少度」，速度管「转多快」</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（2.4 运动学与坐标系） =================
+   演示内颜色统一：亮绿 #AFFF00、深绿 #83BF00、品牌紫 #784CF6；
+   canvas 文字不使用 emoji。
+   麦轮公式约定与教学内容.md 完全一致：
+   w1=FL=Vx−Vy−ωk, w2=FR=Vx+Vy+ωk, w3=RL=Vx+Vy−ωk, w4=RR=Vx−Vy+ωk
+   （k=a+b；X 前、Y 左，ω 正 = 左转） */
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const D2R = Math.PI / 180;
+/* 角度回绕到 (-180, 180] */
+function wrap180(d) {
+  while (d > 180) d -= 360;
+  while (d <= -180) d += 360;
+  return d;
+}
+/* 画箭头：从 (x,y) 沿角 a（世界系，y 向上）长 len */
+function arrow(ctx, x, y, a, len, color, width, dash) {
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width || 3;
+  ctx.setLineDash(dash || []);
+  ctx.beginPath(); ctx.moveTo(x, y);
+  ctx.lineTo(x + Math.cos(a) * len, y - Math.sin(a) * len); ctx.stroke();
+  const ax = x + Math.cos(a) * len, ay = y - Math.sin(a) * len;
+  ctx.beginPath(); ctx.moveTo(ax, ay);
+  ctx.lineTo(ax - Math.cos(a - 0.42) * 12, ay + Math.sin(a - 0.42) * 12);
+  ctx.lineTo(ax - Math.cos(a + 0.42) * 12, ay + Math.sin(a + 0.42) * 12);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+/* ───────────── 演示一 坐标系关系：三套轴 + 目标点坐标 ───────────── */
+ARTINX_DEMOS['coords'] = (() => {
+  let raf = null;
+  const T = { x: 170, y: 95 };          /* 目标点（世界系，相对车中心，y 向上） */
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const th = (+document.getElementById('coTh').value) * D2R;   /* 车头角 */
+    const ph = (+document.getElementById('coPh').value) * D2R;   /* 云台偏角 */
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2, cy = h / 2;
+    /* 世界系（场地） */
+    arrow(ctx, cx - 240, cy, 0, 150, '#262034', 2.5);
+    arrow(ctx, cx - 240, cy, Math.PI / 2, 100, '#262034', 2.5);
+    ctx.fillStyle = '#6E6880'; ctx.font = '13px sans-serif';
+    ctx.fillText('世界系 X（场地）', cx - 240, cy + 18);
+    ctx.save(); ctx.translate(cx - 240, cy - 100); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('世界系 Y', 0, 0); ctx.restore();
+    /* 车（机器人系） */
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-th);   /* canvas y 向下，需取负 */
+    ctx.fillStyle = '#784CF6';
+    ctx.fillRect(-34, -48, 68, 96);
+    ctx.fillStyle = '#AFFF00';
+    ctx.fillRect(-10, -44, 8, 8); ctx.fillRect(-10, 36, 8, 8);
+    ctx.restore();
+    arrow(ctx, cx, cy, th, 120, '#784CF6', 4);        /* 机器人系 X = 车头 */
+    arrow(ctx, cx, cy, th + Math.PI / 2, 100, '#83BF00', 4);
+    ctx.fillStyle = '#784CF6'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('机器人系 X（车头）', cx + Math.cos(th) * 130 - 60, cy - Math.sin(th) * 130 - 6);
+    arrow(ctx, cx, cy, th + ph, 150, '#AFFF00', 4, [9, 5]);  /* 云台系 X = 炮口 */
+    ctx.fillStyle = '#83BF00'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('云台系 X（炮口）', cx + Math.cos(th + ph) * 160 - 52, cy - Math.sin(th + ph) * 160 - 6);
+    /* 目标点 + 投影 */
+    const tx = cx + T.x, ty = cy - T.y;
+    const px = T.x, py = T.y;
+    const Xr = { x: Math.cos(th), y: Math.sin(th) };                 /* 机器人系 X 基向量 */
+    const Yr = { x: -Math.sin(th), y: Math.cos(th) };                /* 机器人系 Y 基向量 */
+    const Xg = { x: Math.cos(th + ph), y: Math.sin(th + ph) };
+    const Yg = { x: -Math.sin(th + ph), y: Math.cos(th + ph) };
+    const rx = px * Xr.x + py * Xr.y, ry = px * Yr.x + py * Yr.y;    /* 机器人系坐标 */
+    const gx = px * Xg.x + py * Xg.y, gy = px * Yg.x + py * Yg.y;    /* 云台系坐标 */
+    ctx.strokeStyle = '#C9C3DE'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(cx + rx * Xr.x, cy - rx * Xr.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(cx + ry * Yr.x, cy - ry * Yr.y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(tx, ty, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#784CF6'; ctx.fill();
+    ctx.fillStyle = '#262034'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('目标', tx + 14, ty + 4);
+    /* 三种坐标读数 */
+    ctx.fillStyle = '#262034'; ctx.font = 'bold 15px Consolas, monospace';
+    ctx.fillText('同一个矢量「车→目标」:', 26, 30);
+    ctx.fillStyle = '#784CF6';
+    ctx.fillText('世界系  (' + px.toFixed(0) + ', ' + py.toFixed(0) + ')', 26, 56);
+    ctx.fillText('机器人系(' + rx.toFixed(0) + ', ' + ry.toFixed(0) + ')', 26, 80);
+    ctx.fillStyle = '#83BF00';
+    ctx.fillText('云台系  (' + gx.toFixed(0) + ', ' + gy.toFixed(0) + ')', 26, 104);
+    ctx.fillStyle = '#6E6880'; ctx.font = '12px sans-serif';
+    ctx.fillText('θ = ' + Math.round(th / D2R) + '°　φ = ' + Math.round(ph / D2R) + '°（拖滑块，读数跟着变）', 26, 126);
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+/* ───────────── 演示四 麦轮单轮受力分解 ───────────── */
+ARTINX_DEMOS['force'] = (() => {
+  let raf = null, ph = 0, last = 0;
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const spd = +document.getElementById('fSpd').value;   /* -100..100 */
+    const now = performance.now();
+    const dt = (now - (last || now)) / 1000; last = now;
+    ph += spd * dt * 1.6;                                 /* 辊子相位随轮速滚动 */
+    ctx.clearRect(0, 0, w, h);
+    const cx = w * 0.5, cy = h * 0.55, R = Math.min(w, h) * 0.26;
+    /* 轮体 */
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = '#F7F4FE'; ctx.fill();
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 4; ctx.stroke();
+    /* 45° 辊子（"\" 走向 = 左前轮同款；沿滚动方向平移模拟轮转） */
+    const sp = 26, off = ph % sp;
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R - 4, 0, Math.PI * 2); ctx.clip();
+    ctx.strokeStyle = '#C9C3DE'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+    for (let x = cx - R * 2.2 + off; x < cx + R * 2.2; x += sp) {
+      ctx.beginPath(); ctx.moveTo(x - R, cy - R); ctx.lineTo(x + R, cy + R); ctx.stroke();
+    }
+    ctx.restore();
+    /* 轮轴 */
+    ctx.strokeStyle = '#262034'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(cx - R - 14, cy); ctx.lineTo(cx + R + 14, cy); ctx.stroke();
+    const dir = spd >= 0 ? 1 : -1, mag = Math.abs(spd) / 100;
+    const F = mag * R * 1.35;
+    /* 屏幕坐标 y 向下：正转（向前滚）→ 驱动力向上；
+       传给车身的合力沿辊子垂线 = 斜前 45°（上右）；
+       沿辊子方向的分量被辊子空转吃掉（上左） */
+    const aRoll = dir > 0 ? Math.PI / 2 : -Math.PI / 2;     /* 轮子驱动力方向 */
+    const aAct  = dir > 0 ? Math.PI / 4 : -3 * Math.PI / 4; /* 合力：斜前 45° */
+    const aEat  = dir > 0 ? 3 * Math.PI / 4 : -Math.PI / 4; /* 沿辊子：被吃掉 */
+    arrow(ctx, cx, cy, aRoll, F, '#B9B3CC', 4, [6, 5]);
+    arrow(ctx, cx, cy, aAct, F * 0.707, '#784CF6', 5);
+    arrow(ctx, cx, cy, aRoll, F * 0.5, '#83BF00', 4, [7, 4]);            /* 前进分量 */
+    arrow(ctx, cx, cy, dir > 0 ? 0 : Math.PI, F * 0.5, '#AFFF00', 4, [7, 4]); /* 侧向分量 */
+    arrow(ctx, cx, cy, aEat, F * 0.707, '#C9C3DE', 3, [4, 6]);
+    const fx = cx + Math.cos(aAct) * F * 0.707, fy = cy - Math.sin(aAct) * F * 0.707;
+    ctx.fillStyle = '#784CF6'; ctx.font = 'bold 15px sans-serif';
+    ctx.fillText('传给车身：斜前 45°', fx + 10, fy - 8);
+    ctx.fillStyle = '#83BF00'; ctx.fillText('前进分量', cx + 8, cy - F * 0.5 - 8);
+    ctx.fillStyle = '#83BF00'; ctx.fillText('侧向分量', cx + F * 0.5 + 8, cy + 18);
+    ctx.fillStyle = '#B9B3CC'; ctx.fillText('沿辊子方向：被空转吃掉', cx - 150, cy - F * 0.707 - 12);
+    ctx.fillStyle = '#6E6880'; ctx.fillText('轮子驱动力（正转 = 向前滚）', cx + 16, cy + 34);
+    ctx.fillStyle = '#262034'; ctx.font = 'bold 16px Consolas, monospace';
+    ctx.fillText('轮速 = ' + (spd >= 0 ? '+' : '') + spd, cx - 58, cy + R + 34);
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  return {
+    init(canvas) { last = 0; if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+/* ───────────── 演示二（核心）麦轮 8 方向 ─────────────
+ * 公式与 md 完全一致：w1=FL=Vx−Vy−ωk, w2=FR=Vx+Vy+ωk,
+ * w3=RL=Vx+Vy−ωk, w4=RR=Vx−Vy+ωk（k=a+b；X 前 Y 左，ω 正=左转）
+ * 轮型（X 型，对角相同）：FL、RR 为 "\" 辊；FR、RL 为 "/" 辊
+ * 正转主动力：FL/RR → 前外 45°，FR/RL → 前内 45°（由公式符号推出）
+ * 屏幕约定：hd=0 车头朝上，hd 增大 = 右转；左转(ω>0) → hd 减小 */
+ARTINX_DEMOS['mecanum'] = (() => {
+  let raf = null, last = 0;
+  let vx = 0.707, vy = 0.707, vw = 0;           /* 当前目标（默认左前） */
+  let px = 0, py = 0, hd = 0;                    /* 车屏幕位置与朝向 */
+  const A = 34, B = 26, K = A + B;               /* 半长、半宽、k=a+b */
+  let bound = false;
+  function bind() {
+    if (bound) return; bound = true;
+    const btns = [...document.querySelectorAll('#slide-mecanum .demo-controls .btn')];
+    const mark = () => {
+      btns.forEach(o => { o.style.background = ''; o.style.color = ''; });
+      if (vx || vy || vw) {
+        const act = btns.find(o => o.dataset.dir === '0,0,0' ? false :
+          o.dataset.dir.split(',').map(Number).every((v, i) => Math.abs(v - [vx, vy, vw][i]) < 1e-3));
+        if (act) { act.style.background = '#784CF6'; act.style.color = '#fff'; }
+      }
+    };
+    btns.forEach(b => {
+      b.onclick = () => {
+        const [x, y, z] = b.dataset.dir.split(',').map(Number);
+        vx = x; vy = y; vw = z;
+        mark();
+      };
+    });
+    mark();
+    window.addEventListener('keydown', e => {
+      if (!document.getElementById('slide-mecanum').classList.contains('active')) return;
+      const k = e.key.toLowerCase();
+      if (k === 'w') { vx = 1; vy = 0; vw = 0; }
+      else if (k === 's') { vx = -1; vy = 0; vw = 0; }
+      else if (k === 'a') { vx = 0; vy = 1; vw = 0; }
+      else if (k === 'd') { vx = 0; vy = -1; vw = 0; }
+      else if (k === 'q') { vx = 0; vy = 0; vw = 1; }
+      else if (k === 'e') { vx = 0; vy = 0; vw = -1; }
+      else if (k === 'x') { vx = 0; vy = 0; vw = 0; }
+      else return;
+      e.preventDefault();
+      mark();
+    });
+  }
+  function wheelSpd() {                              /* 麦轮解算（与公式一致） */
+    return [vx - vy - vw * K, vx + vy + vw * K, vx + vy - vw * K, vx - vy + vw * K];
+  }
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    const dt = Math.min((now - (last || now)) / 1000, 0.05); last = now;
+    /* 车运动学（屏幕系，y 向下）：前进 f=(sin hd,−cos hd)，左 l=(−cos hd,−sin hd) */
+    px += (Math.sin(hd) * vx - Math.cos(hd) * vy) * 90 * dt;
+    py += (-Math.cos(hd) * vx - Math.sin(hd) * vy) * 90 * dt;
+    hd -= vw * 1.2 * dt;                             /* ω 正 = 左转 = 屏幕逆时针 */
+    /* 环绕边界 */
+    if (px > w / 2 - 30) px = -w / 2 + 30; else if (px < -w / 2 + 30) px = w / 2 - 30;
+    if (py > h / 2 - 30) py = -h / 2 + 30; else if (py < -h / 2 + 30) py = h / 2 - 30;
+    const ox = w / 2 + px, oy = h / 2 + py;          /* 车中心屏幕坐标 */
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#6E6880'; ctx.font = '13px sans-serif';
+    ctx.fillText('车头角 = ' + Math.round(wrap180(hd / D2R)) + '°', 22, 26);
+    const s = wheelSpd();
+    const m = Math.max(Math.abs(s[0]), Math.abs(s[1]), Math.abs(s[2]), Math.abs(s[3]), 1e-6);
+    /* 四轮局部坐标（x=右, y=下；车头 = 局部 −y）：FL 左前、FR 右前、RL 左后、RR 右后 */
+    const wl = [
+      { x: -B, y: -A, type: 1, s: s[0] }, { x: B, y: -A, type: 2, s: s[1] },
+      { x: -B, y: A, type: 2, s: s[2] }, { x: B, y: A, type: 1, s: s[3] }
+    ];
+    /* 车体（局部系里：−y 为车头） */
+    ctx.save(); ctx.translate(ox, oy); ctx.rotate(hd);
+    ctx.fillStyle = '#784CF6';
+    ctx.fillRect(-B - 12, -A - 14, (B + 12) * 2, (A + 14) * 2);
+    ctx.fillStyle = '#AFFF00'; ctx.fillRect(-6, -A - 20, 12, 12);   /* 车头标 */
+    wl.forEach(wlx => {
+      const wx = wlx.x, wy = wlx.y;
+      /* 辊子纹理：type1="\"（FL/RR），type2="/"（FR/RL），对角相同 */
+      ctx.strokeStyle = '#8F87AB'; ctx.lineWidth = 2.5;
+      for (let t = -1; t <= 1; t++) {
+        ctx.beginPath();
+        if (wlx.type === 1) { ctx.moveTo(wx - 6 + t * 7, wy - 6); ctx.lineTo(wx + 6 + t * 7, wy + 6); }
+        else { ctx.moveTo(wx - 6 + t * 7, wy + 6); ctx.lineTo(wx + 6 + t * 7, wy - 6); }
+        ctx.stroke();
+      }
+      ctx.beginPath(); ctx.arc(wx, wy, 11, 0, Math.PI * 2);
+      ctx.fillStyle = '#262034'; ctx.fill(); ctx.strokeStyle = '#AFFF00'; ctx.lineWidth = 2; ctx.stroke();
+      const dir = wlx.s >= 0 ? 1 : -1;
+      /* 滚动方向箭头（上 = 正转 = 向前滚） */
+      const c = wlx.s >= 0 ? '#AFFF00' : '#B9B3CC';
+      ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.moveTo(wx, wy + 13 * dir); ctx.lineTo(wx, wy - 21 * dir);
+      ctx.lineTo(wx - 4, wy - 15 * dir); ctx.moveTo(wx, wy - 21 * dir); ctx.lineTo(wx + 4, wy - 15 * dir);
+      ctx.stroke();
+      /* 主动力 45° 箭头（由公式符号推出）：type1 → 前外(右)，type2 → 前内(左) */
+      const fx = (wlx.type === 1 ? 0.707 : -0.707) * 24 * dir;
+      const fy = -0.707 * 24 * dir;
+      ctx.strokeStyle = 'rgba(120,76,246,.65)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(wx, wy); ctx.lineTo(wx + fx, wy + fy); ctx.stroke();
+      /* 转速条（向右伸，绿=正 紫=负） */
+      const barLen = Math.abs(wlx.s) / m * 46;
+      ctx.fillStyle = wlx.s >= 0 ? '#AFFF00' : '#784CF6';
+      ctx.fillRect(wx + 13, wy - 6, barLen, 5);
+      ctx.fillStyle = '#262034'; ctx.font = 'bold 11px Consolas, monospace';
+      ctx.fillText(wlx.s.toFixed(1), wx + 13, wy - 10);
+    });
+    ctx.restore();
+    /* 图例 */
+    ctx.fillStyle = '#262034'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('绿箭头/绿条 = 正转　紫条 = 反转　半透明紫 = 45° 主动力', 22, h - 18);
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  return {
+    init(canvas) { bind(); last = 0; if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+/* ───────────── 演示三 云台 Yaw / Pitch（俯视 + 侧视） ───────────── */
+ARTINX_DEMOS['gimbal'] = (() => {
+  let raf = null;
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const ch = (+document.getElementById('gmCh').value) * D2R;   /* 底盘 Yaw */
+    const rel = (+document.getElementById('gmRel').value) * D2R; /* 云台相对角 */
+    const pt = +document.getElementById('gmPt').value;           /* Pitch */
+    const abs = ch + rel;                                        /* 绝对角 = 相对角 + 底盘Yaw */
+    ctx.clearRect(0, 0, w, h);
+    const mid = w * 0.5;
+    /* 分界线 */
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(mid, 20); ctx.lineTo(mid, h - 26); ctx.stroke();
+    ctx.fillStyle = '#6E6880'; ctx.font = '13px sans-serif';
+    ctx.fillText('俯视图', 22, 26); ctx.fillText('侧视图', mid + 22, 26);
+    /* —— 俯视图 —— */
+    const cx = mid / 2, cy = h * 0.52;
+    arrow(ctx, cx, cy - 130, Math.PI / 2, 40, '#6E6880', 2.5);   /* 场地北 */
+    ctx.fillStyle = '#6E6880'; ctx.font = '12px sans-serif'; ctx.fillText('北', cx - 18, cy - 148);
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-ch);          /* 底盘 */
+    ctx.fillStyle = '#784CF6'; ctx.fillRect(-46, -64, 92, 128);
+    ctx.fillStyle = '#AFFF00'; ctx.fillRect(-10, -58, 8, 8);
+    ctx.restore();
+    /* 炮口绝对方向：abs 以「北（屏幕上方）」为 0、CCW 为正 → 箭头角 = π/2 + abs */
+    arrow(ctx, cx, cy, Math.PI / 2 + abs, 78, '#AFFF00', 5);
+    ctx.fillStyle = '#83BF00'; ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('炮口', cx + Math.cos(Math.PI / 2 + abs) * 84 - 20, cy - Math.sin(Math.PI / 2 + abs) * 84 - 6);
+    /* —— 侧视图 —— */
+    const sx = mid + (w - mid) / 2, sy = h * 0.62;
+    ctx.strokeStyle = '#C9C3DE'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(sx - 130, sy + 8); ctx.lineTo(sx + 130, sy + 8); ctx.stroke(); /* 地面 */
+    ctx.fillStyle = '#F7F4FE'; ctx.fillRect(sx - 34, sy - 46, 68, 46);   /* 车体侧影 */
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 3; ctx.strokeRect(sx - 34, sy - 46, 68, 46);
+    const px2 = sx, py2 = sy - 40;                               /* 俯仰轴 */
+    ctx.beginPath(); ctx.arc(px2, py2, 6, 0, Math.PI * 2); ctx.fillStyle = '#784CF6'; ctx.fill();
+    arrow(ctx, px2, py2, pt * D2R, 72, '#AFFF00', 5);            /* 炮管（pt>0 抬起，pt<0 压低） */
+    /* —— 读数面板 —— */
+    ctx.fillStyle = '#262034'; ctx.font = 'bold 16px Consolas, monospace';
+    ctx.fillText('底盘 Yaw : ' + Math.round(ch / D2R) + '°', 22, h - 92);
+    ctx.fillStyle = '#784CF6';
+    ctx.fillText('相对角(编码器): ' + Math.round(rel / D2R) + '°', 22, h - 66);
+    ctx.fillStyle = '#83BF00';
+    ctx.fillText('绝对角(对场地): ' + Math.round(wrap180(abs / D2R)) + '°', 22, h - 40);
+    ctx.fillStyle = '#262034';
+    ctx.fillText('Pitch : ' + Math.round(pt) + '°', 22, h - 14);
+    ctx.fillStyle = '#6E6880'; ctx.font = '13px sans-serif';
+    ctx.fillText('绝对角 = 相对角 + 底盘Yaw：底盘动，绝对角才变', mid + 22, h - 60);
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.8 整车调车 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">2.8　整车调车</div>
+      <h1 class="anim" style="animation-delay:.2s">整车调车</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">十步，把上一代整车调成「能上场的车」——分模块调试、逐步集成、问题记录、回归验证</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节学什么</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>调车纪律</h3>
+        <p>一次只调一个变量；从最底层往上调。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>10 步调车顺序</h3>
+        <p>电气 → 遥控 → 方向 → 云台 → 单轮 → 整车 → 联动 → 视觉。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>记录与回归</h3>
+        <p>日志七字段；修完必回归。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.4s">
+        <h3>安全红线</h3>
+        <p>架空、急停、看护、电池、上电顺序。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：核心纪律 ① ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">核心纪律 ① 一次只调一个变量</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>定义</h3>
+        <p>一次只改变一个影响现象的输入（参数、线束、代码分支），观察并记录后再动下一个。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>三条配套规则</h3>
+        <ul>
+          <li>动手前，先记录现状，保证可回滚</li>
+          <li>动一个，观察，记录结果</li>
+          <li>不「顺手」改别的东西</li>
+        </ul>
+      </div>
+    </div>
+    <table class="anim" style="animation-delay:.3s;margin-top:14px">
+      <tr><th style="width:58%">做法</th><th>判定</th></tr>
+      <tr><td>把左前轮 Kp 从 0.8 改成 1.0</td><td>一个变量</td></tr>
+      <tr><td>四个轮子的 Kp 一起改</td><td>四个变量，无法归因</td></tr>
+      <tr><td>换了线，顺便改了代码</td><td>两个变量</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：核心纪律 ② ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">核心纪律 ② 从最底层往上调</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:16%">层</th><th style="width:40%">内容</th><th>不查就上的后果</th></tr>
+      <tr><td>1 电气</td><td>供电、线束、CAN</td><td>间歇掉线，伪装成任何 bug</td></tr>
+      <tr><td>2 输入</td><td>遥控映射、行程、死区</td><td>「响应不对」可能只是指令不对</td></tr>
+      <tr><td>3 方向与反馈</td><td>转向、编码器符号</td><td>参数白调；反馈反成正反馈</td></tr>
+      <tr><td>4~10 控制与集成</td><td>闭环、解算、联动、功能</td><td>一切现象不可读</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:12px">
+      <p><strong>口诀：</strong>电气没查完不动软件；方向没对完不调 PID。</p>
+    </div>
+    <p class="anim muted" style="animation-delay:.3s;margin-top:8px">每层「已知正确」，上层结论才有意义——调车是排除法。</p>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：顺序即排查策略 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">顺序本身就是排查策略</h2>
+    <div class="card anim" style="animation-delay:.1s;padding:10px 16px">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+        <span class="chip">① 电气</span><span class="muted">→</span>
+        <span class="chip">② 遥控</span><span class="muted">→</span>
+        <span class="chip">③ 方向</span><span class="muted">→</span>
+        <span class="chip">④ Pitch</span><span class="muted">→</span>
+        <span class="chip">⑤ Yaw</span><span class="muted">→</span>
+        <span class="chip">⑥ 单轮</span><span class="muted">→</span>
+        <span class="chip">⑦ 整车</span><span class="muted">→</span>
+        <span class="chip">⑧ 联动</span><span class="muted">→</span>
+        <span class="chip">⑨ 视觉</span><span class="muted">→</span>
+        <span class="chip green">⑩ 功能</span>
+      </div>
+    </div>
+    <div class="grid grid-2" style="margin-top:14px;flex:1;align-content:start">
+      <div class="callout danger anim" style="animation-delay:.2s">
+        <p><strong>跳步：</strong>第 3 步方向错 → 第 7 步「乱窜」无法定位，嫌疑 = 全部步骤，查一下午。</p>
+      </div>
+      <div class="callout tip anim" style="animation-delay:.3s">
+        <p><strong>按序：</strong>1~6 步全过 → 只查第 7 步新增部分（解算、四轮配合），十分钟定位。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：分模块调试 + 逐步集成 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">分模块调试，逐步集成</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>分模块调试</h3>
+        <p>每个模块（云台 Pitch、底盘单轮……）单独闭环达标，再进入集成。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>逐步集成</h3>
+        <p>每次集成只引入一个新模块，出问题就知道找谁。</p>
+      </div>
+    </div>
+    <div class="callout warn anim" style="animation-delay:.3s">
+      <p><strong>单轮（⑥）先于整车（⑦）：</strong>整车 = 解算 + 四个速度环；环没调好，跑偏分不清来源。</p>
+    </div>
+    <p class="anim muted" style="animation-delay:.4s;margin-top:8px">模块越多，现象越不可读——类比：拼乐高，拼一块验一块。</p>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：步骤 ① 电气 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">步骤 ① 整车电气与设备检查</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">项</th><th>内容</th></tr>
+      <tr><td>检查什么</td><td>线束、接头、供电、CAN 连通、电池电压</td></tr>
+      <tr><td>怎么看</td><td>断电肉眼查 + 轻拉接头；上电看指示灯、模块在线状态、电压读数</td></tr>
+      <tr><td>通过标准</td><td>全模块在线、无掉线、电压正常、轻拉线束无复位</td></tr>
+      <tr><td>常见坑</td><td>接头虚接（跑起来才断）、线束老化、电池鼓包</td></tr>
+    </table>
+    <div class="callout warn anim" style="animation-delay:.2s;margin-top:12px">
+      <p>任何一盏灯不对、一个模块不在线，就停在这一步。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：步骤 ② 遥控 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">步骤 ② 遥控器与输入检查</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">项</th><th>内容</th></tr>
+      <tr><td>检查什么</td><td>对频、通道映射、行程、死区</td></tr>
+      <tr><td>怎么看</td><td>上位机 / 串口打印遥控值，逐通道拨动观察</td></tr>
+      <tr><td>通过标准</td><td>数值稳定、方向与直觉一致、松开回中</td></tr>
+      <tr><td>常见坑</td><td>通道映射反、没设死区</td></tr>
+    </table>
+    <div class="callout warn anim" style="animation-delay:.2s;margin-top:12px">
+      <p>记录每个通道的最小值 / 中值 / 最大值，写进日志。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：步骤 ③ 方向与反馈 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">步骤 ③ 电机方向与反馈检查</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">项</th><th>内容</th></tr>
+      <tr><td>检查什么</td><td>单电机正指令转向 + 编码器读数方向</td></tr>
+      <tr><td>怎么看</td><td>开环给小电流，看转向；同时打印编码器读数</td></tr>
+      <tr><td>通过标准</td><td>同指令同方向（相对车体）、反馈同号</td></tr>
+      <tr><td>常见坑</td><td>方向装反；反馈反成正反馈（给目标满速疯转）</td></tr>
+    </table>
+    <pre class="anim" style="animation-delay:.2s;margin-top:12px"><span class="c">/* 第 3 步：开环给单电机小电流，查方向与反馈 */</span>
+<span class="f">Motor_SetCurrent</span>(can_id, 1000);          <span class="c">/* 小电流 */</span>
+<span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; 100; i++) {
+    <span class="f">printf</span>(<span class="s">"enc=%u\r\n"</span>, <span class="f">Encoder_GetCount</span>(can_id));
+    <span class="f">HAL_Delay</span>(20);
+}
+<span class="f">Motor_SetCurrent</span>(can_id, 0);             <span class="c">/* 测完立刻停 */</span>
+<span class="c">/* 判据：转向符合预期？读数方向与运动一致？ */</span></pre>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：演示 · 电机方向检查 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 · 电机方向检查（步骤 ③ 配套）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="wheels"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="wFwd">四轮同向 · 正转</button>
+        <button class="btn ghost" id="wRev">四轮同向 · 反转</button>
+        <button class="btn ghost" id="wBad">左前轮装反</button>
+        <span id="wheelVerdict" style="font-weight:700;font-size:13px"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：步骤 ④ 云台 Pitch ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">步骤 ④ 云台 Pitch</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">项</th><th>内容</th></tr>
+      <tr><td>检查什么</td><td>Pitch 电机方向 → 反馈 → 零位 → 限位 → PID</td></tr>
+      <tr><td>怎么看</td><td>先复做第 3 步方向反馈检查；再给小目标角度观察响应</td></tr>
+      <tr><td>通过标准</td><td>小角度阶跃稳定到位、无震荡；限位生效不硬顶</td></tr>
+      <tr><td>常见坑</td><td>先调 PID 后才发现方向反；限位没接或逻辑反</td></tr>
+    </table>
+    <div class="callout warn anim" style="animation-delay:.2s;margin-top:12px">
+      <p>五件事按顺序确认，别跳。方向反了，参数白调。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：步骤 ⑤ 云台 Yaw ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">步骤 ⑤ 云台 Yaw</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">项</th><th>内容</th></tr>
+      <tr><td>检查什么</td><td>Yaw 电机方向反馈；IMU 安装方向与坐标轴映射</td></tr>
+      <tr><td>怎么看</td><td>手转云台读角度，确认数值方向与实际一致；再给目标角度</td></tr>
+      <tr><td>通过标准</td><td>指向稳定、无持续漂移、阶跃无震荡</td></tr>
+      <tr><td>常见坑</td><td>IMU 坐标轴映射错（转 90° 读成 −90°）</td></tr>
+    </table>
+    <div class="callout warn anim" style="animation-delay:.2s;margin-top:12px">
+      <p>联动补偿方向反的问题，留到第 8 步查。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：步骤 ⑥ 底盘单轮 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">步骤 ⑥ 底盘单轮（速度环先行）</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">项</th><th>内容</th></tr>
+      <tr><td>检查什么</td><td>单轮速度环阶跃跟随（PID 上场）</td></tr>
+      <tr><td>怎么看</td><td>一次只控一个轮子，串口打印目标 / 实际速度</td></tr>
+      <tr><td>通过标准</td><td>跟得上、无持续震荡、稳态误差小</td></tr>
+      <tr><td>常见坑</td><td>跳单轮直接整车；反馈反成正反馈</td></tr>
+    </table>
+    <pre class="anim" style="animation-delay:.2s;margin-top:12px"><span class="c">/* 第 6 步：单轮速度环阶跃，观察跟随 */</span>
+<span class="k">int16_t</span> target = 1000;                   <span class="c">/* 按实车取安全值 */</span>
+<span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; 1000; i++) {
+    <span class="k">if</span> (i == 500) target = 2000;         <span class="c">/* 阶跃 */</span>
+    <span class="k">float</span> cur = <span class="f">Encoder_GetSpeedRPM</span>(can_id);
+    <span class="k">float</span> out = <span class="f">PID_Calc</span>(&amp;speed_pid, target, cur, 0.001f);
+    <span class="f">Motor_SetCurrent</span>(can_id, (<span class="k">int16_t</span>)out);
+    <span class="k">if</span> (i % 10 == 0) <span class="f">printf</span>(<span class="s">"tgt=%d cur=%.1f\r\n"</span>, target, cur);
+    <span class="f">HAL_Delay</span>(1);
+}
+<span class="f">Motor_SetCurrent</span>(can_id, 0);</pre>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：步骤 ⑦ 底盘整体 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">步骤 ⑦ 底盘整体运动</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">项</th><th>内容</th></tr>
+      <tr><td>检查什么</td><td>前进 / 横移 / 旋转的运动学解算与跑偏</td></tr>
+      <tr><td>怎么看</td><td>低目标速度，分别只发一种指令，观察车身轨迹</td></tr>
+      <tr><td>通过标准</td><td>走直线、横移不歪、原地旋转不漂</td></tr>
+      <tr><td>常见坑</td><td>某轮方向反 → 乱窜；轮距参数与实车不符</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:12px">
+      <p><strong>故障走查：</strong>「前进变打转」且 1~6 步已过 → 打印四轮指令，核对是否同号同幅。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：步骤 ⑧ 云台—底盘联动 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">步骤 ⑧ 云台—底盘联动</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">项</th><th>内容</th></tr>
+      <tr><td>检查什么</td><td>底盘旋转 / 运动时云台指向、机械干涉</td></tr>
+      <tr><td>怎么看</td><td>慢速原地旋转底盘，看云台是否反向补偿</td></tr>
+      <tr><td>通过标准</td><td>补偿方向正确、指向稳定、全行程无干涉</td></tr>
+      <tr><td>常见坑</td><td>补偿方向反（转向翻倍）；供电波动；线束被挂</td></tr>
+    </table>
+    <div class="callout warn anim" style="animation-delay:.2s;margin-top:12px">
+      <p>先慢速确认补偿方向，再提速。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：步骤 ⑨ 视觉联调 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">步骤 ⑨ 视觉联调（与视觉组配合）</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">项</th><th>内容</th></tr>
+      <tr><td>检查什么</td><td>视觉目标 → 云台执行；通信链路稳定性</td></tr>
+      <tr><td>怎么看</td><td>视觉给目标，观察云台指向；抓通信数据核对</td></tr>
+      <tr><td>通过标准</td><td>指哪打哪；长跑数据帧无乱码丢包</td></tr>
+      <tr><td>常见坑</td><td>坐标系不统一、弧度 vs 度、协议字段错位</td></tr>
+    </table>
+    <div class="callout warn anim" style="animation-delay:.2s;margin-top:12px">
+      <p>坐标系、单位、协议——三方先对接口文档，再上机。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：步骤 ⑩ 整车功能 + 收尾 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">步骤 ⑩ 其他整车功能 + 收尾</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">项</th><th>内容</th></tr>
+      <tr><td>检查什么</td><td>拨弹、发射、裁判系统状态、模式切换，逐项过</td></tr>
+      <tr><td>怎么看</td><td>每项单独触发，看执行结果与裁判系统反馈</td></tr>
+      <tr><td>通过标准</td><td>各项按需求运行、互不干扰</td></tr>
+      <tr><td>常见坑</td><td>发射瞬间底盘限流；不常用功能被跳过</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:12px">
+      <p><strong>收尾三件事：</strong>日志未闭环标红；更新回归清单；写一句话交接。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：演示 · 10 步调车清单 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 · 10 步调车清单（点击打勾）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="checklist"></canvas>
+      <div class="demo-controls">
+        <span class="small muted">点击步骤 = 打勾 + 展开「检查什么 / 通过标准 / 常见坑」</span>
+        <button class="btn ghost" id="clReset">重置</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：问题记录规范 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">问题记录：调车日志七字段</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:12%">字段</th><th style="width:46%">填什么</th><th>反例</th></tr>
+      <tr><td>日期</td><td>当天日期，跨天调车才有时序</td><td>不填，分不清先后</td></tr>
+      <tr><td>车辆</td><td>哪辆车、哪个车架</td><td>「那辆车」</td></tr>
+      <tr><td>步骤</td><td>对应 10 步中的哪一步</td><td>不填，不知现象属哪层</td></tr>
+      <tr><td>现象</td><td>客观事实：「前进时车身右偏」</td><td>「车坏了」</td></tr>
+      <tr><td>数据</td><td>读数、截图、曲线、参数值</td><td>「转速有点低」</td></tr>
+      <tr><td>改动</td><td>从几到几：「Kp 0.8→1.0」</td><td>「调了下参数」</td></tr>
+      <tr><td>结果</td><td>改完现象如何、要不要回归</td><td>不填，等于白改</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:10px">
+      <p><strong>三条纪律：</strong>现象写客观事实；改动可回滚；当场记。没记录的问题 = 没修过。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：回归验证 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">回归验证：防「修好一个、弄坏三个」</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>定义</h3>
+        <p>修完一个问题，回头把之前通过的步骤（回归清单）重跑一遍。</p>
+        <pre style="margin-top:8px">□ ① ② ③ ④ ⑤ ⑥ 已通过
+□ ⑦ 底盘整体 ← 当前步骤
+修改 → 验证 → 回归重勾 → 记录</pre>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>为什么要回归</h3>
+        <p>系统耦合：底盘限幅改小 → 整车加速变慢，第 7 步「走直线」标准不再满足。</p>
+        <p style="margin-top:8px">节奏：改 Kp 后先复验第 6 步单轮，再复验第 7 步，10 分钟拦住隐患。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：演示 · 回归验证循环 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 · 回归验证循环</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="regress"></canvas>
+      <div class="demo-controls">
+        <button class="btn ghost" id="regStep">单步</button>
+        <button class="btn" id="regAuto">自动：开</button>
+        <span class="small muted">修完一个 bug，把之前的步骤重跑一遍</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：演示 · 调车日志卡 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 · 调车日志（点击字段看说明）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="logcard"></canvas>
+      <div class="demo-controls">
+        <span class="small muted">没记录的问题 = 没修过。点击任意字段，看这一栏怎么填。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：安全红线 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">五条安全红线</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:20%">红线</th><th>要求</th></tr>
+      <tr><td>架空</td><td>调车时车轮架空或车辆垫起，底盘不贴地</td></tr>
+      <tr><td>急停</td><td>遥控急停随时可触发，上车先试急停</td></tr>
+      <tr><td>看护</td><td>至少两人在场，安全员盯电源与线束</td></tr>
+      <tr><td>电池</td><td>充电有人看护，鼓包、破损即停用</td></tr>
+      <tr><td>上电顺序</td><td>先开遥控再上电；先断车电再关遥控</td></tr>
+    </table>
+    <div class="callout danger anim" style="animation-delay:.2s;margin-top:12px">
+      <p>红线不是建议：任何一条被破坏，立即停工处理。</p>
+    </div>
+    <p class="anim muted" style="animation-delay:.3s;margin-top:8px">为什么「先断车电」：让车先失去动力，而不是先失去控制信号。</p>
+  </section>
+
+  <!-- ══════════════════ 第 24 页：与校内赛结合 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">与校内赛结合</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>节奏建议</h3>
+        <ul>
+          <li>第 1 周：完成 ①~⑥，打好地基</li>
+          <li>第 2 周：完成 ⑦~⑩，进入能打状态</li>
+          <li>每次训练前：回归清单快过一遍</li>
+          <li>赛后：问题入日志，带清单来调车</li>
+        </ul>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>校内赛练什么</h3>
+        <p>在有压力、有时间限制的场景里，把这套调车纪律变成肌肉记忆。</p>
+        <p style="margin-top:8px">第一场考核往往是：底盘能否稳定按指令走——就是第 ⑦ 步。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 25 页：常见问题与排查 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:24%">现象</th><th style="width:32%">可能原因</th><th>排查方法</th></tr>
+      <tr><td>上电后电机不转</td><td>供电 / CAN 掉线 / 虚接</td><td>回第 1 步；再单电机开环</td></tr>
+      <tr><td>给目标满速疯转</td><td>编码器反馈方向反</td><td>第 3 步核对反馈符号</td></tr>
+      <tr><td>前进变成原地打转</td><td>某轮方向反 / 解算错</td><td>回第 3 步；打印四轮指令</td></tr>
+      <tr><td>云台到位不停震荡</td><td>增益过大 / 噪声 / 虚位</td><td>减增益；查反馈与机械</td></tr>
+      <tr><td>底盘转云台跟着转</td><td>联动补偿方向反</td><td>第 8 步补偿取反再试</td></tr>
+      <tr><td>「昨晚还好好的」</td><td>参数被动 / 线松 / 电池老化</td><td>查日志、接头、电池内阻</td></tr>
+      <tr><td>修好一个坏三个</td><td>系统耦合</td><td>回归清单从头重勾</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 26 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源（均已验证可访问）</h2>
+    <ul class="anim" style="animation-delay:.1s;line-height:2.05">
+      <li><a href="https://www.robomaster.com/zh-CN/resource/pages/announcement/1768" target="_blank" rel="noopener">RM 官方规范文件</a> —— 规则 / 参赛 / 制作规范手册下载（通过标准的依据）</li>
+      <li><a href="https://bbs.robomaster.com/wiki/20204847" target="_blank" rel="noopener">官方社区 · 规则资料中心</a> —— 官方资料导航入口</li>
+      <li><a href="https://www.bilibili.com/video/BV1wP4y167Qk" target="_blank" rel="noopener">B 站「寒假调车寄录」</a> —— 真实调车现场：改一点、试一下、再改</li>
+      <li><a href="https://github.com/scutrobotlab/RM2010_AGVinfantry" target="_blank" rel="noopener">华南虎步兵电控开源</a> —— 整车电控按模块组织，对照 10 步顺序</li>
+      <li><a href="https://github.com/HNUYueLuRM/basic_framework" target="_blank" rel="noopener">跃鹿电控框架</a> —— 底盘 / 云台 / 发射分层框架</li>
+      <li><a href="https://github.com/HUSTLYRM/HUST_HeroAim_2024" target="_blank" rel="noopener">华科狼牙英雄辅瞄</a> —— 日志 + 数据定位问题的实战</li>
+    </ul>
+    <p class="small muted anim" style="animation-delay:.2s;margin-top:10px">全部链接已逐一验证可访问（2026-08）。</p>
+  </section>
+
+  <!-- ══════════════════ 第 27 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>十步顺序：一步一验收，顺序就是排查策略</li>
+        <li>一次只调一个变量，从最底层往上调</li>
+        <li>问题必记录：日志七字段；修完必回归</li>
+        <li>安全红线：架空、急停、看护、电池、上电顺序</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（2.8 整车调车） ================= */
+/*
+  注册格式：
+  ARTINX_DEMOS['名字'] = {
+    init(canvas, slide){ ...每帧动画写在这里... },
+    destroy(){ ...清除定时器/raf... }
+  };
+  提示：
+  - canvas 尺寸随窗口变化，用下方 fit(canvas) 获取 CSS 像素尺寸并处理高清屏
+  - 页面切换到其他页时会自动调用 destroy()，切回时重新 init()
+  - 不要依赖任何外部库，用原生 canvas 即可
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+/* —— 通用工具：圆角矩形 / 自动换行文本 —— */
+const CJK_FONT = '"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif';
+function rr(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function wrapText(ctx, text, x, y, maxW, lh, maxLines) {
+  let line = '', n = 0;
+  for (const ch of text) {
+    if (line && ctx.measureText(line + ch).width > maxW) {
+      ctx.fillText(line, x, y + n * lh); n++; line = ch;
+      if (n >= maxLines) return;
+    } else line += ch;
+  }
+  if (n < maxLines) ctx.fillText(line, x, y + n * lh);
+}
+
+/* ================= 演示 1：10 步调车清单（点击打勾 + 展开说明） ================= */
+ARTINX_DEMOS['checklist'] = (() => {
+  const steps = [
+    { n: '① 电气与设备检查', c: '线束 / 接头 / 供电 / CAN / 电池电压', p: '上电无掉线、电压正常、轻拉线束无复位', pit: '接头虚接、线束老化、电池鼓包' },
+    { n: '② 遥控与输入', c: '对频、通道映射、行程、死区', p: '数值稳定、方向与直觉一致、回中', pit: '通道映射反、没设死区' },
+    { n: '③ 电机方向与反馈', c: '单电机转向 + 编码器符号', p: '同指令同方向、反馈同号', pit: '方向装反、反馈反（正反馈）' },
+    { n: '④ 云台 Pitch', c: '方向 → 零位 → 限位 → PID', p: '阶跃稳定、限位生效', pit: '先调 PID 后才发现方向反' },
+    { n: '⑤ 云台 Yaw', c: 'Yaw 反馈、IMU 坐标轴映射', p: '指向稳定、无漂移', pit: 'IMU 坐标轴映射错' },
+    { n: '⑥ 底盘单轮', c: '单轮速度环阶跃跟随', p: '跟得上、无震荡、误差小', pit: '跳过单轮直接整车' },
+    { n: '⑦ 底盘整体运动', c: '前进 / 横移 / 旋转解算', p: '走直线、不漂移', pit: '某轮方向反 → 乱窜' },
+    { n: '⑧ 云台—底盘联动', c: '旋转时云台指向、干涉', p: '补偿方向正确、无干涉', pit: '补偿方向反了' },
+    { n: '⑨ 视觉联调', c: '视觉目标 → 云台执行', p: '指哪打哪、通信稳定', pit: '坐标系 / 单位不统一' },
+    { n: '⑩ 其他整车功能', c: '拨弹、发射、裁判系统等', p: '各项按需求运行', pit: '功能相互干扰' }
+  ];
+  const checks = new Array(10).fill(false);
+  const rows = [];
+  let sel = -1, hover = -1, listW = 0, raf = null;
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    ctx.clearRect(0, 0, w, h);
+    const done = checks.filter(Boolean).length;
+    const pad = 14;
+    listW = w * 0.56;
+    /* 顶部进度条 */
+    ctx.fillStyle = '#EFEDF6';
+    rr(ctx, pad, 12, w - pad * 2, 9, 4.5); ctx.fill();
+    if (done > 0) {
+      const g = ctx.createLinearGradient(pad, 0, w - pad, 0);
+      g.addColorStop(0, '#784CF6'); g.addColorStop(1, '#512FA3');
+      ctx.fillStyle = g;
+      rr(ctx, pad, 12, (w - pad * 2) * done / 10, 9, 4.5); ctx.fill();
+    }
+    ctx.fillStyle = '#5A5468';
+    ctx.font = '12px ' + CJK_FONT;
+    ctx.textAlign = 'left';
+    ctx.fillText(done + ' / 10', w - pad - 40, 20);
+    /* 左侧列表 */
+    const top = 36, rowH = Math.min(36, (h - top - 10) / 10);
+    rows.length = 0;
+    for (let i = 0; i < 10; i++) {
+      const y = top + i * rowH;
+      rows.push({ y0: y, y1: y + rowH });
+      if (sel === i) {
+        ctx.fillStyle = '#F7F4FE';
+        rr(ctx, 6, y + 1, listW - 16, rowH - 2, 8); ctx.fill();
+        ctx.strokeStyle = '#E3DBFC'; ctx.lineWidth = 1.5;
+        rr(ctx, 6, y + 1, listW - 16, rowH - 2, 8); ctx.stroke();
+      } else if (hover === i) {
+        ctx.fillStyle = '#FBFAFE';
+        rr(ctx, 6, y + 1, listW - 16, rowH - 2, 8); ctx.fill();
+      }
+      const cy = y + rowH / 2;
+      ctx.beginPath(); ctx.arc(21, cy, 9, 0, Math.PI * 2);
+      ctx.fillStyle = checks[i] ? '#AFFF00' : '#E3DBFC'; ctx.fill();
+      ctx.strokeStyle = checks[i] ? '#83BF00' : '#C9C3DE'; ctx.lineWidth = 1.5; ctx.stroke();
+      if (checks[i]) {
+        ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(16.5, cy); ctx.lineTo(20, cy + 3.5); ctx.lineTo(25.5, cy - 3.5); ctx.stroke();
+      } else {
+        ctx.fillStyle = '#784CF6'; ctx.font = 'bold 10px ' + CJK_FONT;
+        ctx.textAlign = 'center'; ctx.fillText(i + 1, 21, cy + 3.5);
+        ctx.textAlign = 'left';
+      }
+      ctx.fillStyle = checks[i] ? '#9A92B0' : '#262034';
+      ctx.font = (sel === i ? 'bold ' : '') + '13px ' + CJK_FONT;
+      ctx.fillText(steps[i].n, 38, cy + 5);
+    }
+    /* 右侧说明面板 */
+    const px = listW + 10, pw = w - px - 12, py = top;
+    ctx.fillStyle = '#FBFAFE';
+    rr(ctx, px, py, pw, h - py - 10, 10); ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1;
+    rr(ctx, px, py, pw, h - py - 10, 10); ctx.stroke();
+    if (sel >= 0) {
+      const it = steps[sel];
+      ctx.fillStyle = checks[sel] ? '#83BF00' : '#5A5468';
+      ctx.font = 'bold 13px ' + CJK_FONT;
+      ctx.fillText(checks[sel] ? '已通过' : '未通过', px + 13, py + 26);
+      ctx.fillStyle = '#512FA3';
+      ctx.font = 'bold 14px ' + CJK_FONT;
+      ctx.fillText(it.n, px + 13, py + 48);
+      const lines = [
+        ['检查什么', it.c, '#784CF6'],
+        ['通过标准', it.p, '#83BF00'],
+        ['常见坑', it.pit, '#512FA3']
+      ];
+      let ty = py + 74;
+      for (const L of lines) {
+        ctx.fillStyle = L[2];
+        rr(ctx, px + 13, ty - 9, 6, 6, 2); ctx.fill();
+        ctx.font = 'bold 12px ' + CJK_FONT;
+        ctx.fillText(L[0], px + 24, ty);
+        ctx.fillStyle = '#262034';
+        ctx.font = '12.5px ' + CJK_FONT;
+        wrapText(ctx, L[1], px + 13, ty + 17, pw - 26, 17, 2);
+        ty += 56;
+      }
+    } else {
+      ctx.fillStyle = '#5A5468';
+      ctx.font = '12.5px ' + CJK_FONT;
+      wrapText(ctx, '点击左侧步骤：打勾 + 展开「检查什么 / 通过标准 / 常见坑」。', px + 13, py + 22, pw - 26, 18, 2);
+      ctx.fillStyle = '#262034';
+      ctx.font = 'bold 13px ' + CJK_FONT;
+      wrapText(ctx, '全部打勾 = 整车验收通过。', px + 13, py + 66, pw - 26, 18, 1);
+    }
+    if (done === 10) {
+      ctx.fillStyle = 'rgba(175,255,0,.92)';
+      rr(ctx, w / 2 - 100, 4, 200, 24, 12); ctx.fill();
+      ctx.fillStyle = '#262034';
+      ctx.font = 'bold 12.5px ' + CJK_FONT;
+      ctx.textAlign = 'center';
+      ctx.fillText('10 / 10 整车验收通过', w / 2, 20);
+      ctx.textAlign = 'left';
+    }
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    click(x, y) {
+      if (x > listW) return false;
+      const i = rows.findIndex(R => y >= R.y0 && y < R.y1);
+      if (i >= 0) { checks[i] = !checks[i]; sel = i; }
+      return i >= 0;
+    },
+    move(x, y) {
+      hover = (x >= 0 && x <= listW) ? rows.findIndex(R => y >= R.y0 && y < R.y1) : -1;
+      return hover >= 0;
+    },
+    reset() { checks.fill(false); sel = -1; hover = -1; }
+  };
+})();
+const clCanvas = document.querySelector('canvas[data-demo="checklist"]');
+clCanvas.addEventListener('click', e => {
+  const r = clCanvas.getBoundingClientRect();
+  ARTINX_DEMOS['checklist'].click(e.clientX - r.left, e.clientY - r.top);
+});
+clCanvas.addEventListener('mousemove', e => {
+  const r = clCanvas.getBoundingClientRect();
+  const over = ARTINX_DEMOS['checklist'].move(e.clientX - r.left, e.clientY - r.top);
+  clCanvas.style.cursor = over ? 'pointer' : 'default';
+});
+clCanvas.addEventListener('mouseleave', () => {
+  ARTINX_DEMOS['checklist'].move(-1, -1);
+  clCanvas.style.cursor = 'default';
+});
+document.getElementById('clReset').onclick = () => ARTINX_DEMOS['checklist'].reset();
+
+/* ================= 演示 2：电机方向检查（四轮动画） ================= */
+ARTINX_DEMOS['wheels'] = (() => {
+  let mode = 0;                 /* 0 一致正转 1 一致反转 2 左前装反 */
+  let ang = 0, raf = null;
+  const WHEELS = [
+    { x: -1, y: -1, name: '左前' },
+    { x: 1, y: -1, name: '右前' },
+    { x: -1, y: 1, name: '左后' },
+    { x: 1, y: 1, name: '右后' }
+  ];
+  const MODES = [
+    { dirs: [1, 1, 1, 1], bad: [] },
+    { dirs: [-1, -1, -1, -1], bad: [] },
+    { dirs: [-1, 1, 1, 1], bad: [0] }
+  ];
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    ang += 0.025;
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2, cy = h / 2;
+    const bw = Math.min(w * 0.26, h * 0.34);   /* 车体半宽 */
+    const bh = Math.min(h * 0.15, w * 0.10);   /* 车体半高 */
+    const r = Math.min(h * 0.13, w * 0.05);    /* 轮半径 */
+    /* 车体 */
+    ctx.fillStyle = '#F7F4FE';
+    rr(ctx, cx - bw, cy - bh, bw * 2, bh * 2, 12); ctx.fill();
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 2.5;
+    rr(ctx, cx - bw, cy - bh, bw * 2, bh * 2, 12); ctx.stroke();
+    /* 车头标记 */
+    ctx.fillStyle = '#AFFF00';
+    rr(ctx, cx - 16, cy - bh + 6, 32, 6, 3); ctx.fill();
+    ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 1.5;
+    rr(ctx, cx - 16, cy - bh + 6, 32, 6, 3); ctx.stroke();
+    ctx.fillStyle = '#3C6400';
+    ctx.font = 'bold 11px ' + CJK_FONT;
+    ctx.textAlign = 'center';
+    ctx.fillText('车头', cx, cy - bh + 25);
+    ctx.textAlign = 'left';
+    /* 四个轮子 */
+    const M = MODES[mode];
+    for (let i = 0; i < 4; i++) {
+      const wx = cx + WHEELS[i].x * (bw + r * 0.5);
+      const wy = cy + WHEELS[i].y * (bh + r * 0.6);
+      const d = M.dirs[i], isBad = M.bad.indexOf(i) >= 0;
+      /* 轮胎 */
+      ctx.beginPath(); ctx.arc(wx, wy, r, 0, Math.PI * 2);
+      ctx.fillStyle = '#262036'; ctx.fill();
+      ctx.strokeStyle = '#262034'; ctx.lineWidth = 3; ctx.stroke();
+      /* 辊子（旋转） */
+      ctx.save();
+      ctx.beginPath(); ctx.arc(wx, wy, r - 4, 0, Math.PI * 2); ctx.clip();
+      ctx.strokeStyle = isBad ? '#8F87AB' : '#AFFF00';
+      ctx.lineWidth = 2.5;
+      const rIn = r - 4;
+      for (let k = 0; k < 6; k++) {
+        const a = ang * d + k * (Math.PI / 3);
+        ctx.beginPath();
+        ctx.moveTo(wx - Math.cos(a) * rIn, wy - Math.sin(a) * rIn);
+        ctx.lineTo(wx + Math.cos(a) * rIn, wy + Math.sin(a) * rIn);
+        ctx.stroke();
+      }
+      ctx.restore();
+      /* 轮缘运动方向箭头（轮顶处） */
+      const up = d >= 0 ? -1 : 1;
+      const ay = wy - r - 13, L = 12;
+      const col = isBad ? '#512FA3' : '#83BF00';
+      ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(wx, ay + up * L); ctx.lineTo(wx, ay - up * L); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(wx, ay - up * L);
+      ctx.lineTo(wx - 5, ay - up * L + up * 8);
+      ctx.lineTo(wx + 5, ay - up * L + up * 8);
+      ctx.closePath(); ctx.fillStyle = col; ctx.fill();
+      ctx.lineCap = 'butt';
+      /* 装反标记（画叉，非文字） */
+      if (isBad) {
+        const bx = wx + r * 0.72, by = wy - r * 0.72;
+        ctx.beginPath(); ctx.arc(bx, by, 11, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFF3F5'; ctx.fill();
+        ctx.strokeStyle = '#F0B9C4'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = '#262034'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(bx - 3.5, by - 3.5); ctx.lineTo(bx + 3.5, by + 3.5);
+        ctx.moveTo(bx + 3.5, by - 3.5); ctx.lineTo(bx - 3.5, by + 3.5);
+        ctx.stroke();
+        ctx.lineCap = 'butt';
+      }
+      /* 轮名 */
+      ctx.fillStyle = '#5A5468';
+      ctx.font = '12px ' + CJK_FONT;
+      ctx.textAlign = 'center';
+      ctx.fillText(WHEELS[i].name, wx, wy + r + 17);
+      ctx.textAlign = 'left';
+    }
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    setMode(m) { mode = m; }
+  };
+})();
+const wVerdict = document.getElementById('wheelVerdict');
+const wModes = [['wFwd', 0], ['wRev', 1], ['wBad', 2]];
+function setWheelMode(m) {
+  ARTINX_DEMOS['wheels'].setMode(m);
+  wModes.forEach(([id, mm]) => {
+    const b = document.getElementById(id);
+    if (mm === m) {
+      b.style.background = 'linear-gradient(135deg,#AFFF00,#7FD400)';
+      b.style.color = '#274500'; b.style.border = 'none';
+    } else { b.style.background = ''; b.style.color = ''; b.style.border = ''; }
+  });
+  if (m === 2) {
+    wVerdict.textContent = '左前轮方向相反 —— 这就是「方向装反」';
+    wVerdict.style.color = '#512FA3';
+  } else {
+    wVerdict.textContent = '四轮滚动方向一致（相对车体）';
+    wVerdict.style.color = '#3C6400';
+  }
+}
+wModes.forEach(([id, m]) => { document.getElementById(id).onclick = () => setWheelMode(m); });
+setWheelMode(0);
+
+/* ================= 演示 3：回归验证循环（环状流程动画） ================= */
+ARTINX_DEMOS['regress'] = (() => {
+  const nodes = [
+    { t: '修改', d: '只动一个变量，写清改动' },
+    { t: '验证', d: '看现象是否符合预期' },
+    { t: '回归清单', d: '重跑之前通过的步骤' },
+    { t: '记录', d: '写入日志，问题闭环' }
+  ];
+  let cur = 0, round = 0, auto = true, last = performance.now(), raf = null;
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    const t = performance.now();
+    if (auto && t - last > 2400) {
+      last = t;
+      cur = (cur + 1) % 4;
+      if (cur === 0) round++;
+    }
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2, cy = h / 2 + 4;
+    const R = Math.min(h * 0.30, w * 0.19);
+    /* 轨道 */
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.strokeStyle = '#EFEDF6'; ctx.lineWidth = 12; ctx.stroke();
+    /* 已走部分 */
+    const frac = ((cur + Math.min(1, (t - last) / 2400)) % 4) / 4;
+    if (frac > 0.001) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
+      ctx.strokeStyle = '#AFFF00'; ctx.lineWidth = 12; ctx.stroke();
+    }
+    /* 节点间箭头 */
+    for (let k = 0; k < 4; k++) {
+      const a1 = -Math.PI / 2 + k * (Math.PI / 2);
+      const am = a1 + Math.PI / 4;
+      const ax = cx + R * Math.cos(am), ay = cy + R * Math.sin(am);
+      const tx = -Math.sin(am), ty = Math.cos(am);
+      const nx = Math.cos(am), ny = Math.sin(am);
+      ctx.beginPath();
+      ctx.moveTo(ax + tx * 9, ay + ty * 9);
+      ctx.lineTo(ax - tx * 4 + nx * 6, ay - ty * 4 + ny * 6);
+      ctx.lineTo(ax - tx * 4 - nx * 6, ay - ty * 4 - ny * 6);
+      ctx.closePath();
+      ctx.fillStyle = '#C9C3DE'; ctx.fill();
+    }
+    /* 节点 */
+    for (let k = 0; k < 4; k++) {
+      const a = -Math.PI / 2 + k * (Math.PI / 2);
+      const nx = cx + R * Math.cos(a), ny = cy + R * Math.sin(a);
+      const pulse = (k === cur) ? Math.sin(t / 180) * 3 : 0;
+      const nr = 38 + pulse;
+      const g = ctx.createRadialGradient(nx, ny, 4, nx, ny, nr);
+      if (k === cur) { g.addColorStop(0, '#784CF6'); g.addColorStop(1, '#512FA3'); }
+      else { g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, '#F7F4FE'); }
+      ctx.beginPath(); ctx.arc(nx, ny, nr, 0, Math.PI * 2);
+      ctx.fillStyle = g; ctx.fill();
+      ctx.strokeStyle = (k === cur) ? '#512FA3' : '#E3DBFC';
+      ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.fillStyle = (k === cur) ? '#FFFFFF' : '#262034';
+      ctx.font = 'bold 14px ' + CJK_FONT;
+      ctx.textAlign = 'center';
+      ctx.fillText(nodes[k].t, nx, ny + 5);
+    }
+    /* 中心说明 */
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#5A5468';
+    ctx.font = '12px ' + CJK_FONT;
+    ctx.fillText('第 ' + (round + 1) + ' 轮 · 共 4 步', cx, cy - 40);
+    ctx.fillStyle = '#512FA3';
+    ctx.font = 'bold 20px ' + CJK_FONT;
+    ctx.fillText('现在：' + nodes[cur].t, cx, cy - 12);
+    ctx.fillStyle = '#262034';
+    ctx.font = '13.5px ' + CJK_FONT;
+    ctx.fillText(nodes[cur].d, cx, cy + 14);
+    ctx.textAlign = 'left';
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    stepOnce() { auto = false; last = performance.now(); cur = (cur + 1) % 4; if (cur === 0) round++; },
+    setAuto(v) { auto = v; if (v) last = performance.now(); }
+  };
+})();
+let regAutoOn = true;
+const regAutoBtn = document.getElementById('regAuto');
+function paintRegAuto() {
+  regAutoBtn.textContent = '自动：' + (regAutoOn ? '开' : '关');
+  if (regAutoOn) {
+    regAutoBtn.style.background = 'linear-gradient(135deg,#AFFF00,#7FD400)';
+    regAutoBtn.style.color = '#274500';
+  } else { regAutoBtn.style.background = ''; regAutoBtn.style.color = ''; }
+}
+document.getElementById('regStep').onclick = () => {
+  regAutoOn = false;
+  ARTINX_DEMOS['regress'].setAuto(false);
+  ARTINX_DEMOS['regress'].stepOnce();
+  paintRegAuto();
+};
+regAutoBtn.onclick = () => {
+  regAutoOn = !regAutoOn;
+  ARTINX_DEMOS['regress'].setAuto(regAutoOn);
+  paintRegAuto();
+};
+paintRegAuto();
+
+/* ================= 演示 4：调车日志卡（点击字段看说明） ================= */
+ARTINX_DEMOS['logcard'] = (() => {
+  const fields = [
+    { k: '日期', v: '2026-08-12', d: '写当天日期。跨天调车，时间线比记忆可靠。' },
+    { k: '车辆', v: '上一代步兵车', d: '哪辆车、哪个车架。多车同调时不混淆。' },
+    { k: '步骤', v: '第 7 步 · 底盘整体运动', d: '对应 10 步中的哪一步，锁定问题层级。' },
+    { k: '现象', v: '前进时车身持续向右偏', d: '写客观事实，不写「车坏了」。形容词无法复现。' },
+    { k: '数据', v: '右前轮 950 RPM（目标 1000）', d: '读数、截图、曲线。数据比形容词有用。' },
+    { k: '改动', v: '右前轮 Kp 0.8 → 1.0', d: '从几改成几，保证可回滚。' },
+    { k: '结果', v: '右偏减小，待回归第 6 步', d: '改完现象如何？要不要回归旧步骤？' }
+  ];
+  const rows = [];
+  let sel = -1, hover = -1, leftWNow = 0, raf = null;
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    ctx.clearRect(0, 0, w, h);
+    const leftW = Math.min(w * 0.55, 560);
+    leftWNow = leftW;
+    /* 左卡片 */
+    ctx.fillStyle = '#FFFFFF';
+    rr(ctx, 10, 10, leftW - 6, h - 20, 12); ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5;
+    rr(ctx, 10, 10, leftW - 6, h - 20, 12); ctx.stroke();
+    ctx.fillStyle = '#512FA3';
+    ctx.font = 'bold 15px ' + CJK_FONT;
+    ctx.fillText('调车日志 · 示例', 24, 40);
+    ctx.fillStyle = '#5A5468';
+    ctx.font = '12px ' + CJK_FONT;
+    ctx.fillText('（现象 → 数据 → 改动 → 结果，一条闭环）', 24, 60);
+    const top = 78, rowH = (h - top - 16) / 7;
+    rows.length = 0;
+    for (let i = 0; i < 7; i++) {
+      const y = top + i * rowH;
+      rows.push({ y0: y, y1: y + rowH });
+      if (sel === i) {
+        ctx.fillStyle = '#F7F4FE';
+        rr(ctx, 20, y + 2, leftW - 42, rowH - 4, 8); ctx.fill();
+        ctx.fillStyle = '#784CF6';
+        rr(ctx, 20, y + 2, 4, rowH - 4, 2); ctx.fill();
+      } else if (hover === i) {
+        ctx.fillStyle = '#FBFAFE';
+        rr(ctx, 20, y + 2, leftW - 42, rowH - 4, 8); ctx.fill();
+      }
+      ctx.fillStyle = '#784CF6';
+      ctx.font = 'bold 12.5px ' + CJK_FONT;
+      ctx.fillText(fields[i].k, 30, y + rowH / 2 + 5);
+      ctx.fillStyle = '#262034';
+      ctx.font = '12.5px ' + CJK_FONT;
+      ctx.fillText(fields[i].v, 82, y + rowH / 2 + 5);
+    }
+    /* 右说明面板 */
+    const px = leftW + 8, pw = w - px - 12;
+    if (sel >= 0) {
+      const f = fields[sel];
+      ctx.fillStyle = '#F7F4FE';
+      rr(ctx, px, 10, pw, h - 20, 12); ctx.fill();
+      ctx.strokeStyle = '#E3DBFC'; ctx.lineWidth = 1.5;
+      rr(ctx, px, 10, pw, h - 20, 12); ctx.stroke();
+      ctx.fillStyle = '#512FA3';
+      ctx.font = 'bold 20px ' + CJK_FONT;
+      ctx.fillText('字段：' + f.k, px + 18, 52);
+      ctx.fillStyle = '#5A5468';
+      ctx.font = '12.5px ' + CJK_FONT;
+      ctx.fillText('示例值', px + 18, 80);
+      ctx.fillStyle = '#262034';
+      ctx.font = 'bold 14px ' + CJK_FONT;
+      wrapText(ctx, f.v, px + 18, 100, pw - 36, 21, 2);
+      ctx.fillStyle = '#5A5468';
+      ctx.font = '12.5px ' + CJK_FONT;
+      ctx.fillText('怎么填', px + 18, 156);
+      ctx.fillStyle = '#262034';
+      ctx.font = '13.5px ' + CJK_FONT;
+      wrapText(ctx, f.d, px + 18, 177, pw - 36, 21, 4);
+    } else {
+      ctx.fillStyle = '#262034';
+      ctx.font = 'bold 17px ' + CJK_FONT;
+      wrapText(ctx, '「没记录的问题 = 没修过」', px + 14, 42, pw - 28, 24, 2);
+      ctx.fillStyle = '#5A5468';
+      ctx.font = '13.5px ' + CJK_FONT;
+      wrapText(ctx, '点击左侧任意字段，看这一栏该怎么填。', px + 14, 92, pw - 28, 21, 3);
+    }
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    click(x, y) {
+      const i = rows.findIndex(R => y >= R.y0 && y < R.y1 && x > 10 && x < leftWNow);
+      if (i >= 0) sel = (sel === i) ? -1 : i;
+      return i >= 0;
+    },
+    move(x, y) {
+      hover = rows.findIndex(R => y >= R.y0 && y < R.y1 && x > 10 && x < leftWNow);
+      return hover >= 0;
+    }
+  };
+})();
+const lgCanvas = document.querySelector('canvas[data-demo="logcard"]');
+lgCanvas.addEventListener('click', e => {
+  const r = lgCanvas.getBoundingClientRect();
+  ARTINX_DEMOS['logcard'].click(e.clientX - r.left, e.clientY - r.top);
+});
+lgCanvas.addEventListener('mousemove', e => {
+  const r = lgCanvas.getBoundingClientRect();
+  const over = ARTINX_DEMOS['logcard'].move(e.clientX - r.left, e.clientY - r.top);
+  lgCanvas.style.cursor = over ? 'pointer' : 'default';
+});
+lgCanvas.addEventListener('mouseleave', () => {
+  ARTINX_DEMOS['logcard'].move(-1, -1);
+  lgCanvas.style.cursor = 'default';
+});
+</script>
+</body>
+</html>

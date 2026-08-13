@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.9 可靠性与异常处理 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队后培训/2.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">2.9　收官课</div>
+      <h1 class="anim" style="animation-delay:.2s">可靠性与异常处理</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">任何环节异常时：继续工作，或安全停下，绝不失控</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图：九道保险丝 + 恢复设计</h2>
+    <div class="grid grid-4" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>通信类</h3>
+        <ul>
+          <li>Timeout 超时</li>
+          <li>电机掉线</li>
+          <li>通信中断设计</li>
+        </ul>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>数据类</h3>
+        <ul>
+          <li>输出限幅</li>
+          <li>输入验真</li>
+          <li>传感器异常</li>
+        </ul>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>物理与电源</h3>
+        <ul>
+          <li>机械卡死（堵转）</li>
+          <li>低电压 / 功率超限</li>
+          <li>缓启动</li>
+        </ul>
+      </div>
+      <div class="card green anim" style="animation-delay:.4s">
+        <h3>恢复设计</h3>
+        <ul>
+          <li>故障状态机</li>
+          <li>LED 灯语 / 日志</li>
+          <li>软硬故障分级</li>
+        </ul>
+      </div>
+    </div>
+    <p class="small muted anim" style="animation-delay:.5s;margin-top:12px">四个交互演示（对比 / 看门狗 / 缓启动 / 限幅）+ 实车故障注入演练，详见讲义「动手实践」</p>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：能运行 vs 能稳定运行 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">定义：能运行 vs 能稳定运行</h2>
+    <div style="flex:1;display:flex;align-items:center">
+      <table class="anim" style="animation-delay:.1s">
+        <tr><th></th><th>能运行</th><th>能稳定运行</th></tr>
+        <tr><td>前提</td><td>一切正常</td><td>任何环节都可能出问题</td></tr>
+        <tr><td>表现</td><td>它能动</td><td>继续工作，或安全停下</td></tr>
+        <tr><td>失控</td><td>可能发生</td><td><em>绝不失控</em></td></tr>
+      </table>
+    </div>
+    <div class="callout danger anim" style="animation-delay:.25s;margin-top:12px">
+      赛场上的问题都不是假设：电机掉线、通信超时、堵转、低电压，全部真实发生过。可靠性 = 检测 + 保护 + 恢复。
+    </div>
+    <div class="callout tip anim" style="animation-delay:.35s;margin-top:10px">
+      一句话总结：能运行 = 一切正常时它能动；能稳定运行 = 任何环节出问题时，要么继续工作、要么安全停下。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：Timeout 概念 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">Timeout：等不到反馈，就降级</h2>
+    <p class="anim" style="animation-delay:.1s"><strong>定义</strong>：超时（Timeout）——等待反馈超过约定时限仍未到达，即按最坏情况处理（降级或停机）。</p>
+    <div class="grid" style="flex:1;align-content:center;margin-top:10px">
+      <table class="anim" style="animation-delay:.2s">
+        <tr><th>等待对象</th><th>超时阈值</th><th>超时动作</th></tr>
+        <tr><td>遥控器新数据</td><td>100 ms</td><td>急停，所有目标置 0</td></tr>
+        <tr><td>电机 CAN 反馈</td><td>200 ms</td><td>该电机断电并报障</td></tr>
+        <tr><td>裁判系统数据</td><td>1 s</td><td>停止射击，保留运动</td></tr>
+        <tr><td>上位机（视觉）指令</td><td>500 ms</td><td>自动瞄准降级为手动</td></tr>
+      </table>
+    </div>
+    <div class="callout warn anim" style="animation-delay:.3s;margin-top:10px">
+      两条纪律：喂狗（每收到有效数据刷新时间戳）；超时后置 0，<em>绝不保持旧指令</em>继续冲。类比：发消息不回，不干等，按最坏打算行动。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：Timeout 代码 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">Timeout 代码骨架</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="anim" style="animation-delay:.1s">
+        <h3>遥控器数据超时</h3>
+        <pre><span class="c">/* 收到一帧数据 → 喂狗 */</span>
+last_rc_tick = now_tick;
+
+<span class="c">/* 控制周期检查：无符号减法防回绕 */</span>
+<span class="k">if</span> ((uint32_t)(now_tick - last_rc_tick) &gt; 100u)
+    target_speed = 0;  <span class="c">/* 急停 */</span>
+
+send_current(target_speed);</pre>
+      </div>
+      <div class="anim" style="animation-delay:.2s">
+        <h3>电机反馈超时（4 电机）</h3>
+        <pre><span class="c">/* CAN 回调喂狗 */</span>
+last_fb_tick[id] = now_tick;
+
+<span class="c">/* 控制周期逐电机检查 */</span>
+<span class="k">for</span> (uint8_t i = 0; i &lt; 4; i++)
+    <span class="k">if</span> ((uint32_t)(now_tick - last_fb_tick[i]) &gt; 200u)
+        send_current_to(i, 0); <span class="c">/* 断电 */</span></pre>
+        <p class="small muted" style="margin-top:8px">(uint32_t)(now − last) 在时间戳回绕时依然正确，优于 now &gt; last + TH。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：演示 看门狗 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：遥控器超时保护（看门狗计时）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="wdt"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="wdDrop">注入丢帧</button>
+        <button class="btn ghost" id="wdReset">重置</button>
+        <span class="small muted">25Hz 数据帧 · 100ms 阈值 · 超时急停，恢复后输出缓升</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：输出限幅 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">输出限幅（Output Limit）</h2>
+    <p class="anim" style="animation-delay:.1s"><strong>定义</strong>：发送给执行器的控制量，在发送前钳位（Clamp）到硬件允许范围。</p>
+    <div class="grid grid-2" style="flex:1;align-content:center;margin-top:10px">
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>为什么必须限幅</h3>
+        <ul>
+          <li>溢出反转：int32 算出 100000，存入 int16 被截断成负数，电机瞬间反转</li>
+          <li>电流上限就是电机与电调的保险丝</li>
+          <li>积分项也要单独限幅，防积分饱和</li>
+        </ul>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>纪律</h3>
+        <ul>
+          <li>限幅放在最后一道关卡：CAN 发送函数内部</li>
+          <li>限幅值取硬件允许范围，勿拍脑袋</li>
+          <li>升降双向都要限幅</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.4s;margin-top:10px">
+      一句话总结：输出出门前先压范围——不设限的代码等于把车钥匙交给一个疯子。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：输入验真 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">输入验真（Input Check）</h2>
+    <p class="anim" style="animation-delay:.1s"><strong>定义</strong>：传感器读数进入控制逻辑前，验证其物理合理性；离谱数据一律不信。类比：眼睛报假消息比眼睛瞎了更危险。</p>
+    <div class="grid" style="flex:1;align-content:center;margin-top:10px">
+      <table class="anim" style="animation-delay:.2s">
+        <tr><th>检查层</th><th>判据</th><th>示例</th></tr>
+        <tr><td>范围检查</td><td>超出物理极限</td><td>转速 99999 / 电压 0</td></tr>
+        <tr><td>跳变检查</td><td>两次读数差太多</td><td>角度 1ms 跳 180°</td></tr>
+        <tr><td>连续检查</td><td>连续 N 次全异常</td><td>判定传感器故障</td></tr>
+      </table>
+    </div>
+    <div class="callout warn anim" style="animation-delay:.3s;margin-top:10px">
+      处理策略：异常读数丢弃、用上次可信值顶上；连续异常则断电降级。范围边界要符合物理事实（车最快 ±8000 RPM，±10000 以上即可判假）。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：限幅与验真代码 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">限幅与验真代码</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="anim" style="animation-delay:.1s">
+        <h3>输出限幅</h3>
+        <pre><span class="n">int16_t</span> <span class="f">clamp_i16</span>(int32_t v, int16_t lo, int16_t hi)
+{
+    <span class="k">if</span> (v &gt; hi) <span class="k">return</span> hi;
+    <span class="k">if</span> (v &lt; lo) <span class="k">return</span> lo;
+    <span class="k">return</span> (int16_t)v;
+}
+
+<span class="c">/* 发送函数内：最后一道关卡 */</span>
+cmd = <span class="f">clamp_i16</span>(raw, -16384, 16384);
+<span class="f">can_send_motor_cmd</span>(cmd);</pre>
+      </div>
+      <div class="anim" style="animation-delay:.2s">
+        <h3>输入验真</h3>
+        <pre><span class="c">/* 超出物理范围一律不信 */</span>
+<span class="k">if</span> (!<span class="f">rpm_looks_valid</span>(rpm)) {
+    rpm = last_valid_rpm;    <span class="c">/* 旧值顶上 */</span>
+    <span class="k">if</span> (++bad_count &gt; 50)  <span class="c">/* 50ms */</span>
+        <span class="f">send_current</span>(0);      <span class="c">/* 断电 */</span>
+} <span class="k">else</span> {
+    last_valid_rpm = rpm;
+    bad_count = 0;
+}</pre>
+        <p class="small muted" style="margin-top:8px">输出不设限会溢出反转；输入不验真就是用假数据开车。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：演示 限幅削平 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：输出限幅「削平」PID 输出</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="clampDemo"></canvas>
+      <div class="demo-controls">
+        <label>限幅值 ±<input type="range" id="clLimit" min="500" max="8000" step="100" value="3000"></label>
+        <span class="small muted">紫虚线 = PID 原始输出 · 绿实线 = 实际发送，被削掉的部分永远到不了电机</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：通信中断行为设计 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">通信中断（Communication Loss）：断联不是停机</h2>
+    <p class="anim" style="animation-delay:.1s">判断标准只有一条：<strong>没了这条数据，我还能不能安全地干这件事？</strong>按此提前设计离线策略，断联照表执行。</p>
+    <div style="flex:1;display:flex;align-items:center;margin-top:10px">
+      <table class="anim" style="animation-delay:.2s">
+        <tr><th>中断对象</th><th>还能安全干</th><th>必须停掉 / 降级</th></tr>
+        <tr><td>遥控器（DR16）</td><td>无</td><td>一切，超时 100ms 急停</td></tr>
+        <tr><td>某电机 CAN 反馈</td><td>其余电机正常动</td><td>该电机断电 + 报障</td></tr>
+        <tr><td>裁判系统</td><td>运动、云台</td><td>射击（离线时射击无效）</td></tr>
+        <tr><td>上位机（视觉）</td><td>手动控制</td><td>自动瞄准，降级为手动</td></tr>
+      </table>
+    </div>
+    <div class="callout warn anim" style="animation-delay:.3s;margin-top:10px">
+      离线状态必须可观测（LED / UI 指出谁离线）；CAN 断线后要复位控制器，防止错误计数满进入 bus-off 拖垮整条总线。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：电机掉线 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">电机掉线：反馈沉默 = 最危险的状态</h2>
+    <p class="anim" style="animation-delay:.1s"><strong>定义</strong>：电机掉线——CAN 反馈帧停止更新（数据停住不动或完全收不到）。常见原因：线松、接插件氧化、电调死机。</p>
+    <div class="grid grid-2" style="flex:1;align-content:center;margin-top:10px">
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>危险在哪</h3>
+        <p>速度闭环「以为」电机在转：误差不变，积分项持续累积，输出越推越大；线重新接上，电机可能瞬间满功率狂转。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.3s">
+        <h3>处理三步</h3>
+        <ul>
+          <li>超时断电：200ms 无反馈，电流置 0</li>
+          <li>积分清零，消灭「憋着的大招」</li>
+          <li>报障 + 恢复流程，绝不瞬间复活</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.4s;margin-top:10px">
+      一句话总结：反馈沉默本身就是故障信号——超时就断电，重连走恢复流程。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：传感器异常 + 机械卡死 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">传感器异常与机械卡死（堵转）</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>传感器异常</h3>
+        <p>与掉线区别：<em>数据仍在更新，但内容是错的</em>。识别靠三层检查（范围 / 跳变 / 连续），处理为丢弃验真、连续异常降级（见第 8 页）。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>机械卡死（堵转）</h3>
+        <p>堵转信号：<em>电流拉满 + 转速约等于 0</em>，电能全变成热量，几秒烫手、几十秒烧线圈。</p>
+      </div>
+    </div>
+    <div class="callout danger anim" style="animation-delay:.3s;margin-top:10px">
+      堵转判据三条件缺一不可：|电流| &gt; 阈值 且 |转速| &lt; 阈值 且 持续 &gt; 500ms → 断电 + 报障。瞬时「大电流低转速」可能只是启动瞬间；摩擦轮等常堵转机构单独对待。堵转是物理问题，代码解决不了，必须人来查。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：堵转代码 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">堵转检测代码</h2>
+    <div class="cols" style="align-items:center">
+      <div class="anim" style="animation-delay:.1s">
+        <pre><span class="c">/* 每 1ms 控制周期调用一次 */</span>
+<span class="k">void</span> <span class="f">stall_check</span>(int16_t rpm, int16_t cur)
+{
+    <span class="c">/* 电流大 + 转速≈0 */</span>
+    <span class="k">if</span> ((rpm &gt; -100 &amp;&amp; rpm &lt; 100) &amp;&amp;
+        (cur &gt; 12000 || cur &lt; -12000)) {
+        stall_ms++;          <span class="c">/* 计时 */</span>
+    } <span class="k">else</span> {
+        stall_ms = 0;        <span class="c">/* 清零 */</span>
+    }
+
+    <span class="k">if</span> (stall_ms &gt; 500) {   <span class="c">/* 500ms */</span>
+        <span class="f">send_current</span>(0);   <span class="c">/* 断电 */</span>
+        <span class="f">fault_led_on</span>();   <span class="c">/* 报障 */</span>
+    }
+}</pre>
+      </div>
+      <div>
+        <div class="callout tip anim" style="animation-delay:.2s">三个条件同时满足才判堵转：<em>大电流 + 零转速 + 持续 500ms</em>。</div>
+        <div class="callout warn anim" style="animation-delay:.3s">触发后不自动恢复：机械卡死是物理问题，需人工确认后解锁。</div>
+        <div class="callout anim" style="animation-delay:.4s">阈值按实车标定：记录堵转瞬间日志，取正常爬坡电流之上。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：演示 能运行 vs 能稳定运行 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：同一辆车，两次命运（注入故障对比）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="vsRun"></canvas>
+      <div class="demo-controls">
+        <span class="small muted">注入故障：</span>
+        <button class="btn" id="vrF1">电机掉线</button>
+        <button class="btn" id="vrF2">通信超时</button>
+        <button class="btn" id="vrF3">堵转</button>
+        <button class="btn ghost" id="vrRun">重跑</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：电源异常 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">电源异常：低电压与功率超限</h2>
+    <p class="anim" style="animation-delay:.1s">电池电压是整车的体能条：电压低还硬拉满输出，主控会先断电重启——场上直接「死机」，比降档可怕得多。</p>
+    <div class="grid" style="flex:1;align-content:center;margin-top:10px">
+      <table class="anim" style="animation-delay:.2s">
+        <tr><th>电压区间</th><th>档位</th><th>允许动作</th></tr>
+        <tr><td>&gt; 24.0 V</td><td>满血</td><td>全功率输出</td></tr>
+        <tr><td>22 ~ 24 V</td><td>降档</td><td>限功率、减加速度</td></tr>
+        <tr><td>&lt; 22.0 V</td><td>保命</td><td>仅云台与基本运动，禁止射击，提示换电</td></tr>
+      </table>
+    </div>
+    <div class="callout warn anim" style="animation-delay:.3s;margin-top:10px">
+      功率超限：预测下一拍输出会超限，主动按比例降档，不等裁判系统判罚（本质是动态输出限幅）。电压采样要做短时平均 + 滞回比较，防止保护抖来抖去。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：缓启动概念 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">缓启动（Ramp）：输出别跳崖，让它走坡道</h2>
+    <p class="anim" style="animation-delay:.1s"><strong>定义</strong>：目标值突变时，输出按固定斜率逼近目标，限制每周期变化量。上电瞬间全功率阶跃 = 三重冲击。</p>
+    <div class="grid grid-2" style="flex:1;align-content:center;margin-top:10px">
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>阶跃启动的危害</h3>
+        <ul>
+          <li>电流冲击：电池与电调瞬间最大电流</li>
+          <li>机械冲击：齿轮「啪」地一响</li>
+          <li>云台猛地甩头，威胁队友与机械</li>
+        </ul>
+      </div>
+      <div class="card green anim" style="animation-delay:.3s">
+        <h3>Ramp 的纪律</h3>
+        <ul>
+          <li>斜率平衡：太慢反应迟钝，太快形同虚设</li>
+          <li>底盘 / 云台 / 摩擦轮可用不同斜率</li>
+          <li>升降双向都 ramp；安全急停可直接置 0</li>
+        </ul>
+      </div>
+    </div>
+    <p class="small muted anim" style="animation-delay:.4s;margin-top:10px">RAMP_STEP = 50（每 1ms）时，5000 满值约 100ms 爬满。Ramp 解决「指令突变」，解决不了「负载突变」——真堵转，该断电还是断电。</p>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：缓启动代码 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">缓启动代码</h2>
+    <div class="cols" style="align-items:center">
+      <div class="anim" style="animation-delay:.1s">
+        <pre><span class="c">/* 每 1ms 调用一次 */</span>
+<span class="k">void</span> <span class="f">ramp_to</span>(int16_t target)
+{
+    <span class="k">if</span> (out_now &lt; target) {
+        out_now += RAMP_STEP; <span class="c">/* +50 */</span>
+        <span class="k">if</span> (out_now &gt; target) out_now = target;
+    } <span class="k">else if</span> (out_now &gt; target) {
+        out_now -= RAMP_STEP;
+        <span class="k">if</span> (out_now &lt; target) out_now = target;
+    }
+    <span class="f">send_current</span>(out_now); <span class="c">/* 发送前已限幅 */</span>
+}</pre>
+      </div>
+      <div>
+        <div class="callout tip anim" style="animation-delay:.2s">到顶后钉在目标：先加步长再比较，防超调。</div>
+        <div class="callout warn anim" style="animation-delay:.3s">恢复时也走 ramp：目标先同步到当前值，再爬升，防「诈尸式」弹起。</div>
+        <div class="callout anim" style="animation-delay:.4s">对比：阶跃是瞬间拉满（冲击），斜坡是平稳爬升（无冲击）。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：演示 缓启动 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：缓启动 · 阶跃 vs 斜坡</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="ramp"></canvas>
+      <div class="demo-controls">
+        <label>斜坡时间 <input type="range" id="rmSlope" min="0.2" max="2.0" step="0.1" value="0.8"> s</label>
+        <span class="small muted">拖动滑块：斜坡越缓，峰值电流越小，代价是反应变慢</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：保护恢复设计 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">保护触发之后：恢复设计</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>故障状态机</h3>
+        <p style="margin:8px 0"><span class="chip green">正常</span> → <span class="chip">保护</span> → <span class="chip gray">恢复确认</span> → 正常</p>
+        <ul>
+          <li>软故障（通信抖动 / 低电压）自动恢复</li>
+          <li>硬故障（堵转 / 传感器损坏）人工确认</li>
+          <li>恢复走 ramp，清积分，防诈尸式弹起</li>
+        </ul>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>必须可观测</h3>
+        <ul>
+          <li>LED 灯语：颜色 + 闪烁频率区分故障（红灯常亮 = 堵转，慢闪 = 通信断，黄灯 = 低电压）</li>
+          <li>日志：类型 / 时间 / 关键数据（电流、电压、误差），赛后复盘靠它</li>
+          <li>上电自检亮一遍灯，验证 LED 没坏</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:10px">
+      一句话总结：保护要看得见，恢复要分轻重——软故障自动恢复，硬故障人工确认。保护触发了却没人知道，等于没保护。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：常见问题 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查</h2>
+    <div style="flex:1;display:flex;align-items:center">
+      <table class="anim" style="animation-delay:.1s">
+        <tr><th>现象</th><th>可能原因</th><th>排查方法</th></tr>
+        <tr><td>超时保护频繁误触发</td><td>阈值太小 / 周期不稳</td><td>日志看实际间隔，阈值取 3~5 倍</td></tr>
+        <tr><td>电机「诈尸」瞬间狂转</td><td>掉线期间积分累积</td><td>掉线清积分，恢复走 ramp</td></tr>
+        <tr><td>堵转保护误触发</td><td>持续时间太短 / 没区分爬坡</td><td>加长 500ms，按实车改阈值</td></tr>
+        <tr><td>限幅后仍溢出反转</td><td>限幅不在发送函数内</td><td>最后一道关卡放 CAN 发送前</td></tr>
+        <tr><td>低电压保护抖动</td><td>采样没滤波 / 没滞回</td><td>短时平均，降档恢复用不同阈值</td></tr>
+        <tr><td>拔一根 CAN 线全车瘫</td><td>控制器进入 bus-off</td><td>掉线检测中复位 CAN 控制器</td></tr>
+        <tr><td>保护触发但灯不亮</td><td>灯语在保护逻辑外 / LED 坏</td><td>上电自检 + 日志与灯语交叉验证</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center;gap:12px">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>看门狗定时器 · Wikipedia</h3>
+        <p class="small">理解喂狗原理、多级恢复与 fail-safe 输出</p>
+        <p class="small"><a href="https://en.wikipedia.org/wiki/Watchdog_timer">en.wikipedia.org/wiki/Watchdog_timer</a></p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>Barr Group 嵌入式 C 编码规范</h3>
+        <p class="small">免费权威规范，防御性编程规则可直接采用</p>
+        <p class="small"><a href="https://barrgroup.com/embedded-systems/books/embedded-c-coding-standard">barrgroup.com/embedded-c-coding-standard</a></p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>RoboMaster 官方论坛</h3>
+        <p class="small">电控开源专栏与问答区，搜「离线」「保护」看各队实战讨论</p>
+        <p class="small"><a href="https://bbs.robomaster.com/">bbs.robomaster.com</a></p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>罗马论坛 · RM 资料站</h3>
+        <p class="small">各队技术干货集中地，学别人怎么处理故障</p>
+        <p class="small"><a href="https://rcbbs.top/">rcbbs.top</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>超时喂狗：等不到就降级，绝不保持旧指令</li>
+        <li>限幅验真：输出压范围，输入验真假</li>
+        <li>断联策略：谁继续、谁降级、谁停下</li>
+        <li>堵转断电：电流大 + 转速零 + 持续 500ms</li>
+        <li>缓启动：输出走坡道，恢复也走坡道</li>
+        <li>恢复设计：软故障自动，硬故障人工确认</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;font-size:19px;margin-top:10px">
+        <strong>能运行是及格线，能稳定运行才是入场券。</strong>
+      </p>
+      <p class="anim" style="animation-delay:.4s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（各小节自行编写） ================= */
+/*
+  注册格式：
+  ARTINX_DEMOS['example'] = {
+    init(canvas, slide){ ...每帧动画写在这里... },
+    destroy(){ ...清除定时器/raf... }
+  };
+  提示：
+  - canvas 尺寸随窗口变化，用下方 fit(canvas) 获取 CSS 像素尺寸并处理高清屏
+  - 页面切换到其他页时会自动调用 destroy()，切回时重新 init()
+  - 不要依赖任何外部库，用原生 canvas 即可
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+// 圆角矩形辅助
+function rr(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+// 读取滑块值（带默认值兜底）
+function sliderVal(id, def) {
+  const el = document.getElementById(id);
+  const v = el ? parseFloat(el.value) : NaN;
+  return isFinite(v) ? v : def;
+}
+// 文字小标签（返回宽度）
+function chipTxt(ctx, txt, x, y, bg, ink) {
+  ctx.font = 'bold 12px "Microsoft YaHei", sans-serif';
+  const tw = ctx.measureText(txt).width + 16;
+  ctx.fillStyle = bg;
+  rr(ctx, x, y, tw, 22, 11); ctx.fill();
+  ctx.fillStyle = ink;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(txt, x + tw / 2, y + 11.5);
+  return tw;
+}
+// 状态 LED
+function led(ctx, x, y, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(x, y, 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
+}
+
+/* ---------- 演示 1：能运行 vs 能稳定运行（同一辆车两次命运，注入故障） ---------- */
+ARTINX_DEMOS['vsRun'] = (() => {
+  let raf = null, canvas = null;
+  const S = { t0: 0, fault: null, endAt: 0 };
+  const FAULT_NAMES = ['电机掉线', '通信超时', '堵转'];
+  const WD = 0.7;          // 有保护版的超时检测时长（演示用）
+  const RESTART = 1.8;     // 双车结局后自动重跑间隔
+
+  // 单车运动学：返回 { x, v, phase }
+  function lane(t, w, prot) {
+    const start = 88, endX = w - 96;
+    const vc = 0.27 * w, a0 = 0.6 * w, t1 = vc / a0;
+    const tf = S.fault ? S.fault.t : Infinity;
+    if (t <= t1) return { x: start + 0.5 * a0 * t * t, v: a0 * t, phase: 'accel' };
+    const x1 = start + 0.5 * a0 * t1 * t1;      // 巡航开始位置
+    if (t < tf) {
+      const x = x1 + vc * (t - t1);
+      if (x >= endX) return { x: endX, v: 0, phase: 'end' };
+      return { x: x, v: vc, phase: 'cruise' };
+    }
+    const xf = x1 + vc * (tf - t1);             // 故障时刻位置
+    const dt = t - tf;
+    if (prot) {
+      if (dt < WD) return { x: Math.min(xf + vc * dt, endX), v: vc, phase: 'wd' };
+      const dec = 1.8 * w, ts = vc / dec, dd = dt - WD;
+      if (dd < ts) {
+        return { x: Math.min(xf + vc * WD + vc * dd - 0.5 * dec * dd * dd, endX), v: vc - dec * dd, phase: 'stop' };
+      }
+      const xs = xf + vc * WD + vc * ts - 0.5 * dec * ts * ts;
+      return { x: Math.min(xs, endX), v: 0, phase: 'safe' };
+    }
+    const a2 = 1.4 * w, vmax = 0.62 * w, tm = (vmax - vc) / a2;
+    let x, v;
+    if (dt < tm) { x = xf + vc * dt + 0.5 * a2 * dt * dt; v = vc + a2 * dt; }
+    else { x = xf + vc * tm + 0.5 * a2 * tm * tm + vmax * (dt - tm); v = vmax; }
+    return { x: x, v: v, phase: x > w + 70 ? 'crashed' : 'fault' };
+  }
+
+  function statusText(phase, prot) {
+    if (!prot) {
+      if (phase === 'accel' || phase === 'cruise') return '正常行驶';
+      if (phase === 'end') return '安全到达';
+      if (phase === 'fault') return '未察觉故障，继续满功率';
+      return '失控冲出赛道';
+    }
+    if (phase === 'accel' || phase === 'cruise') return '正常行驶';
+    if (phase === 'end') return '安全到达';
+    if (phase === 'wd') return '检测超时…';
+    if (phase === 'stop') return '急停减速！';
+    return '保护急停';
+  }
+
+  function drawCar(ctx, x, y, prot, phase) {
+    ctx.fillStyle = prot ? '#784CF6' : '#5A5468';
+    rr(ctx, x - 31, y - 14, 62, 26, 8); ctx.fill();
+    ctx.fillStyle = '#E3DBFC';
+    rr(ctx, x + 8, y - 9, 16, 10, 4); ctx.fill();
+    for (const dx of [-20, 20]) {
+      ctx.fillStyle = '#262034';
+      ctx.beginPath(); ctx.arc(x + dx, y + 15, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#E3DBFC';
+      ctx.beginPath(); ctx.arc(x + dx, y + 15, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    if (phase === 'crashed') {
+      ctx.strokeStyle = '#F0B9C4'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * 20, y + Math.sin(a) * 20);
+        ctx.lineTo(x + Math.cos(a) * 34, y + Math.sin(a) * 34);
+        ctx.stroke();
+      }
+    }
+    if (phase === 'safe') {
+      ctx.strokeStyle = '#AFFF00'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x, y, 40, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+
+  function drawBolt(ctx, x, y) {
+    ctx.strokeStyle = '#F0B9C4'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - 4, y - 30);
+    ctx.lineTo(x + 6, y - 12);
+    ctx.lineTo(x - 2, y - 12);
+    ctx.lineTo(x + 8, y + 6);
+    ctx.lineTo(x - 4, y + 6);
+    ctx.lineTo(x + 2, y + 18);
+    ctx.stroke();
+  }
+
+  function draw() {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    const t = (now - S.t0) / 1000;
+    ctx.clearRect(0, 0, w, h);
+
+    const lanes = [
+      { y: h * 0.30, prot: false, name: '无保护版' },
+      { y: h * 0.72, prot: true, name: '有保护版' }
+    ];
+
+    // 赛道
+    lanes.forEach(L => {
+      const bh = h * 0.13;
+      ctx.fillStyle = '#F7F4FE';
+      rr(ctx, 24, L.y - bh / 2, w - 48, bh, 10); ctx.fill();
+      ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.strokeStyle = '#E3DBFC'; ctx.setLineDash([6, 6]);
+      ctx.beginPath(); ctx.moveTo(88, L.y - bh / 2 + 4); ctx.lineTo(88, L.y + bh / 2 - 4); ctx.stroke();
+      ctx.setLineDash([]);
+      const endX = w - 96;
+      ctx.strokeStyle = '#7FD400'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(endX, L.y - bh / 2 + 2); ctx.lineTo(endX, L.y + bh / 2 - 2); ctx.stroke();
+    });
+
+    // 顶部提示
+    ctx.font = 'bold 12.5px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    if (S.fault) {
+      ctx.fillStyle = '#512FA3';
+      ctx.fillText('故障注入：' + S.fault.name + ' —— 观察两条车道的命运', w / 2, 10);
+    } else {
+      ctx.fillStyle = '#5A5468';
+      ctx.fillText('点下方按钮，向两辆车同时注入故障', w / 2, 10);
+    }
+
+    let upCrash = false, protSafe = false;
+    lanes.forEach(L => {
+      const st = lane(t, w, L.prot);
+      if (st.phase === 'crashed') upCrash = true;
+      if (st.phase === 'safe') protSafe = true;
+
+      // 车道标签 + LED
+      const labelW = chipTxt(ctx, L.name, 24, L.y - 44, L.prot ? '#E3DBFC' : '#EFEDF6', L.prot ? '#512FA3' : '#5A5468');
+      let ledC = '#AFFF00';
+      if (!L.prot && st.phase === 'crashed') ledC = '#F0B9C4';
+      if (L.prot && st.phase === 'wd') ledC = '#F3D9A4';
+      if (L.prot && st.phase === 'stop') ledC = '#F0B9C4';
+      led(ctx, 24 + labelW + 14, L.y - 33, ledC);
+
+      // 状态文字
+      const stx = statusText(st.phase, L.prot);
+      ctx.font = 'bold 12.5px "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = (st.phase === 'crashed') ? '#512FA3'
+        : (st.phase === 'safe') ? '#83BF00'
+        : (st.phase === 'wd' || st.phase === 'stop') ? '#512FA3' : '#5A5468';
+      ctx.fillText(stx, w - 24, L.y - 33);
+
+      // 故障闪电
+      if (S.fault) {
+        const fx = lane(S.fault.t, w, true).x;
+        drawBolt(ctx, Math.min(fx, w - 40), L.y);
+      }
+
+      // 有保护版的看门狗条
+      if (L.prot && S.fault && (st.phase === 'wd' || st.phase === 'stop')) {
+        const f = st.phase === 'wd' ? clamp((t - S.fault.t) / WD, 0, 1) : 1;
+        const bx = st.x - 45, by = L.y - 60;
+        ctx.fillStyle = '#FFFFFF';
+        rr(ctx, bx, by - 14, 90, 12, 6); ctx.fill();
+        ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = f < 1 ? '#AFFF00' : '#F0B9C4';
+        rr(ctx, bx + 1, by - 13, 88 * f, 10, 5); ctx.fill();
+        ctx.font = '11px "Microsoft YaHei", sans-serif';
+        ctx.fillStyle = '#5A5468'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText('超时检测 ' + Math.round(f * 100) + '%', bx + 45, by - 33);
+      }
+
+      // 车
+      drawCar(ctx, st.x, L.y, L.prot, st.phase);
+    });
+
+    // 底部图例
+    ctx.font = '12px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('无保护版：不知故障 → 冲出赛道　|　有保护版：超时检测 → 急停减速 → 安全停下', 24, h - 22);
+
+    // 自动重跑
+    if (S.fault && upCrash && protSafe) {
+      if (!S.endAt) S.endAt = now;
+      else if (now - S.endAt > RESTART * 1000) reset();
+    } else {
+      S.endAt = 0;
+    }
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function reset() {
+    S.fault = null;
+    S.t0 = performance.now();
+    S.endAt = 0;
+  }
+
+  function inject(i) {
+    if (S.fault || !canvas) return;
+    const t = (performance.now() - S.t0) / 1000;
+    const w = canvas.getBoundingClientRect().width;
+    const a = lane(t, w, false), b = lane(t, w, true);
+    if (a.phase === 'end' || b.phase === 'end') return;   // 已到终点，请点重跑
+    S.fault = { t: t, name: FAULT_NAMES[i] };
+  }
+
+  return {
+    init(c) {
+      canvas = c;
+      reset();
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      canvas = null;
+    },
+    inject,
+    rerun: reset
+  };
+})();
+
+/* ---------- 演示 2：Timeout 看门狗（帧到达 → 喂狗；丢帧 → 计时条 → 急停） ---------- */
+ARTINX_DEMOS['wdt'] = (() => {
+  let raf = null, canvas = null, last = 0;
+  const S = { sim: 0, lastFrame: 0, frameTimes: [], drop: false, out: 0, trig: false };
+  const FRAME_MS = 40;    // 25Hz 数据帧
+  const TH = 100;         // 超时阈值 100ms
+
+  function step(dt) {
+    S.sim += dt;
+    if (!S.drop && S.sim - S.lastFrame >= FRAME_MS) {
+      S.lastFrame = S.sim;
+      S.frameTimes.push(S.sim);
+    }
+    while (S.frameTimes.length && S.sim - S.frameTimes[0] > 720) S.frameTimes.shift();
+    const age = S.sim - S.lastFrame;
+    S.trig = age > TH;
+    const tgt = S.trig ? 0 : 5000;
+    if (S.out < tgt) S.out = Math.min(tgt, S.out + dt * 17);      // 恢复：约 300ms 爬满
+    else if (S.out > tgt) S.out = Math.max(tgt, S.out - dt * 200); // 急停：25ms 内归零
+  }
+
+  function draw() {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    const dt = Math.min(50, now - last);
+    last = now;
+    step(dt);
+    ctx.clearRect(0, 0, w, h);
+    const age = S.sim - S.lastFrame;
+
+    // 帧时间线
+    const sx = 170, sw = w - 40 - sx, y0 = 56;
+    ctx.fillStyle = '#F7F4FE';
+    rr(ctx, sx, y0, sw, 24, 8); ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.stroke();
+    const px = sw / 700;
+    ctx.fillStyle = '#AFFF00';
+    for (const ft of S.frameTimes) {
+      const x = sx + sw - (S.sim - ft) * px;
+      if (x > sx) ctx.fillRect(x - 1.5, y0 + 5, 3, 14);
+    }
+    ctx.font = '11.5px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('遥控器数据帧（25Hz，右→左流动）', 24, y0 + 12);
+    if (S.drop) {
+      ctx.fillStyle = '#512FA3';
+      ctx.fillText('丢帧中…', sx + 14, y0 + 12);
+    }
+
+    // 看门狗计时条
+    const by = 118, bx = 170, bw = sw;
+    ctx.fillStyle = '#262034';
+    ctx.fillText('看门狗', 24, by + 13);
+    ctx.fillStyle = '#FBFAFE';
+    rr(ctx, bx, by, bw, 26, 8); ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.stroke();
+    const fillW = clamp(age / 150, 0, 1) * (bw - 2);
+    const col = age > TH ? '#F0B9C4' : (age > 60 ? '#F3D9A4' : '#AFFF00');
+    ctx.fillStyle = col;
+    rr(ctx, bx + 1, by + 1, fillW, 24, 7); ctx.fill();
+    const thx = bx + 1 + (TH / 150) * (bw - 2);
+    ctx.strokeStyle = '#512FA3'; ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(thx, by - 8); ctx.lineTo(thx, by + 34); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#512FA3';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText('100ms 阈值', thx, by + 32);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#262034';
+    ctx.font = 'bold 13px Consolas, monospace';
+    ctx.fillText(Math.round(Math.min(age, 150)) + ' ms', bx + bw - 10, by + 13);
+
+    // 电机输出
+    const oy = 190;
+    ctx.font = 'bold 13.5px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#262034';
+    ctx.fillText('电机输出（电流）', 24, oy + 8);
+    ctx.font = 'bold 28px Consolas, monospace';
+    ctx.fillText(Math.round(S.out) + '', 24, oy + 36);
+    const ox = 200, ow = w - 40 - ox;
+    ctx.fillStyle = '#FBFAFE';
+    rr(ctx, ox, oy, ow, 26, 8); ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = S.trig ? '#F0B9C4' : '#784CF6';
+    rr(ctx, ox + 1, oy + 1, (S.out / 5000) * (ow - 2), 24, 7); ctx.fill();
+
+    // 状态框
+    const sy = 248;
+    let status = '正常：每帧都喂狗', sBg = '#F7FDEB', sBd = '#BFE98A', sInk = '#83BF00';
+    if (S.trig) { status = '超时！急停（输出置 0）'; sBg = '#FFF3F5'; sBd = '#F0B9C4'; sInk = '#512FA3'; }
+    else if (S.drop) { status = '丢帧中：看门狗计时增长…'; sBg = '#FFF9EC'; sBd = '#F3D9A4'; sInk = '#262034'; }
+    ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+    const tw = ctx.measureText(status).width;
+    ctx.fillStyle = sBg;
+    rr(ctx, 24, sy, tw + 28, 30, 10); ctx.fill();
+    ctx.strokeStyle = sBd; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = sInk;
+    ctx.fillText(status, 38, sy + 15);
+
+    // 底部说明
+    ctx.font = '11.5px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('点「注入丢帧」停发数据：计时条走到 100ms → 急停；点「恢复发帧」→ 输出缓升回正常。', 24, h - 20);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function toggleDrop() {
+    S.drop = !S.drop;
+    const b = document.getElementById('wdDrop');
+    if (b) b.textContent = S.drop ? '恢复发帧' : '注入丢帧';
+  }
+
+  function reset() {
+    S.sim = 0; S.lastFrame = 0; S.frameTimes = [];
+    S.drop = false; S.out = 0; S.trig = false;
+    const b = document.getElementById('wdDrop');
+    if (b) b.textContent = '注入丢帧';
+  }
+
+  return {
+    init(c) {
+      canvas = c;
+      last = performance.now();
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      canvas = null;
+    },
+    toggleDrop, reset
+  };
+})();
+
+/* ---------- 演示 3：缓启动（阶跃 vs 斜坡，滑块调斜坡时间） ---------- */
+ARTINX_DEMOS['ramp'] = (() => {
+  let raf = null, canvas = null, last = 0;
+  const S = { t: 0, ang: 0 };
+  const LOOP = 2.6, START = 0.15, TARGET = 5000;
+
+  function rampOut(tt, rt) {
+    if (tt < START) return 0;
+    if (tt < START + rt) return TARGET * (tt - START) / rt;
+    return TARGET;
+  }
+
+  function draw() {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    const dt = Math.min(50, now - last);
+    last = now;
+    S.t += dt / 1000;
+    if (S.t > LOOP) S.t -= LOOP;
+    const rt = sliderVal('rmSlope', 0.8);
+    S.ang += (rampOut(S.t, rt) / TARGET) * dt / 1000 * 20;
+    ctx.clearRect(0, 0, w, h);
+
+    // 曲线区
+    const px0 = 60, py0 = 44, pw = w * 0.60 - 50, ph = h - 100;
+    const X = tt => px0 + (tt / LOOP) * pw;
+    const Y = v => py0 + ph - (v / 6000) * ph;
+
+    ctx.strokeStyle = '#EEEAF8'; ctx.lineWidth = 1;
+    ctx.font = '10.5px Consolas, monospace';
+    for (let g = 1; g <= 5; g++) {
+      const gy = Y(g * 1000);
+      ctx.beginPath(); ctx.moveTo(px0, gy); ctx.lineTo(px0 + pw, gy); ctx.stroke();
+      ctx.fillStyle = '#5A5468'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(g * 1000, px0 - 8, gy);
+    }
+
+    // 目标（浅紫虚线）
+    ctx.strokeStyle = '#E3DBFC'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(START), Y(0));
+    ctx.lineTo(X(START), Y(TARGET)); ctx.lineTo(X(LOOP), Y(TARGET));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 阶跃输出（紫）
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(START), Y(0));
+    ctx.lineTo(X(START), Y(TARGET)); ctx.lineTo(X(LOOP), Y(TARGET));
+    ctx.stroke();
+
+    // 斜坡输出（绿）
+    const tend = START + rt;
+    ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(START), Y(0));
+    ctx.lineTo(X(tend), Y(TARGET)); ctx.lineTo(X(LOOP), Y(TARGET));
+    ctx.stroke();
+
+    // 阶跃冲击标注
+    ctx.strokeStyle = '#512FA3'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(X(START), Y(TARGET)); ctx.lineTo(X(START), py0 + 4); ctx.stroke();
+    ctx.fillStyle = '#512FA3';
+    ctx.font = 'bold 12.5px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('电流冲击', X(START), Y(TARGET) - 8);
+    // 斜坡标注
+    ctx.fillStyle = '#83BF00';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText('平稳爬升 ' + rt.toFixed(1) + 's', X((START + tend) / 2), Y(3000) - 24);
+
+    // 轴标签
+    ctx.fillStyle = '#262034';
+    ctx.font = '11.5px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText('时间 →（目标在 0.15s 从 0 跳到 5000）', px0 + pw / 2, py0 + ph + 6);
+    ctx.save();
+    ctx.translate(24, py0 + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('输出电流', 0, 0);
+    ctx.restore();
+
+    // 右侧面板：峰值电流对比
+    const rx = w * 0.60 + 30, rw = w - rx - 24;
+    const rampPct = clamp(0.1 / rt * 100, 0, 100);
+    const barW = rw - 66;
+    ctx.font = 'bold 13.5px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#262034';
+    ctx.fillText('峰值电流对比', rx, 36);
+    ctx.font = '11.5px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#512FA3';
+    ctx.fillText('阶跃启动', rx, 76);
+    ctx.fillStyle = '#512FA3';
+    rr(ctx, rx, 96, barW, 18, 6); ctx.fill();
+    ctx.fillStyle = '#262034'; ctx.textBaseline = 'middle';
+    ctx.fillText('100%', rx + barW + 10, 105);
+    ctx.fillStyle = '#83BF00';
+    ctx.fillText('斜坡启动', rx, 130);
+    ctx.fillStyle = '#AFFF00';
+    rr(ctx, rx, 150, Math.max(4, barW * rampPct / 100), 18, 6); ctx.fill();
+    ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 1.5;
+    rr(ctx, rx, 150, Math.max(4, barW * rampPct / 100), 18, 6); ctx.stroke();
+    ctx.fillStyle = '#262034';
+    ctx.fillText(Math.round(rampPct) + '%', rx + barW + 10, 159);
+    ctx.fillStyle = '#5A5468'; ctx.textBaseline = 'top';
+    ctx.fillText('斜坡越缓，冲击电流越小', rx, 186);
+
+    // 电机风扇
+    const cx = rx + rw / 2, cy = 262, R = 40;
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#262034'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) {
+      const a = S.ang + i * Math.PI * 2 / 3;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(a) * (R - 8), cy + Math.sin(a) * (R - 8));
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#262034';
+    ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#5A5468';
+    ctx.font = '11.5px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText('转速平滑爬升', cx, cy + R + 8);
+
+    // 图例
+    ctx.font = '11.5px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#784CF6';
+    ctx.fillText('紫 = 阶跃指令', 24, h - 22);
+    ctx.fillStyle = '#83BF00';
+    ctx.fillText('绿 = 斜坡指令（拖动滑块改斜坡时间）', 122, h - 22);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  return {
+    init(c) {
+      canvas = c;
+      last = performance.now();
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      canvas = null;
+    }
+  };
+})();
+
+/* ---------- 演示 4：输出限幅（PID 原始输出被限幅「削平」） ---------- */
+ARTINX_DEMOS['clampDemo'] = (() => {
+  let raf = null, canvas = null, last = 0;
+  const S = { t: 0, cur: 0, hist: [] };
+  const TAU = 0.25, KP = 1.6, PER = 3.0, WIN = 6;
+
+  function step(dtMs) {
+    S.t += dtMs / 1000;
+    const tgt = (Math.floor(S.t / PER) % 2 === 0) ? 4000 : -4000;
+    S.cur += (tgt - S.cur) * (1 - Math.exp(-(dtMs / 1000) / TAU));
+    const err = tgt - S.cur;
+    const raw = KP * err + 120 * Math.sin(S.t * 15);
+    const lim = sliderVal('clLimit', 3000);
+    S.hist.push({ t: S.t, raw: raw, cl: clamp(raw, -lim, lim) });
+    while (S.hist.length > 2 && S.hist[0].t < S.t - WIN - 0.1) S.hist.shift();
+  }
+
+  function draw() {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    const dt = Math.min(50, now - last);
+    last = now;
+    step(dt);
+    const lim = sliderVal('clLimit', 3000);
+    ctx.clearRect(0, 0, w, h);
+
+    const px0 = 56, py0 = 40, pw = w - px0 - 24, ph = h - 62;
+    const Y = v => py0 + ph / 2 - (v / 13000) * (ph / 2);
+    const X = tt => px0 + pw - (S.t - tt) / WIN * pw;
+
+    // 背景
+    ctx.fillStyle = '#FBFAFE';
+    rr(ctx, px0, py0, pw, ph, 10); ctx.fill();
+    // 限幅外区域（被削掉的部分）
+    ctx.fillStyle = 'rgba(240,185,196,.25)';
+    ctx.fillRect(px0, py0, pw, Y(lim) - py0);
+    ctx.fillRect(px0, Y(-lim), pw, (py0 + ph) - Y(-lim));
+    // 限幅内区域
+    ctx.fillStyle = 'rgba(175,255,0,.12)';
+    ctx.fillRect(px0, Y(lim), pw, Y(-lim) - Y(lim));
+
+    // 限幅线
+    ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 2;
+    ctx.setLineDash([8, 6]);
+    for (const lv of [lim, -lim]) {
+      ctx.beginPath(); ctx.moveTo(px0, Y(lv)); ctx.lineTo(px0 + pw, Y(lv)); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.font = '11.5px Consolas, monospace';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillStyle = '#83BF00';
+    ctx.fillText('+' + lim, px0 + 8, Y(lim) - 2);
+    ctx.fillText('-' + lim, px0 + 8, Y(-lim) - 2);
+
+    // 零轴
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px0, Y(0)); ctx.lineTo(px0 + pw, Y(0)); ctx.stroke();
+
+    // 目标阶跃（浅紫）
+    ctx.strokeStyle = '#E3DBFC'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    let started = false;
+    for (let tt = S.t - WIN; tt <= S.t; tt += 0.25) {
+      const tgt = (Math.floor(tt / PER) % 2 === 0) ? 4000 : -4000;
+      const y = Y(tgt);
+      if (!started) { ctx.moveTo(X(tt), y); started = true; }
+      else ctx.lineTo(X(tt), y);
+    }
+    ctx.stroke();
+
+    // 原始输出（紫虚线）
+    if (S.hist.length > 1) {
+      ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 2.5;
+      ctx.setLineDash([7, 5]);
+      ctx.beginPath();
+      for (let i = 0; i < S.hist.length; i++) {
+        const p = S.hist[i];
+        i === 0 ? ctx.moveTo(X(p.t), Y(p.raw)) : ctx.lineTo(X(p.t), Y(p.raw));
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // 削平点
+    ctx.fillStyle = '#F0B9C4';
+    for (let i = 0; i < S.hist.length; i += 4) {
+      const p = S.hist[i];
+      if (Math.abs(p.raw) > lim) {
+        ctx.beginPath(); ctx.arc(X(p.t), Y(p.cl), 2.5, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    // 实际发送（绿实线）
+    if (S.hist.length > 1) {
+      ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let i = 0; i < S.hist.length; i++) {
+        const p = S.hist[i];
+        i === 0 ? ctx.moveTo(X(p.t), Y(p.cl)) : ctx.lineTo(X(p.t), Y(p.cl));
+      }
+      ctx.stroke();
+    }
+
+    // 图例
+    ctx.font = 'bold 12.5px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#784CF6';
+    ctx.fillText('紫虚线 = PID 原始输出', px0 + 6, py0 + ph + 8);
+    ctx.fillStyle = '#83BF00';
+    ctx.fillText('绿实线 = 实际发送（被削平）', px0 + 180, py0 + ph + 8);
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('当前限幅 ±' + lim + '，超出部分永远到不了电机', px0 + 360, py0 + ph + 8);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  return {
+    init(c) {
+      canvas = c;
+      last = performance.now();
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      canvas = null;
+    }
+  };
+})();
+
+/* ---------- 按钮接线 ---------- */
+document.getElementById('vrF1').onclick = () => ARTINX_DEMOS['vsRun'].inject(0);
+document.getElementById('vrF2').onclick = () => ARTINX_DEMOS['vsRun'].inject(1);
+document.getElementById('vrF3').onclick = () => ARTINX_DEMOS['vsRun'].inject(2);
+document.getElementById('vrRun').onclick = () => ARTINX_DEMOS['vsRun'].rerun();
+document.getElementById('wdDrop').onclick = () => ARTINX_DEMOS['wdt'].toggleDrop();
+document.getElementById('wdReset').onclick = () => ARTINX_DEMOS['wdt'].reset();
+</script>
+</body>
+</html>

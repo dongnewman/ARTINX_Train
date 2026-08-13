@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.5 PID 与前馈 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 2.5 PID 与前馈 演示文档（基于 SLIDE_TEMPLATE.html v2）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  演示：pidadv 进阶PID仿真器 / cascade 串级动画 / feedfwd 前馈对比 / gravcomp 重力补偿
+  全篇无 emoji；封面署名「电控组长 董心宇」，不写课时与前置。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">2.5　PID 与前馈</div>
+      <h1 class="anim" style="animation-delay:.2s">PID 与前馈</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">输出限幅 · 抗积分饱和 · 串级 PID · 前馈补偿</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>进阶 PID：四道护栏</h3>
+        <p>输出限幅、积分限幅、抗积分饱和、微分滤波——定义、解法与代码骨架（第 3-5、11-12 页）。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>串级 PID 与三环</h3>
+        <p>位置环套速度环：外环发令、内环执行；第 7 页有可注入干扰的结构动画（第 6-8 页）。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>前馈补偿</h3>
+        <p>速度 / 加速度 / 重力 / 摩擦四种前馈；反馈 + 前馈组合（第 15-17 页，演示见 18-19 页）。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.4s">
+        <h3>调参与实战</h3>
+        <p>Pitch / Yaw / 底盘 / 摩擦轮调参方向、整定顺序五步（第 9-10 页）；第 14 页为进阶 PID 仿真器。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：输出限幅 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">输出限幅（Output Limit）</h2>
+    <div class="grid grid-2">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>为什么需要</h3>
+        <p>PID 输出可算到任意大，但电机最大电流 / 电压有限。超出部分不会生效，执行器长期被顶死在极限值——输出失真，还给积分饱和埋下伏笔。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>怎么做</h3>
+        <p>把控制量钳位（clamp）到执行器能力范围：<em>u = clamp(u, −u_max, +u_max)</em>。u_max 按电机手册最大值设定并留余量。</p>
+      </div>
+    </div>
+    <div class="anim" style="animation-delay:.3s;margin-top:12px">
+      <svg viewBox="0 0 520 84" style="width:100%;height:84px" role="img" aria-label="输出限幅曲线">
+        <line x1="20" y1="62" x2="500" y2="62" stroke="#E8E4F4" stroke-width="2"/>
+        <line x1="20" y1="62" x2="20" y2="8" stroke="#E8E4F4" stroke-width="2"/>
+        <polyline points="20,62 104,52 416,18 500,18" fill="none" stroke="#784CF6" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <line x1="104" y1="52" x2="416" y2="18" stroke="#784CF6" stroke-width="3.5" opacity=".35" stroke-dasharray="7 5"/>
+        <line x1="20" y1="18" x2="500" y2="18" stroke="#AFFF00" stroke-width="2" stroke-dasharray="6 4"/>
+        <line x1="20" y1="52" x2="500" y2="52" stroke="#AFFF00" stroke-width="2" stroke-dasharray="6 4"/>
+        <text x="505" y="66" font-size="11" fill="#5A5468">输入</text>
+        <text x="24" y="12" font-size="11" fill="#3C6400">+u_max</text>
+        <text x="24" y="78" font-size="11" fill="#3C6400">−u_max</text>
+        <text x="330" y="14" font-size="11" fill="#83BF00">被削平的部分</text>
+      </svg>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.4s;margin-top:10px">限幅是「保护电机 + 保护控制效果」的第一道护栏；输出被限幅后积分仍会累积——见下页积分饱和。</div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：积分限幅与积分饱和 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">积分限幅与积分饱和（Windup）</h2>
+    <div class="grid grid-2">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>积分饱和是什么</h3>
+        <p>误差长时间存在（大阶跃、堵转）时 I 项持续累积，像雪球越滚越大，远超输出限幅允许的量。误差回零后输出仍长时间顶在限幅值 → <em>大超调、来回振荡</em>。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>解法：两件套缺一不可</h3>
+        <p>① 积分限幅：|∫e| ≤ int_max，管住雪球大小；<br>② 抗积分饱和（Anti-Windup）：输出饱和时停止 / 回退积分（条件积分或反计算法），管住雪球继续滚。</p>
+      </div>
+    </div>
+    <div class="anim" style="animation-delay:.3s;margin-top:12px">
+      <svg viewBox="0 0 520 84" style="width:100%;height:84px" role="img" aria-label="有无抗饱和的阶跃响应对比">
+        <line x1="20" y1="30" x2="500" y2="30" stroke="#5A5468" stroke-width="1.5" stroke-dasharray="6 4"/>
+        <polyline points="20,70 60,67 100,58 140,42 180,26 210,20 240,23 270,35 300,39 330,32 360,26 390,28 420,33 450,31 480,30 500,30"
+                  fill="none" stroke="#512FA3" stroke-width="2.5" stroke-linejoin="round"/>
+        <polyline points="20,70 60,68 100,60 140,44 180,33 220,30 280,30 340,30 400,30 500,30"
+                  fill="none" stroke="#83BF00" stroke-width="2.5" stroke-linejoin="round"/>
+        <text x="445" y="26" font-size="11" fill="#5A5468">目标</text>
+        <text x="24" y="12" font-size="11" fill="#512FA3">无抗饱和：超调 + 振荡</text>
+        <text x="200" y="46" font-size="11" fill="#3C6400">有抗饱和：干净追平</text>
+      </svg>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.4s;margin-top:10px">一句话：限幅管住「攒多少」，抗饱和管住「什么时候别再攒」。第 14 页仿真器可关闭抗饱和观察振荡。</div>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：微分噪声 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">微分噪声（Derivative Noise）</h2>
+    <div class="grid grid-2">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>问题</h3>
+        <p>位置信号带编码器毛刺（量化台阶、机械振动）。D 项对误差求导会放大高频噪声，输出剧烈抖动 → 云台高频抽搐、有电流声。</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.2s">
+        <h3>解法</h3>
+        <p>① 误差先一阶低通滤波再差分（不完全微分）；<br>② 直接使用陀螺仪角速度代替位置差分，免去求导。滤波系数需在「干净」与「跟手」之间试出。</p>
+      </div>
+    </div>
+    <div class="anim" style="animation-delay:.3s;margin-top:12px">
+      <svg viewBox="0 0 520 84" style="width:100%;height:84px" role="img" aria-label="原始信号与滤波后信号对比">
+        <line x1="20" y1="62" x2="500" y2="62" stroke="#E8E4F4" stroke-width="2"/>
+        <line x1="20" y1="62" x2="20" y2="8" stroke="#E8E4F4" stroke-width="2"/>
+        <polyline points="20,45 40,51 60,41 80,48 100,39 120,46 140,42 160,49 180,40 200,47 220,39 240,48 260,41 280,46 300,39 320,48 340,42 360,50 380,40 400,46 420,39 440,45 460,41 480,47 500,40"
+                  fill="none" stroke="#784CF6" stroke-width="2"/>
+        <polyline points="20,44 60,43 100,44 140,43 200,44 260,43 320,44 380,43 440,44 500,43"
+                  fill="none" stroke="#83BF00" stroke-width="3" stroke-linecap="round"/>
+        <text x="24" y="12" font-size="11" fill="#784CF6">原始（带毛刺）：微分放大成抖动</text>
+        <text x="150" y="26" font-size="11" fill="#3C6400">低通滤波后：微分可用</text>
+      </svg>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.4s;margin-top:10px">一句话：对带噪声的信号求导 = 放大噪声；先滤波再求导（或用陀螺仪），D 项才敢用。</div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：串级 PID 原理 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">串级 PID：外环发令，内环执行</h2>
+    <pre class="anim" style="animation-delay:.1s;font-size:12.5px;line-height:1.5;padding:10px 16px">θ* →(±)→ [位置环 PID] → ω* →(±)→ [速度环 PID] → u → [电机+云台] → ω → θ
+       ↑                                  ↑                                │
+       └─────── 实际角度 θ（编码器） ──────┴── 实际角速度 ω（陀螺仪） ──────┘</pre>
+    <div class="grid grid-2" style="margin-top:12px">
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>内外环职责（云台 Pitch）</h3>
+        <p>外环（位置环）：输入 eθ = θ* − θ，输出目标角速度 ω*；<br>内环（速度环）：输入 eω = ω* − ω，输出电机电流 u。<br>核心：<em>外环输出 = 内环目标</em>。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>为什么抗干扰强 / 怎么整定</h3>
+        <p>扰动先改变角速度 → 内环立即抵消，位置几乎不动；单环须等位置误差出现才反应。<br>整定顺序：<em>先内后外</em>；外环常用 P 或 PI，少用 D。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：串级 PID 结构动画 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">串级结构动画：扰动刚冒头就被内环吃掉</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="cascade"></canvas>
+      <div class="demo-controls">
+        <button class="btn green" id="caDist">注入干扰（模拟手拨云台）</button>
+        <span class="small muted">外环输出 = 内环目标（目标角速度）；下方曲线观察扰动被内环吸收</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：位置环 / 速度环 / 电流环 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">「环」= 反馈什么量</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:16%">环</th><th style="width:24%">反馈量</th><th style="width:26%">输出</th><th>机器人的使用</th></tr>
+      <tr><td>电流环</td><td>电流（力矩 ≈ 电流）</td><td>电压 / PWM</td><td>电机驱动内部，我们一般不碰</td></tr>
+      <tr><td>速度环</td><td>转速 / 角速度</td><td>电流</td><td>摩擦轮、底盘</td></tr>
+      <tr><td>位置环</td><td>角度 / 位置</td><td>目标速度</td><td>云台 Pitch / Yaw</td></tr>
+    </table>
+    <ul class="anim" style="animation-delay:.2s;margin-top:14px;flex:1">
+      <li>云台 Pitch / Yaw：位置环套速度环（串级）；摩擦轮：仅速度环；底盘：速度环 + 2.4 运动学分解。</li>
+      <li>环数不是越多越好：每多一层，就多一组要整定的参数、多一份延迟，够用就好。</li>
+      <li>各执行器具体用哪些环，讲解时结合战队现有代码展示。</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：各执行器调参方向 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">各执行器调参方向（只讲方向，不给数值）</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:18%">执行器</th><th style="width:26%">物理特点</th><th>调参方向与理由</th></tr>
+      <tr><td>云台 Pitch</td><td>重力始终往下拽</td><td>足够的 I 或重力补偿扛住重力，否则垂头、回中慢</td></tr>
+      <tr><td>云台 Yaw</td><td>摩擦大、有静摩擦</td><td>适当 I 克服静摩擦；I 太大低频抖动</td></tr>
+      <tr><td>底盘</td><td>惯性大、整车重</td><td>P 不宜过大，否则来回冲；以速度环为主</td></tr>
+      <tr><td>摩擦轮</td><td>只求转速稳、响应快</td><td>转速环为主，往快响应调，波动小即达标</td></tr>
+    </table>
+    <div class="callout warn anim" style="animation-delay:.2s;margin-top:14px">每台车重心、摩擦都不同：方向照此表，数值必须实车整定。</div>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:10px">Pitch 受重力 → 重 I / 重力补偿；Yaw 摩擦大 → 重 I；底盘惯性大 → 轻 P；摩擦轮 → 快响应。</div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：整定顺序五步 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">整定顺序五步</h2>
+    <ol class="anim" style="animation-delay:.1s;font-size:15px;line-height:2.05;flex:1;display:flex;flex-direction:column;justify-content:center;max-width:860px">
+      <li>确认传感器正常：陀螺仪零漂、编码器方向，再动手调参。</li>
+      <li>串级先内环后外环：内环（速度环）调稳了，外环才有的调。</li>
+      <li>先 P：让系统大致跟上目标、不振荡。</li>
+      <li>再 D 压超调，最后加 I 消静差。</li>
+      <li>确认限幅与抗饱和都已生效，再上剧烈目标测试。</li>
+    </ol>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:10px">两条铁律：先内后外；先 P、后 I、再 D。顺序反了越调越乱。</div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：代码骨架 1 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">进阶 PID 代码骨架（一）：结构体与初始化</h2>
+    <pre class="anim" style="animation-delay:.1s;flex:1"><span class="c">/* 进阶 PID：输出限幅 + 积分限幅 + 抗饱和 + 微分滤波 */</span>
+<span class="k">typedef struct</span> {
+    <span class="k">float</span> kp, ki, kd;        <span class="c">/* PID 增益 */</span>
+    <span class="k">float</span> out_max;           <span class="c">/* 输出限幅值：按电机最大电流/电压设 */</span>
+    <span class="k">float</span> int_max;           <span class="c">/* 积分限幅值：积分最多攒这么多 */</span>
+    <span class="k">float</span> filt_coef;         <span class="c">/* 微分低通滤波系数 0~1，越小滤波越重 */</span>
+    <span class="k">float</span> err_sum;           <span class="c">/* 积分累积量 */</span>
+    <span class="k">float</span> prev_err;          <span class="c">/* 上一次误差（微分用） */</span>
+    <span class="k">float</span> prev_filt;         <span class="c">/* 上一次滤波后误差 */</span>
+} PidAdv;
+
+<span class="k">static float</span> <span class="f">clampf</span>(<span class="k">float</span> v, <span class="k">float</span> lo, <span class="k">float</span> hi)
+{ <span class="k">return</span> v &lt; lo ? lo : (v &gt; hi ? hi : v); }</pre>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:10px">四道护栏全部封装在结构体里；初始化时按电机手册设定 out_max，滤波系数与增益实车整定。</div>
+  </section>
+  <!-- ══════════════════ 第 12 页：代码骨架 2 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">进阶 PID 代码骨架（二）：更新函数</h2>
+    <pre class="anim" style="animation-delay:.1s;flex:1"><span class="c">/* 每个控制周期调用一次（如 1kHz），dt 为周期秒数 */</span>
+<span class="k">float</span> <span class="f">pid_adv_update</span>(PidAdv *p, <span class="k">float</span> target, <span class="k">float</span> measure, <span class="k">float</span> dt) {
+    <span class="k">float</span> err = target - measure;
+    <span class="c">/* ① 微分：误差先一阶低通滤波再差分，滤掉编码器毛刺 */</span>
+    <span class="k">float</span> filt_err = p-&gt;prev_filt + p-&gt;filt_coef * (err - p-&gt;prev_filt);
+    <span class="k">float</span> d_term = p-&gt;kd * (filt_err - p-&gt;prev_filt) / dt;
+    p-&gt;err_sum += p-&gt;ki * err * dt;                  <span class="c">/* ② 积分累积 */</span>
+    <span class="k">float</span> out = p-&gt;kp * err + p-&gt;err_sum + d_term;
+    <span class="k">float</span> out_lim = <span class="f">clampf</span>(out, -p-&gt;out_max, p-&gt;out_max); <span class="c">/* ③ 输出限幅 */</span>
+    <span class="c">/* ④ 抗饱和：输出被限幅压住时反算积分；⑤ 积分限幅 */</span>
+    <span class="k">if</span> (out != out_lim) p-&gt;err_sum = out_lim - (p-&gt;kp * err + d_term);
+    p-&gt;err_sum = <span class="f">clampf</span>(p-&gt;err_sum, -p-&gt;int_max, p-&gt;int_max);
+    p-&gt;prev_err = err; p-&gt;prev_filt = filt_err;
+    <span class="k">return</span> out_lim;
+}</pre>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:10px">五处保护依次生效：①微分滤波 ②积分累积 ③输出限幅 ④抗饱和（反计算）⑤积分限幅。</div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：代码骨架 3 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">串级 + 前馈：调用骨架</h2>
+    <pre class="anim" style="animation-delay:.1s"><span class="c">/* 串级：外环输出 = 内环目标（云台 Pitch 示例） */</span>
+<span class="k">float</span> w_ref = <span class="f">pid_adv_update</span>(&amp;pos_loop, ang_ref, ang_cur, dt);
+<span class="k">float</span> u_fb  = <span class="f">pid_adv_update</span>(&amp;vel_loop, w_ref, vel_cur, dt);
+
+<span class="c">/* 前馈：按目标直接给，不等误差 */</span>
+<span class="k">float</span> u_ff = ff.kv * w_ref                          <span class="c">/* 速度前馈 */</span>
+           + ff.grav * <span class="f">cosf</span>(ang_cur * DEG2RAD);     <span class="c">/* 重力补偿 */</span>
+
+<span class="f">motor_set_current</span>(PITCH_MOTOR, u_fb + u_ff);      <span class="c">/* FB 纠错 + FF 给大头 */</span></pre>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:12px">完整版（含加速度前馈、摩擦补偿、结构体定义）见 <em>教学内容.md</em> 任务一至任务三。</div>
+    <div class="callout warn anim" style="animation-delay:.3s;margin-top:10px">整定顺序：先内环后外环；前馈系数最后单独调；目标有阶跃时先做平滑轨迹，前馈才不会打出尖峰。</div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：进阶 PID 仿真器 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">进阶 PID 仿真器：三个开关都试一遍</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="pidadv"></canvas>
+      <div class="demo-controls">
+        <label>Kp <input type="range" id="paKp" min="0.5" max="8" step="0.1" value="3"><span id="paKpV" class="small">3</span></label>
+        <label>Ki <input type="range" id="paKi" min="0" max="6" step="0.1" value="2.5"><span id="paKiV" class="small">2.5</span></label>
+        <label>Kd <input type="range" id="paKd" min="0" max="3" step="0.05" value="0.3"><span id="paKdV" class="small">0.3</span></label>
+        <label><input type="checkbox" id="paLimit" checked style="accent-color:#784CF6">输出限幅</label>
+        <label><input type="checkbox" id="paAw" checked style="accent-color:#784CF6">抗积分饱和</label>
+        <label><input type="checkbox" id="paDf" checked style="accent-color:#784CF6">微分滤波</label>
+        <label>噪声 <input type="range" id="paNoise" min="0" max="1" step="0.05" value="0"></label>
+        <button class="btn green" id="paStep">阶跃目标</button>
+        <button class="btn ghost" id="paReset">重置</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：前馈总论 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">前馈（Feedforward, FF）：提前给，不等误差</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:16%"></th><th>反馈 Feedback</th><th>前馈 Feedforward</th></tr>
+      <tr><td>依据</td><td>误差 e = 目标 − 实际</td><td>目标信号本身（参考轨迹）</td></tr>
+      <tr><td>特点</td><td>错了再改，天生滞后半拍</td><td>提前给够，无滞后；依赖模型与系数</td></tr>
+      <tr><td>短板</td><td>误差为零时输出约零（只剩 I）</td><td>系数不准会过冲或欠补</td></tr>
+    </table>
+    <table class="anim" style="animation-delay:.2s;margin-top:12px">
+      <tr><th style="width:24%">四种前馈</th><th style="width:34%">形式</th><th>解决什么问题</th></tr>
+      <tr><td>速度前馈</td><td>kv · ω_ref</td><td>跟踪运动目标慢半拍</td></tr>
+      <tr><td>加速度前馈</td><td>ka · α_ref</td><td>惯性大的负载加速时跟不上</td></tr>
+      <tr><td>重力补偿</td><td>k_g · cosθ</td><td>Pitch 不同仰角所需力矩不同</td></tr>
+      <tr><td>摩擦补偿</td><td>F_fric · sign(ω_ref)</td><td>克服静摩擦「第一下」</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:12px"><em>u = u_fb + u_ff</em>：反馈负责纠错，前馈负责给大头——队友，不是对手。</div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：速度前馈与加速度前馈 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">速度前馈与加速度前馈</h2>
+    <div class="grid grid-2">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>速度前馈（Velocity FF）</h3>
+        <p><em>u_ff = kv · ω_ref</em>：目标角速度乘系数直接加到输出。目标动得越快、提前给得越多，解决跟踪运动目标慢半拍。</p>
+        <p>整定：kv 从小到大，跟随误差最小为佳；给过大引起超调。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>加速度前馈（Acceleration FF）</h3>
+        <p><em>u_ff = ka · α_ref</em>：目标加速度乘系数。惯性大的负载（云台带动大质量）加速时需额外力矩。</p>
+        <p>α_ref 来自轨迹规划的微分；平缓轨迹下此项常可省去。</p>
+      </div>
+    </div>
+    <div class="callout warn anim" style="animation-delay:.3s;margin-top:12px">目标若是阶跃（突变），速度 / 加速度前馈会在瞬间打出尖峰——目标先做平滑（斜坡、S 形轨迹）再用前馈。</div>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：重力补偿与摩擦补偿 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">重力补偿与摩擦补偿</h2>
+    <div class="grid grid-2">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>重力补偿（Gravity Comp.）</h3>
+        <p>Pitch 停在仰角 θ 所需维持力矩：<em>τ_g = m·g·L·cosθ</em>（水平最大、竖直为零）。</p>
+        <p>补偿项 <em>u = k_g · cosθ</em>，按当前角度即时补上；第 19 页演示可拖动角度观察。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>摩擦补偿（Friction Comp.）</h3>
+        <p>静摩擦是起步「第一下」卡顿的主因：<em>u = F_fric · sign(ω_ref)</em>，补一个恰好克服静摩擦的固定量，方向随目标速度方向。</p>
+        <p>F_fric 按实测静摩擦力矩设定，不宜过大。</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:12px">I 项也能扛重力与静差，但靠误差慢慢攒，慢；前馈按角度 / 方向即时给上，两者常并用。</div>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：前馈对比演示 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">前馈对比：同一目标，三种方案</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="feedfwd"></canvas>
+      <div class="demo-controls">
+        <label><input type="checkbox" id="ffGrav" checked style="accent-color:#784CF6">重力扰动</label>
+        <button class="btn ghost" id="ffReset">重播</button>
+        <span class="small muted">同一目标（斜坡转到 30°）：仅反馈 / +速度前馈 / +前馈+重力补偿；切开关后点重播</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：重力补偿示意 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">重力补偿示意：力矩随角度变</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="gravcomp"></canvas>
+      <div class="demo-controls">
+        <label>俯仰角 <input type="range" id="gvAngle" min="0" max="90" step="1" value="30"><span id="gvVal" class="small">30°</span></label>
+        <span class="small muted">重力力矩 = m·g·L·cosθ：抬得越高，力矩越小，补偿量越小</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：常见问题与排查 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:30%">现象</th><th style="width:32%">可能原因</th><th>排查方法</th></tr>
+      <tr><td>云台到限位附近猛抽</td><td>堵转时积分攒爆（饱和）</td><td>检查抗饱和生效；给积分限幅</td></tr>
+      <tr><td>云台高频抖动、电流声</td><td>微分用了带噪声的位置差分</td><td>微分加低通滤波，或用陀螺仪</td></tr>
+      <tr><td>大跳变目标超调严重</td><td>限幅后积分继续累积</td><td>开启饱和时停止 / 回退积分</td></tr>
+      <tr><td>串级越调越乱</td><td>先调了外环</td><td>固定外环输出，先把内环调好</td></tr>
+      <tr><td>跟踪快速目标慢半拍</td><td>只有反馈、没有前馈</td><td>加速度 / 速度前馈</td></tr>
+      <tr><td>特定角度停不住、缓滑</td><td>重力力矩没被补偿</td><td>增大 I 或加重力补偿</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：四个高频坑 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">四个高频坑</h2>
+    <div class="grid grid-4" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>1. 先调外环</h3>
+        <p>串级先调外环 → <em>越调越乱</em>。先内后外。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>2. 没加限幅</h3>
+        <p>输出飙到极限 → <em>电机猛抽</em>、发热。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>3. D 用原始差分</h3>
+        <p>毛刺被放大 → <em>云台抽搐</em>。先滤波。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.4s">
+        <h3>4. 前馈系数乱拍</h3>
+        <p>给多过冲、给少没用 → <em>实车整定</em>。</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.5s;margin-top:14px">记住两句话：限幅是保护，抗饱和是让积分别捣乱；调参按「先内后外、先 P 后 I 再 D」。</div>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源（均已验证可访问）</h2>
+    <ul class="anim" style="animation-delay:.1s;font-size:14.5px;line-height:2.1;flex:1;display:flex;flex-direction:column;justify-content:center">
+      <li><a href="https://ww2.mathworks.cn/videos/series/understanding-pid-control.html" target="_blank" rel="noopener">Understanding PID Control（MathWorks 官方系列，中文站）</a> —— 抗饱和、微分滤波、串级各对应一集</li>
+      <li><a href="https://www.bilibili.com/video/BV1E3zLBBEsE/" target="_blank" rel="noopener">B站：手把手用 C 语言实现串级 PID 控制</a> —— 从离散框图到代码全程讲解</li>
+      <li><a href="https://www.bilibili.com/video/BV1oUyVYXEmD/" target="_blank" rel="noopener">B站：四旋翼串级 PID 姿态控制</a> —— 哈工大课程实验，外环 PI + 内环 PID 实例</li>
+      <li><a href="https://www.bilibili.com/video/BV1n94y1v7QZ/" target="_blank" rel="noopener">B站：中科大 RM 电控合集 · 前馈 PID</a> —— 比赛视角讲前馈，含程序编写与练习</li>
+      <li><a href="https://github.com/RoboMaster/RoboRTS-Firmware" target="_blank" rel="noopener">RoboRTS-Firmware（RoboMaster 官方开源步兵固件）</a> —— 看真实比赛固件如何组织底盘 / 云台控制任务</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>限幅：输出、积分都要限；抗饱和 = 限幅 + 饱和时停止积分</li>
+        <li>微分：先低通滤波再求导，或直接用陀螺仪角速度</li>
+        <li>串级：外环发令、内环执行；先内后外</li>
+        <li>前馈：速度 / 加速度 / 重力 / 摩擦，按目标提前给</li>
+        <li>调参：方向比数值重要，数值实车整定</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（2.5 小节） ================= */
+/*
+  演示清单：
+  pidadv   进阶 PID 仿真器（限幅 / 抗饱和 / 微分滤波 开关）
+  cascade  串级 PID 数据流动画（可注入干扰）
+  feedfwd  前馈对比三条曲线（可注入重力扰动）
+  gravcomp 重力补偿示意（角度滑块）
+  演示内颜色统一：荧光绿 #AFFF00（亮）/ 深绿 #83BF00；canvas 文字不使用 emoji。
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const $ = id => document.getElementById(id);
+const lc = (hex, a) => { /* #RRGGBB + alpha → rgba */
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+};
+/* —— 通用绘制小工具 —— */
+function poly(ctx, pts, color, w, dash) {
+  ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+  ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (dash) ctx.setLineDash(dash); else ctx.setLineDash([]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+function polySegs(pts) { /* 折线分段长度（用于等速移动的小球） */
+  const segs = [0]; let L = 0;
+  for (let i = 1; i < pts.length; i++) { L += Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]); segs.push(L); }
+  return segs;
+}
+function ptAt(pts, segs, s) { /* s∈[0,1]：折线上按总长取点 */
+  const d = s * segs[segs.length - 1];
+  for (let i = 1; i < segs.length; i++) {
+    if (segs[i] >= d) {
+      const r = (d - segs[i-1]) / (segs[i] - segs[i-1]);
+      return [pts[i-1][0] + (pts[i][0] - pts[i-1][0]) * r, pts[i-1][1] + (pts[i][1] - pts[i-1][1]) * r];
+    }
+  }
+  return pts[pts.length - 1];
+}
+function arrow(ctx, x1, y1, x2, y2, color, w) {
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.stroke();
+  const a = Math.atan2(y2 - y1, x2 - x1), s = 9;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - s * Math.cos(a - 0.45), y2 - s * Math.sin(a - 0.45));
+  ctx.lineTo(x2 - s * Math.cos(a + 0.45), y2 - s * Math.sin(a + 0.45));
+  ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+}
+
+// —— 演示 1：进阶 PID 仿真器（一阶惯性电机 + 可注入噪声）——
+// 三个开关真实生效：限幅 → 控制量被钳位；抗饱和 → 积分限幅 + 反计算；
+// 微分滤波 → D 项用滤波后误差。开关切换时保留旧曲线（淡紫）作对比。
+ARTINX_DEMOS['pidadv'] = (() => {
+  const M = {
+    UMAX: 2.0, TAU: 0.12, FRIC: 0.12, IMAX: 2.5,
+    p: 0, v: 0, target: 0, errSum: 0, prevFilt: 0, prevChosen: 0,
+    time: 0, hist: [], ghost: null, SIM: 1 / 240,
+  };
+  let raf = null, acc = 0, last = 0;
+  const WIN = 6;
+
+  const read = () => ({
+    kp: +$('paKp').value, ki: +$('paKi').value, kd: +$('paKd').value,
+    limit: $('paLimit').checked, aw: $('paAw').checked, df: $('paDf').checked,
+    noise: +$('paNoise').value,
+  });
+
+  function step(dt) {
+    const q = read();
+    const meas = M.p + q.noise * 0.02 * (Math.random() * 2 - 1); /* 编码器测量噪声 */
+    const err = M.target - meas;
+    const filt = M.prevFilt + 0.25 * (err - M.prevFilt);         /* 一阶低通 α=0.25 */
+    const chosen = q.df ? filt : err;
+    const dTerm = q.kd * (chosen - M.prevChosen) / dt;
+    M.prevChosen = chosen;
+    M.errSum += q.ki * err * dt;
+    if (q.aw) M.errSum = clamp(M.errSum, -M.IMAX, M.IMAX);
+    const out = q.kp * err + M.errSum + dTerm;
+    const outLim = q.limit ? clamp(out, -M.UMAX, M.UMAX) : out;
+    if (q.aw && outLim !== out) M.errSum = clamp(outLim - (q.kp * err + dTerm), -M.IMAX, M.IMAX);
+    /* 电机模型：速度一阶惯性 + 库仑摩擦（tanh 平滑） */
+    const fric = M.FRIC * Math.tanh(M.v * 40);
+    M.v += (outLim - M.v - fric) * (dt / M.TAU);
+    M.p += M.v * dt;
+    M.time += dt;
+    M.hist.push({ t: M.time, p: M.p, u: outLim });
+    if (M.hist.length > 2400) M.hist.splice(0, 600);
+  }
+
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const q = read();
+    $('paKpV').textContent = q.kp;
+    $('paKiV').textContent = q.ki;
+    $('paKdV').textContent = q.kd;
+    ctx.clearRect(0, 0, w, h);
+    const ml = 46, mr = 14, mt = 20, mb = 10, gap = 14;
+    const plotW = w - ml - mr;
+    const totalH = h - mt - mb - gap;
+    const pH = totalH * 0.70, uH = totalH - pH;
+    const py0 = mt, uy0 = mt + pH + gap;
+    const tspan = Math.min(WIN, M.time);
+    const t0 = M.time - tspan;
+    const X = t => ml + (t - t0) / Math.max(tspan, 1e-6) * plotW;
+    const Yp = v => py0 + (1.7 - v) / 2.3 * pH;            /* 位置范围 -0.6 ~ 1.7 */
+    const Yu = v => uy0 + (M.UMAX * 1.7 - v) / (3.4 * M.UMAX) * uH;
+    /* 网格与基准线 */
+    ctx.font = '11px Consolas, monospace';
+    ctx.strokeStyle = '#EEEAF8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(ml, py0); ctx.lineTo(ml + plotW, py0); ctx.stroke();  /* p=1.7 顶 */
+    ctx.beginPath(); ctx.moveTo(ml, Yp(0)); ctx.lineTo(ml + plotW, Yp(0)); ctx.stroke(); /* p=0 */
+    ctx.beginPath(); ctx.moveTo(ml, Yp(1)); ctx.lineTo(ml + plotW, Yp(1)); ctx.stroke(); /* p=1 */
+    ctx.beginPath(); ctx.moveTo(ml, uy0); ctx.lineTo(ml + plotW, uy0); ctx.stroke();    /* u=0 */
+    /* 控制量限幅线 */
+    ctx.strokeStyle = '#AFFF00'; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(ml, Yu(M.UMAX)); ctx.lineTo(ml + plotW, Yu(M.UMAX)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ml, Yu(-M.UMAX)); ctx.lineTo(ml + plotW, Yu(-M.UMAX)); ctx.stroke();
+    ctx.setLineDash([]);
+    /* 目标虚线 */
+    ctx.strokeStyle = '#5A5468'; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(ml, Yp(M.target)); ctx.lineTo(ml + plotW, Yp(M.target)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#5A5468'; ctx.textAlign = 'left';
+    ctx.fillText('目标 ' + M.target.toFixed(1), ml + plotW - 74, Yp(M.target) - 6);
+    /* 旧曲线（开关切换前）作对比 */
+    if (M.ghost && M.ghost.length > 1) {
+      const pts = [];
+      for (const it of M.ghost) { const t = it.t; if (t >= t0) pts.push([X(t), Yp(it.p)]); }
+      poly(ctx, pts, lc('#784CF6', 0.20), 2.5);
+    }
+    /* 位置曲线 */
+    if (M.hist.length > 1) {
+      const pts = [];
+      for (const it of M.hist) { const t = it.t; if (t >= t0) pts.push([X(t), Yp(it.p)]); }
+      poly(ctx, pts, '#784CF6', 2.5);
+      const lastP = M.hist[M.hist.length - 1];
+      ctx.fillStyle = '#784CF6'; ctx.textAlign = 'left';
+      ctx.fillText('位置 p', Math.min(X(lastP.t) + 8, ml + plotW - 56), Yp(lastP.p) - 6);
+    }
+    /* 控制量曲线 */
+    if (M.hist.length > 1) {
+      const pts = [];
+      for (const it of M.hist) { const t = it.t; if (t >= t0) pts.push([X(t), Yu(it.u)]); }
+      poly(ctx, pts, '#83BF00', 2);
+      ctx.fillStyle = '#3C6400'; ctx.textAlign = 'left';
+      ctx.fillText('控制量 u', ml + 6, uy0 + 12);
+    }
+  }
+
+  /* 开关状态（右上角，右对齐逐行绘制） */
+  function drawStat(canvas) {
+    const { w, ctx } = fit(canvas);
+    const q = read();
+    const ml = 46, mr = 14, mt = 20;
+    const plotW = w - ml - mr;
+    ctx.font = '11px Consolas, monospace';
+    const items = [
+      [q.limit, '输出限幅'], [q.aw, '抗积分饱和'], [q.df, '微分滤波'],
+    ];
+    let y = mt + 12;
+    ctx.textAlign = 'right';
+    for (const [on, txt] of items) {
+      ctx.fillStyle = on ? '#784CF6' : '#5A5468';
+      ctx.fillText((on ? '● ' : '○ ') + txt, ml + plotW, y);
+      y += 15;
+    }
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('噪声 ' + q.noise.toFixed(2), ml + plotW, y);
+  }
+
+  function loop(canvas) {
+    const now = performance.now();
+    const frame = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
+    last = now;
+    acc += frame;
+    let n = 0;
+    while (acc >= M.SIM && n < 12) { step(M.SIM); acc -= M.SIM; n++; }
+    draw(canvas);
+    drawStat(canvas);
+    raf = requestAnimationFrame(() => loop(canvas));
+  }
+
+  function snapshot() {
+    if (M.hist.length > 60) { M.ghost = M.hist.slice(); M.hist = []; }
+  }
+  function reset() {
+    M.p = 0; M.v = 0; M.errSum = 0; M.prevFilt = 0; M.prevChosen = 0;
+    M.time = 0; M.hist = []; M.ghost = null; M.target = 0; acc = 0;
+  }
+
+  $('paLimit').addEventListener('change', snapshot);
+  $('paAw').addEventListener('change', snapshot);
+  $('paDf').addEventListener('change', snapshot);
+  $('paStep').onclick = () => { M.target = M.target === 0 ? 1 : 0; };
+  $('paReset').onclick = reset;
+
+  return {
+    init(canvas) { last = 0; if (!raf) raf = requestAnimationFrame(() => loop(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+// —— 演示 2：串级 PID 数据流动画（外环位置 → 内环速度，可注入干扰）——
+ARTINX_DEMOS['cascade'] = (() => {
+  const C = {
+    thRef: 0.6, th: 0, w: 0, sumE: 0, sumEv: 0,
+    eTh: 0, eW: 0, wRef: 0, u: 0, time: 0,
+    hist: [], dist: 0, SIM: 1 / 240,
+  };
+  let raf = null, acc = 0, last = 0;
+
+  function step(dt) {
+    const eTh = C.thRef - C.th;
+    C.sumE = clamp(C.sumE + 0.5 * eTh * dt, -2, 2);
+    const wRef = clamp(3.0 * eTh + C.sumE, -5, 5);   /* 外环：P + I → 目标角速度 */
+    const eW = wRef - C.w;
+    C.sumEv = clamp(C.sumEv + 1.0 * eW * dt, -2, 2);
+    let u = 2.0 * eW + C.sumEv - 0.25 * C.w;          /* 内环：PI + 速度阻尼 */
+    u = clamp(u, -3, 3);
+    const fric = 0.12 * Math.tanh(C.w * 40);
+    C.w += (u - C.w - fric) * (dt / 0.12);
+    C.th += C.w * dt;
+    C.time += dt;
+    C.eTh = eTh; C.eW = eW; C.wRef = wRef; C.u = u;
+    C.hist.push({ t: C.time, eTh, eW });
+    if (C.hist.length > 900) C.hist.splice(0, 300);
+    if (C.dist > 0) C.dist -= dt;
+  }
+
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    ctx.clearRect(0, 0, w, h);
+    const X = f => f * w;
+    /* —— 结构图（上 62%）—— */
+    const by = 24, bh = 52, cy = by + bh / 2;
+    const T = { x: X(0.02), y: by, w: X(0.115) - X(0.02), h: bh };
+    const S1 = { x: X(0.175), y: cy };
+    const PP = { x: X(0.225), y: by, w: X(0.145), h: bh };
+    const S2 = { x: X(0.425), y: cy };
+    const VP = { x: X(0.475), y: by, w: X(0.145), h: bh };
+    const Mbox = { x: X(0.72), y: by, w: X(0.13), h: bh };
+    const Mx = Mbox.x + Mbox.w / 2;
+
+    /* 内环虚线框 */
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+    ctx.strokeRect(S2.x - 20, by - 8, Mbox.x + Mbox.w - S2.x + 34, bh + 16);
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#784CF6'; ctx.font = '11px "Microsoft YaHei", sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('内环：速度环（快，先把这里调好）', S2.x - 14, by - 14);
+
+    /* 方框 */
+    const box = (b, title, sub) => {
+      ctx.fillStyle = '#F7F4FE'; ctx.strokeStyle = '#E3DBFC'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, 10); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#262034'; ctx.textAlign = 'center';
+      ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+      ctx.fillText(title, b.x + b.w / 2, b.y + b.h / 2 - 6);
+      ctx.fillStyle = '#5A5468'; ctx.font = '11px "Microsoft YaHei", sans-serif';
+      ctx.fillText(sub, b.x + b.w / 2, b.y + b.h / 2 + 13);
+    };
+    box(T, '目标角度 θ*', '外环输入');
+    box(PP, '位置环 PID', '外环·慢');
+    box(VP, '速度环 PID', '内环·快');
+    box(Mbox, '电机 + 云台', '电流 → 力矩');
+
+    /* 求和点 */
+    const sum = (s, lab) => {
+      ctx.beginPath(); ctx.arc(s.x, s.y, 13, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.strokeStyle = '#784CF6';
+      ctx.beginPath(); ctx.moveTo(s.x - 8, s.y); ctx.lineTo(s.x + 8, s.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(s.x, s.y - 8); ctx.lineTo(s.x, s.y + 8); ctx.stroke();
+      ctx.fillStyle = '#784CF6'; ctx.font = '10px Consolas, monospace'; ctx.textAlign = 'center';
+      ctx.fillText(lab, s.x, s.y + 26);
+    };
+    sum(S1, 'eθ');
+    sum(S2, 'eω');
+
+    /* 连线（主路径 + 反馈路径） */
+    const fwd = [
+      [T.x + T.w, cy], [S1.x - 13, cy], [S1.x + 13, cy], [PP.x, cy],
+      [PP.x + PP.w, cy], [S2.x - 13, cy], [S2.x + 13, cy], [VP.x, cy],
+      [VP.x + VP.w, cy], [Mbox.x + 6, cy],
+    ];
+    const fbW = [
+      [Mx, by + bh], [Mx, by + bh + 46], [S2.x, by + bh + 46], [S2.x, S2.y + 13],
+    ];
+    const fbTh = [
+      [Mx, by + bh], [Mx, by + bh + 82], [S1.x, by + bh + 82], [S1.x, S1.y + 13],
+    ];
+    poly(ctx, fwd, '#C9C3DE', 2);
+    poly(ctx, fbW, '#C9C3DE', 2);
+    poly(ctx, fbTh, '#C9C3DE', 2);
+    /* 反馈箭头 */
+    arrow(ctx, S2.x, S2.y + 13, S2.x, S2.y + 5, '#83BF00', 2);
+    arrow(ctx, S1.x, S1.y + 13, S1.x, S1.y + 5, '#83BF00', 2);
+    arrow(ctx, Mbox.x + 6, cy, Mbox.x + 2, cy, '#83BF00', 2);
+    /* 路径标签 */
+    ctx.font = '11px "Microsoft YaHei", sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#784CF6';
+    ctx.fillText('目标角速度 ω*（外环输出 = 内环目标）', VP.x, by + bh + 20);
+    ctx.fillStyle = '#3C6400';
+    ctx.fillText('实际角速度 ω', Mx + 8, by + bh + 28);
+    ctx.fillText('实际角度 θ（积分）', Mx + 8, by + bh + 64);
+
+    /* 流动小球 */
+    const segF = polySegs(fwd), segW = polySegs(fbW), segT = polySegs(fbTh);
+    const t = performance.now() / 1000;
+    const d1 = ptAt(fwd, segF, (t * 0.22) % 1);
+    const d2 = ptAt(fbW, segW, (t * 0.18 + 0.3) % 1);
+    const d3 = ptAt(fbTh, segT, (t * 0.13 + 0.45) % 1);
+    const dot = (p, color) => {
+      ctx.beginPath(); ctx.arc(p[0], p[1], 5, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    };
+    dot(d1, '#784CF6'); dot(d2, '#83BF00'); dot(d3, '#512FA3');
+
+    /* 干扰提示：闪光圆环 + 文字 */
+    if (C.dist > 0) {
+      const rr = 10 + (0.25 - C.dist) * 70;
+      ctx.beginPath(); ctx.arc(Mbox.x + Mbox.w / 2, by - 6, Math.max(4, rr), 0, Math.PI * 2);
+      ctx.strokeStyle = lc('#AFFF00', Math.max(0.1, C.dist / 0.25)); ctx.lineWidth = 3; ctx.stroke();
+      ctx.font = 'bold 16px "Microsoft YaHei", sans-serif'; ctx.textAlign = 'center';
+      ctx.fillStyle = '#512FA3';
+      ctx.fillText('干扰注入', Mbox.x + Mbox.w / 2, by - 22);
+    }
+
+    /* 数值读出一行 */
+    ctx.font = '12px Consolas, monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#262034';
+    const ry = by + bh + 104;
+    ctx.fillText('θ*=0.60  eθ=' + C.eTh.toFixed(3) + '  ω*=' + C.wRef.toFixed(2) +
+                 '  eω=' + C.eW.toFixed(3) + '  u=' + C.u.toFixed(2), X(0.02), ry);
+
+    /* —— 底部：两个误差小图（近 3 秒）—— */
+    const g0 = ry + 8, gh = h - g0 - 8;
+    const half = (w - 56 - 20) / 2;
+    const plot = (x0, idx, label, ymax, color) => {
+      ctx.strokeStyle = '#EEEAF8'; ctx.lineWidth = 1;
+      ctx.strokeRect(x0, g0, half, gh);
+      ctx.strokeStyle = '#E8E4F4'; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(x0, g0 + gh / 2); ctx.lineTo(x0 + half, g0 + gh / 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = '11px "Microsoft YaHei", sans-serif'; ctx.textAlign = 'left';
+      ctx.fillStyle = '#5A5468'; ctx.fillText(label, x0 + 6, g0 + 12);
+      const span = Math.min(3, C.time), t0 = C.time - span;
+      const pts = [];
+      for (const it of C.hist) {
+        if (it.t >= t0) pts.push([x0 + (it.t - t0) / Math.max(span, 1e-6) * half,
+                                  g0 + gh / 2 - clamp(it[idx], -ymax, ymax) / ymax * (gh / 2 - 6)]);
+      }
+      poly(ctx, pts, color, 2);
+    };
+    plot(X(0.02), 0, '位置误差 eθ（扰动下几乎不动）', 0.25, '#784CF6');
+    plot(X(0.02) + half + 20, 1, '速度误差 eω（瞬间顶回）', 2.5, '#83BF00');
+  }
+
+  function loop(canvas) {
+    const now = performance.now();
+    const frame = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
+    last = now;
+    acc += frame;
+    let n = 0;
+    while (acc >= C.SIM && n < 12) { step(C.SIM); acc -= C.SIM; n++; }
+    draw(canvas);
+    raf = requestAnimationFrame(() => loop(canvas));
+  }
+
+  $('caDist').onclick = () => { C.w += 1.6; C.dist = 0.25; }; /* 手拨云台 = 速度突加 */
+
+  return {
+    init(canvas) { last = 0; if (!raf) raf = requestAnimationFrame(() => loop(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+// —— 演示 3：前馈对比（三张并排小图：仅反馈 / +速度前馈 / +前馈+重力补偿）——
+// 三个面板用同一目标轨迹、同一组反馈增益，只有前馈项不同。
+ARTINX_DEMOS['feedfwd'] = (() => {
+  const G0 = 0.9;                              /* 重力力矩系数（单位：与 u 同量纲） */
+  const TARGET = 30 * Math.PI / 180;           /* 30°（仿真用弧度） */
+  const T0 = 0.4, TR = 0.8;                    /* 0.4s 开始斜坡，0.8s 到位 */
+  const CFG = [
+    { name: '仅反馈', kv: 0, grav: 0 },
+    { name: '+速度前馈', kv: 1.0, grav: 0 },
+    { name: '+速度前馈+重力补偿', kv: 1.0, grav: 1 },
+  ];
+  const S = {
+    t: 0,
+    pan: CFG.map(() => ({ th: 0, w: 0, sumE: 0, hist: [] })),
+    SIM: 1 / 240,
+  };
+  let raf = null, acc = 0, last = 0;
+
+  const sm = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+  const thRef = t => TARGET * sm((t - T0) / TR);
+  const wRef = t => {                          /* 目标角速度 = smoothstep 的解析导数 */
+    const x = (t - T0) / TR;
+    if (x <= 0 || x >= 1) return 0;
+    return TARGET * 6 * x * (1 - x) / TR;
+  };
+
+  function step(dt) {
+    if (S.t >= 4.5) return;                    /* 播完定格，重播按钮重来 */
+    const gravOn = $('ffGrav').checked;
+    const G = gravOn ? G0 : 0;
+    S.t += dt;
+    const tr = thRef(S.t), wr = wRef(S.t);
+    S.pan.forEach((p, i) => {
+      const cfg = CFG[i];
+      const e = tr - p.th;
+      p.sumE = clamp(p.sumE + 1.2 * e * dt, -2, 2);
+      const uFb = 6 * e + p.sumE - 0.6 * p.w;                 /* 反馈：P + I + 速度阻尼 */
+      const uFf = cfg.kv * wr + (cfg.grav ? G * Math.cos(tr) : 0);
+      const u = clamp(uFb + uFf, -4, 4);
+      const fric = 0.15 * Math.tanh(p.w * 40);
+      p.w += (u - p.w - G * Math.cos(p.th) - fric) * (dt / 0.15);
+      p.th += p.w * dt;
+      p.hist.push({ t: S.t, th: p.th });
+      if (p.hist.length > 1200) p.hist.splice(0, 300);
+    });
+  }
+
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    ctx.clearRect(0, 0, w, h);
+    const gravOn = $('ffGrav').checked;
+    const pad = 14, gp = 14;
+    const pW = (w - pad * 2 - gp * 2) / 3;
+    const pX = i => pad + i * (pW + gp);
+    const pY = 12, pH = h - pY - 8;
+    const DEG = 180 / Math.PI;
+    const yMin = -6, yMax = 42;                /* 纵轴显示范围（度） */
+    const Y = v => pY + (yMax - v) / (yMax - yMin) * pH;
+    S.pan.forEach((p, i) => {
+      const x0 = pX(i);
+      const Xt = t => x0 + 10 + t / 4 * (pW - 20);           /* 时间 0~4s */
+      /* 面板框 */
+      ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.roundRect(x0, pY, pW, pH, 12); ctx.stroke();
+      /* 面板标题（直接标注，色即身份） */
+      ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'left'; ctx.fillStyle = '#262034';
+      ctx.fillText(CFG[i].name, x0 + 10, pY + 20);
+      ctx.font = '10px "Microsoft YaHei", sans-serif'; ctx.fillStyle = '#5A5468';
+      ctx.fillText(gravOn ? '重力 G·cosθ 施加中' : '无重力（理想情况）', x0 + 10, pY + 34);
+      /* 网格：0° 与 30° */
+      ctx.strokeStyle = '#EEEAF8'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x0 + 8, Y(0)); ctx.lineTo(x0 + pW - 8, Y(0)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x0 + 8, Y(30)); ctx.lineTo(x0 + pW - 8, Y(30)); ctx.stroke();
+      /* 目标轨迹（虚线） */
+      const ref = [];
+      for (let t = 0; t <= 4.0001; t += 0.05) ref.push([Xt(t), Y(thRef(t) * DEG)]);
+      poly(ctx, ref, '#5A5468', 1.5, [6, 4]);
+      /* 响应曲线 */
+      const pts = [];
+      for (const it of p.hist) if (it.t <= 4) pts.push([Xt(it.t), Y(it.th * DEG)]);
+      poly(ctx, pts, '#784CF6', 2.2);
+      /* 纵轴标签 */
+      ctx.font = '10px Consolas, monospace'; ctx.fillStyle = '#5A5468';
+      ctx.textAlign = 'right';
+      ctx.fillText('30°', x0 + pW - 8, Y(30) - 4);
+      ctx.fillText('0°', x0 + pW - 8, Y(0) - 4);
+    });
+    /* 底部图例 */
+    ctx.font = '11px "Microsoft YaHei", sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#5A5468';
+    ctx.fillText('虚线=目标  实线=实际角度', pad + 2, h - 8);
+  }
+
+  function loop(canvas) {
+    const now = performance.now();
+    const frame = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
+    last = now;
+    acc += frame;
+    let n = 0;
+    while (acc >= S.SIM && n < 12) { step(S.SIM); acc -= S.SIM; n++; }
+    draw(canvas);
+    raf = requestAnimationFrame(() => loop(canvas));
+  }
+
+  $('ffReset').onclick = () => {
+    S.t = 0; acc = 0;
+    S.pan.forEach(p => { p.th = 0; p.w = 0; p.sumE = 0; p.hist = []; });
+  };
+
+  return {
+    init(canvas) { last = 0; if (!raf) raf = requestAnimationFrame(() => loop(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+// —— 演示 4：重力补偿示意（云台 Pitch 侧视图，角度滑块）——
+// 重力力矩 = m·g·L·cosθ：θ↑ → 力臂↓ → 力矩↓
+ARTINX_DEMOS['gravcomp'] = (() => {
+  let raf = null;
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    const ang = +$('gvAngle').value;
+    $('gvVal').textContent = ang + '°';
+    ctx.clearRect(0, 0, w, h);
+    const rad = ang * Math.PI / 180;
+    const cos = Math.cos(rad);
+    const px = w * 0.30, py = h * 0.60;                 /* 转轴（Pitch 轴） */
+    const L = Math.min(w, h) * 0.28;                    /* 云台臂长 */
+    const tip = { x: px + L * Math.cos(rad), y: py - L * Math.sin(rad) };
+
+    /* 参考虚线 */
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(px - 30, py); ctx.lineTo(px + L + 90, py); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tip.x, py + 12); ctx.lineTo(tip.x, py - L - 44); ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* 云台臂 */
+    ctx.strokeStyle = '#262034'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+    /* 转轴 */
+    ctx.beginPath(); ctx.arc(px, py, 10, 0, Math.PI * 2);
+    ctx.fillStyle = '#784CF6'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    /* 质量块 */
+    ctx.beginPath(); ctx.arc(tip.x, tip.y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = '#E3DBFC'; ctx.fill();
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 2; ctx.stroke();
+
+    /* 重力箭头（长度固定 = m·g） */
+    arrow(ctx, tip.x, tip.y, tip.x, tip.y + 46, '#83BF00', 3);
+    ctx.font = '12px "Microsoft YaHei", sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#3C6400';
+    ctx.fillText('重力 m·g', tip.x + 10, tip.y + 32);
+
+    /* 力臂 = L·cosθ（水平距离） */
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 4]);
+    ctx.beginPath(); ctx.moveTo(px, tip.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#784CF6';
+    ctx.fillText('力臂 L·cosθ', px + (tip.x - px) / 2 - 34, tip.y + 18);
+
+    /* 电机需提供的力矩：弧线长度 ∝ cosθ */
+    const r = 20 + 34 * cos;
+    const a0 = -2.9, a1 = -1.9;                         /* 左上象限的弧 */
+    ctx.beginPath(); ctx.arc(px, py, r, a0, a1);
+    ctx.strokeStyle = '#AFFF00'; ctx.lineWidth = 3.5; ctx.stroke();
+    const ax = px + r * Math.cos(a1), ay = py + r * Math.sin(a1);
+    arrow(ctx, ax, ay, ax - 12, ay + 14, '#AFFF00', 2.5);
+    ctx.fillStyle = '#3C6400'; ctx.font = 'bold 12px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('电机需提供的力矩', px - 0.74 * r - 66, py - 0.68 * r - 2);
+
+    /* 角度标注 */
+    ctx.strokeStyle = '#5A5468'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(px, py, 26, -rad, 0); ctx.stroke();
+    ctx.fillStyle = '#5A5468'; ctx.font = '12px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('θ', px + 34, py - 12);
+
+    /* 底部力矩条 */
+    const bx = 30, by0 = h - 34, bw = 200, bh2 = 16;
+    ctx.fillStyle = '#F7F4FE'; ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(bx, by0, bw, bh2, 8); ctx.fill(); ctx.stroke();
+    if (cos > 0.01) {
+      ctx.fillStyle = '#784CF6';
+      ctx.beginPath(); ctx.roundRect(bx, by0, Math.max(8, bw * cos), bh2, 8); ctx.fill();
+    }
+    ctx.fillStyle = '#262034'; ctx.font = '12px Consolas, monospace'; ctx.textAlign = 'left';
+    ctx.fillText('cosθ = ' + cos.toFixed(2), bx + bw + 14, by0 + 13);
+    ctx.fillStyle = '#5A5468'; ctx.font = '13px "Microsoft YaHei", sans-serif';
+    ctx.fillText('θ = 0°（水平）力矩最大 → θ = 90°（竖直）力矩 ≈ 0 → 补偿量 = m·g·L·cosθ', 30, by0 - 12);
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+</script>
+</body>
+</html>

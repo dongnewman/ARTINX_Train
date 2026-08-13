@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.3 嵌入式软件架构 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">2.3　入队后培训</div>
+      <h1 class="anim" style="animation-delay:.2s">嵌入式软件架构</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">一个功能放在哪里，模块之间如何配合——认识完整电控工程的组织</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s"><h3>1 分层架构</h3><p>BSP / Device / Module / Application 五层定义与调用规则</p></div>
+      <div class="card anim" style="animation-delay:.10s"><h3>2 模块接口</h3><p>struct + 函数签名；封装：改内部不影响外部</p></div>
+      <div class="card anim" style="animation-delay:.15s"><h3>3 数据流</h3><p>转速数据：CAN 中断 → DMA → Device → 控制器</p></div>
+      <div class="card anim" style="animation-delay:.20s"><h3>4 状态与状态机</h3><p>状态 / 模式定义；状态转移图；switch 实现</p></div>
+      <div class="card anim" style="animation-delay:.25s"><h3>5 控制周期</h3><p>1kHz 控制环；中断定时 vs RTOS 任务</p></div>
+      <div class="card anim" style="animation-delay:.30s"><h3>6 RTOS 任务</h3><p>任务、优先级、抢占、阻塞</p></div>
+    </div>
+    <p class="muted small anim" style="animation-delay:.4s;margin-top:12px">含 3 个交互演示：分层图（点击展开）、状态机（按钮触发事件）、控制周期时间轴</p>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：为什么需要分层 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">为什么需要分层</h2>
+    <div class="cols" style="flex:1">
+      <div>
+        <h3 class="anim" style="animation-delay:.05s">单文件裸机程序的问题</h3>
+        <ul class="anim" style="animation-delay:.12s">
+          <li>初始化、CAN 收发、PID、按键全在一个 main.c</li>
+          <li>改一处要通读全文，牵一发动全身</li>
+          <li>多人协作改同一文件，冲突频繁</li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="anim" style="animation-delay:.18s">整车工程的现实</h3>
+        <ul class="anim" style="animation-delay:.25s">
+          <li>云台、底盘、摩擦轮、裁判系统、遥控同时工作</li>
+          <li>几十个功能并行，需要明确的分工边界</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.35s;margin-top:12px">
+      <strong>分层架构（Layered Architecture）</strong>：按职责把代码组织成层级，每层只解决一类问题，层间按规则调用。类比公司分部门，规则见下页。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：五层架构总览 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">五层架构总览</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:20%">层</th><th style="width:15%">类比</th><th style="width:33%">职责</th><th>典型内容</th></tr>
+      <tr><td><strong>Application</strong> 应用层</td><td>总经理</td><td>调度全局：谁在什么时候干什么</td><td>main、任务创建、遥控/裁判分发</td></tr>
+      <tr><td><strong>Module</strong> 模块层</td><td>业务部门</td><td>一个完整功能：状态机 + 控制器</td><td>云台模块、底盘模块、功率模块</td></tr>
+      <tr><td><strong>Device</strong> 设备层</td><td>设备管理员</td><td>一个具体外设：收发帧、解析协议</td><td>电机设备、IMU 设备、遥控器设备</td></tr>
+      <tr><td><strong>BSP</strong> 板级驱动</td><td>物业</td><td>寄存器与外设初始化</td><td>时钟、GPIO、CAN、UART 配置</td></tr>
+      <tr><td><strong>硬件</strong></td><td>大楼</td><td>芯片、总线、执行器、传感器</td><td>STM32、CAN 总线、3508 电机</td></tr>
+    </table>
+    <p class="anim" style="animation-delay:.2s;margin-top:12px"><span class="chip green">铁律</span> 只能向下调用；不跳级；同层不直连；唯一「向上」是回调。控制器（PID）属于 Module 层。</p>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：调用规则与回调 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">调用规则与回调</h2>
+    <div class="cols" style="flex:1">
+      <div>
+        <table>
+          <tr><th style="width:30%">规则</th><th>内容</th></tr>
+          <tr><td>只能向下</td><td>上层调用下层；下层不得指挥上层</td></tr>
+          <tr><td>尽量不跳级</td><td>Application 经 Module 做事；遥控器等公共 Device 可直达</td></tr>
+          <tr><td>同层不直连</td><td>模块协作走 Application 中转或消息队列</td></tr>
+          <tr><td>唯一向上</td><td>回调（Callback）：下层注册函数指针，事件发生时被调用</td></tr>
+        </table>
+      </div>
+      <div>
+<pre><span class="c">/* 合法「向上」：Device 注册回调 */</span>
+<span class="n">dev</span>-><span class="f">on_feedback</span> = <span class="f">Module_OnMotorData</span>;
+<span class="c">/* ISR 只调回调，不关心上层是谁 */</span></pre>
+        <div class="callout danger" style="margin-top:10px">放错层信号：BSP 里出现「云台」字样；Module 直接写寄存器；数据靠 extern 全局变量传递。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：BSP 与 Device ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">BSP 与 Device：物业与设备管理员</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>BSP（Board Support Package，板级支持包）</h3>
+        <ul>
+          <li>把寄存器操作封装成函数：HAL_GPIO_WritePin(...)</li>
+          <li>被 Device 调用；只碰硬件寄存器</li>
+          <li>判断标准：不应出现任何业务名词（云台/底盘）</li>
+        </ul>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>Device（设备层）</h3>
+        <ul>
+          <li>管理一个外设的完整生命周期</li>
+          <li>对外 = struct 数据 + 操作函数，隐藏协议细节</li>
+          <li>被 Module 调用；调用 BSP</li>
+          <li>维护设备状态字段与时间戳</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.28s;margin-top:12px">设备 = 一个 struct + 一组函数：初始化 / 发送指令 / 解析反馈（如 Motor_Device_Init / SendSpeed / ParseFeedback）。</div>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：Module 与 Application ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">Module 与 Application：部门与总经理</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>Module（模块层）</h3>
+        <ul>
+          <li>一个完整功能的家：状态机 + 控制器</li>
+          <li>输入：Device 提供的数据；输出：控制量</li>
+          <li>控制器（PID）住在这里，不属于单独一层</li>
+          <li>被 Application 调用；调用 Device</li>
+        </ul>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>Application（应用层）</h3>
+        <ul>
+          <li>顶层：main 函数与 RTOS 任务创建</li>
+          <li>决定「谁在什么时候干什么」</li>
+          <li>遥控输入、裁判系统数据在此分发</li>
+          <li>模块间协作在此中转</li>
+        </ul>
+      </div>
+    </div>
+    <p class="anim" style="animation-delay:.28s;margin-top:12px">分层解决两件事：<em>代码放哪里</em>（职责）与<em>谁能调谁</em>（依赖方向）。</p>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：模块接口 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">模块接口：一份「合同」</h2>
+    <div class="cols" style="flex:1">
+      <div>
+<pre><span class="c">/* 云台模块接口：调用者只需知道两件事 */</span>
+<span class="k">void</span>  <span class="f">Gimbal_SetTargetYaw</span>(<span class="k">float</span> yaw_deg);
+<span class="k">float</span> <span class="f">Gimbal_GetCurrentYaw</span>(<span class="k">void</span>);
+
+<span class="c">/* 内部用什么电机、什么 PID：不暴露 */</span></pre>
+        <p class="small muted" style="margin-top:10px">接口 = 外部可见的 struct 与函数签名；函数名、参数、返回值即合同条款。</p>
+      </div>
+      <div>
+        <ul>
+          <li><em>封装</em>：只暴露「做什么」，不暴露「怎么做」</li>
+          <li>换电机型号 → 只改 Device 内部，调用方零改动</li>
+          <li>反例：extern 全局变量 = 谁都能改，出 bug 难定位 → 数据藏进 struct，只暴露操作函数</li>
+        </ul>
+        <div class="callout tip" style="margin-top:10px">改内部不影响外部——这是判断接口好坏的标准。</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════ 第 9 页：数据流旅程 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">数据流：电机转速的完整旅程</h2>
+    <div class="cols" style="flex:1">
+      <div>
+<pre>电调 ── CAN 反馈帧(0x200+ID, 8 字节) ──▶ CAN 外设
+① 中断 ISR：帧收进缓冲区，置标志      （微秒级）
+② DMA（可选）：大批量数据后台搬运，搬完通知
+③ Device：解析 转速/角度/电流，打时间戳
+④ Module：控制器读反馈 → 误差 → PID → 输出
+⑤ Device：输出打包控制帧 → BSP 塞进 CAN 邮箱
+⑥ 电调执行；1 ms 后下一帧再来</pre>
+      </div>
+      <div>
+        <ul>
+          <li><em>中断不干重活</em>：解析计算留给后面的层</li>
+          <li><em>每层只做份内事</em>：解析的不算 PID，算 PID 的不碰寄存器</li>
+          <li><em>时间戳识别迟到数据</em>：判断数据是 1ms 前还是 10ms 前（2.9 超时处理）</li>
+        </ul>
+        <div class="callout tip" style="margin-top:10px">反向旅程：控制输出沿 Device → BSP 发出，整条链路闭环。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：数据流各站分工 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">数据流各站分工与时间预算</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:16%">站</th><th style="width:20%">谁</th><th style="width:44%">干什么</th><th>耗时</th></tr>
+      <tr><td>硬件</td><td>CAN 外设</td><td>自动收帧进硬件 FIFO</td><td>并行，不占 CPU</td></tr>
+      <tr><td>中断</td><td>ISR</td><td>帧搬进软件缓冲区，置标志</td><td>微秒级</td></tr>
+      <tr><td>DMA</td><td>搬运工</td><td>大批量数据后台搬运，搬完通知</td><td>并行</td></tr>
+      <tr><td>Device</td><td>电机设备</td><td>按协议解析转速/角度，打时间戳</td><td>微秒级</td></tr>
+      <tr><td>Module</td><td>云台控制器</td><td>读反馈 → 误差 → PID → 输出</td><td>几十微秒</td></tr>
+      <tr><td>BSP</td><td>发送函数</td><td>控制帧塞进 CAN 邮箱</td><td>微秒级</td></tr>
+    </table>
+    <p class="anim" style="animation-delay:.2s;margin-top:12px"><span class="chip">时间预算</span> 整条链路必须在一个控制周期（1 ms）内完成，剩余时间留给其他任务。</p>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：状态、模式、状态机定义 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">状态、模式、状态机：三个定义</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>状态（State）</h3>
+        <p>系统某一时刻的确定工作情形，同一时刻只能是其中一种。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>模式（Mode）</h3>
+        <p>上层选定的工作方式（遥控/自瞄），决定目标值从哪里来。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>状态机（State Machine）</h3>
+        <p>「状态 + 事件 + 转移规则」的模型：只有事件发生，状态才转移。</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.35s;margin-top:12px">
+      一句话：<em>模式是选择，状态是事实</em>。云台状态：关机（OFF）/ 初始化（INIT）/ 跟随（FOLLOW），另有保护（PROTECT）。
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：状态转移图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">云台状态转移图</h2>
+    <div class="cols" style="flex:1">
+      <div>
+<pre>               ┌──── 断电 ────┐
+               ▼              │
+ OFF ──上电──▶ INIT ──标定完成──▶ FOLLOW
+               │  ▲              │
+               │  │ 解除          │ 急停
+               ▼  │              ▼
+             PROTECT ◀───────────┘</pre>
+      </div>
+      <div>
+        <ul>
+          <li>转移条件写在箭头上：事件触发转移</li>
+          <li>没收到「标定完成」，永远留在 INIT——未标定角度不可信，贸然跟随会失控</li>
+          <li>新需求 = 加一个状态、加几条转移，逻辑不散落</li>
+        </ul>
+        <div class="callout tip" style="margin-top:10px">状态跳跃逻辑（标定/跟随/保护）用 if 堆叠不可维护，状态机一张图讲清。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：状态机代码（上） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">switch 状态机（上）：枚举与前半</h2>
+    <div class="cols" style="flex:1">
+      <div>
+<pre><span class="k">typedef enum</span> { OFF, INIT, FOLLOW, PROTECT }
+  <span class="n">State_e</span>;
+<span class="k">static</span> State_e state = OFF;   <span class="c">/* 当前状态 */</span>
+
+<span class="k">void</span> <span class="f">FSM_Update</span>(<span class="k">void</span>) {    <span class="c">/* 每周期调用 */</span>
+  <span class="k">switch</span> (state) {
+  <span class="k">case</span> OFF:
+    <span class="k">if</span> (PowerOn()) state = INIT;   <span class="c">/* 上电 */</span>
+    <span class="k">break</span>;
+  <span class="k">case</span> INIT:
+    Calibrate();
+    <span class="k">if</span> (CalibDone())     state = FOLLOW;
+    <span class="k">if</span> (EmergencyStop()) state = PROTECT;
+    <span class="k">break</span>;</pre>
+      </div>
+      <div>
+        <ul>
+          <li>枚举给每种状态一个名字</li>
+          <li>state 用 static 限定：仅本文件可见，外界改不了</li>
+          <li>每个 case：做本状态的事 + 检查事件</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：状态机代码（下） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">switch 状态机（下）：后半与要点</h2>
+    <div class="cols" style="flex:1">
+      <div>
+<pre>  <span class="k">case</span> FOLLOW:
+    FollowControl();             <span class="c">/* 每周期跟随控制 */</span>
+    <span class="k">if</span> (EmergencyStop()) state = PROTECT;
+    <span class="k">break</span>;
+  <span class="k">case</span> PROTECT:
+    MotorRelax();                <span class="c">/* 电机放松 */</span>
+    <span class="k">if</span> (!EmergencyStop()) state = INIT;
+    <span class="k">if</span> (!PowerOn())       state = OFF;
+    <span class="k">break</span>;
+  <span class="k">default</span>: state = OFF;       <span class="c">/* 兜底 */</span>
+  }
+}</pre>
+      </div>
+      <div>
+        <ul>
+          <li><em>转移 = 改 state</em>：下一拍走新 case</li>
+          <li><em>default 兜底</em>：未知值回安全态（关机）</li>
+          <li>状态机每周期调用一次（100 Hz 即可）</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：控制周期定义与常见周期 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">控制周期：定义与常见周期</h2>
+    <ul class="anim" style="animation-delay:.05s">
+      <li><strong>控制周期（Control Period）</strong>：控制器以固定间隔执行，该间隔即控制周期；云台/底盘常用 <em>1 kHz（1 ms）</em>。</li>
+      <li>为什么固定：PID 积分项乘 dt、微分项除 dt；dt 波动 → 同一组参数实际效果漂移 → 控制失效。</li>
+    </ul>
+    <table class="anim" style="animation-delay:.15s;margin-top:10px">
+      <tr><th>功能</th><th>周期</th><th>频率</th><th>依据</th></tr>
+      <tr><td>电流环（电调内部）</td><td>0.05~0.1 ms</td><td>10~20 kHz</td><td>电流变化极快，必须更快</td></tr>
+      <tr><td>云台/底盘控制环</td><td>1 ms</td><td>1 kHz</td><td>响应速度与 CPU 负载的平衡点</td></tr>
+      <tr><td>状态机 / 遥控解析</td><td>10 ms</td><td>100 Hz</td><td>人的操作节奏最多几十 Hz</td></tr>
+      <tr><td>心跳 / 超时 / 功率监控</td><td>1000 ms</td><td>1 Hz</td><td>保底检查，每秒一次足够</td></tr>
+    </table>
+    <p class="anim" style="animation-delay:.25s;margin-top:10px">规律：<em>越靠近执行器周期越快，越靠近人的节奏越慢</em>。</p>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：时间轴与两种实现 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">1kHz 时间轴与两种实现</h2>
+    <div class="cols" style="flex:1">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span class="chip green" style="width:104px;text-align:center;flex:none">1kHz 控制</span>
+          <span class="small muted">每 1 ms 一拍：读 → 算 → 发</span>
+        </div>
+        <div style="display:flex;gap:2px;margin-bottom:8px">
+          <i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--green);display:block"></i>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span class="chip" style="width:104px;text-align:center;flex:none">100Hz 状态机</span>
+          <i style="flex:1;height:14px;border-radius:2px;background:var(--purple);display:block"></i><i style="flex:1;height:14px;border-radius:2px;background:var(--purple);display:block"></i>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="chip gray" style="width:104px;text-align:center;flex:none">1Hz 心跳</span>
+          <span class="small muted">每 1000 拍执行 1 次（本窗口看不见）</span>
+        </div>
+      </div>
+      <div>
+        <table>
+          <tr><th>方案</th><th>触发方式</th><th>精度</th><th>适用</th></tr>
+          <tr><td>中断定时</td><td>硬件定时器</td><td>微秒级</td><td>电流环、数据到达</td></tr>
+          <tr><td>RTOS 任务</td><td>调度器</td><td>毫秒级抖动</td><td>1kHz 控制、状态机、通信</td></tr>
+        </table>
+        <div class="callout tip" style="margin-top:10px">中断里只置标志，控制逻辑放主循环/任务——两者常组合使用。</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════ 第 17 页：中断与 DMA ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">中断与 DMA</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>中断（Interrupt）</h3>
+        <ul>
+          <li>硬件事件打断当前执行流，转入中断服务函数（ISR）</li>
+          <li>ISR 必须短（微秒级）：只收数据 / 置标志 / 发信号</li>
+          <li>禁止：printf、延时、复杂计算——ISR 期间同级中断被挡</li>
+        </ul>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>DMA（Direct Memory Access）</h3>
+        <ul>
+          <li>直接存储器访问：独立硬件搬运工</li>
+          <li>CPU 布置任务（源/目标/字节数），搬完用中断通知</li>
+          <li>适合：串口批量接收、ADC 连续采样、CAN 多帧</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout danger anim" style="animation-delay:.28s;margin-top:12px">分工：DMA 搬运、中断通知、模块计算。ISR 一长，1kHz 控制环当场乱拍——整车最经典的坑。</div>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：RTOS 五个关键概念 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">RTOS 任务：五个关键概念</h2>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <table class="anim" style="animation-delay:.05s">
+        <tr><th style="width:20%">概念</th><th>定义</th></tr>
+        <tr><td>RTOS</td><td>实时操作系统（Real-Time OS），运行在 MCU 上，核心能力是多任务调度（FreeRTOS / RT-Thread）</td></tr>
+        <tr><td>任务（Task）</td><td>独立执行流：各自 for(;;) 循环 + 独立栈，像并行的小程序</td></tr>
+        <tr><td>优先级（Priority）</td><td>数字越大级别越高（FreeRTOS 约定），调度器永远运行最高优先级的就绪任务</td></tr>
+        <tr><td>抢占（Preemption）</td><td>高优先级任务就绪（延时到期/被唤醒）时，立即打断正在运行的低优先级任务</td></tr>
+        <tr><td>阻塞（Blocked）</td><td>任务调用 vTaskDelay 主动离开等待，不占 CPU；与死等延时（白占 CPU）的区别所在</td></tr>
+      </table>
+      <p class="anim" style="animation-delay:.2s;margin-top:10px">类比一句话：CPU 是分时会议室，优先级是级别，抢占是「大佬到了让位」。</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：RTOS 固定周期任务示例 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">RTOS 固定周期任务示例</h2>
+    <div class="cols" style="flex:1">
+      <div>
+<pre><span class="k">void</span> <span class="f">GimbalTask</span>(<span class="k">void</span> *arg) {
+  TickType_t last = <span class="f">xTaskGetTickCount</span>();
+  <span class="k">for</span> (;;) {
+    <span class="f">Gimbal_Control_1kHz</span>();         <span class="c">/* 执行控制 */</span>
+    <span class="f">vTaskDelayUntil</span>(&last,
+        pdMS_TO_TICKS(1));        <span class="c">/* 距上次正好 1ms */</span>
+  }
+}
+<span class="f">xTaskCreate</span>(GimbalTask, <span class="s">"gimbal"</span>, 512,
+             NULL, 3, NULL);      <span class="c">/* 优先级 3 */</span>
+<span class="f">vTaskStartScheduler</span>();          <span class="c">/* 交给调度器 */</span></pre>
+      </div>
+      <div>
+        <ul>
+          <li>vTaskDelayUntil：补偿执行耗时，保证固定周期</li>
+          <li>第三个参数 512 是任务栈大小（字）</li>
+          <li>任务函数永不 return</li>
+        </ul>
+        <div class="callout tip" style="margin-top:10px">战队工程的任务列表与优先级（讲解时打开工程对照，实际命名以代码为准）。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：演示 1 分层架构图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 1：分层架构图（点击展开）</h2>
+    <p class="small muted anim" style="animation-delay:.05s;margin-bottom:8px">点击左侧各层，查看职责、示例与调用关系；层间箭头 = 合法调用方向（只能向下）。</p>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="layering"></canvas>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：演示 2 状态机 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 2：云台状态机（按钮触发事件）</h2>
+    <p class="small muted anim" style="animation-delay:.05s;margin-bottom:8px">事件不合法时状态机不转移——没收到「标定完成」就永远留在初始化。</p>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="fsm"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="fsmP">上电</button>
+        <button class="btn" id="fsmC">标定完成</button>
+        <button class="btn" id="fsmE">急停</button>
+        <button class="btn ghost" id="fsmR">解除</button>
+        <button class="btn ghost" id="fsmQ">断电</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：演示 3 控制周期时间轴 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示 3：控制周期时间轴</h2>
+    <p class="small muted anim" style="animation-delay:.05s;margin-bottom:8px">绿色 = 1kHz 控制逐拍执行；紫色 = 100Hz 状态机；CAN 中断抢占时，控制拍被推迟。</p>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="tick"></canvas>
+      <div class="demo-controls">
+        <label>速度 <input type="range" id="tickSpeed" min="5" max="40" value="15" step="5"></label>
+        <button class="btn green" id="tickPause">暂停</button>
+        <span class="small muted">空白 = CPU 空闲，分给其他任务</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：常见问题与排查 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th style="width:26%">现象</th><th style="width:34%">可能原因</th><th>排查方法</th></tr>
+      <tr><td>状态机卡死不转移</td><td>事件标志未清除 / 事件函数判断错</td><td>断点打印事件函数返回值</td></tr>
+      <tr><td>1kHz 周期忽长忽短</td><td>任务内 HAL_Delay / ISR 过长</td><td>GPIO 翻转 + 示波器量周期</td></tr>
+      <tr><td>电机反馈值乱跳</td><td>解析字节序错 / 缓冲区数据被覆盖</td><td>对照协议逐字节核对</td></tr>
+      <tr><td>加 RTOS 后随机死机</td><td>任务栈太小（栈溢出）</td><td>增大栈 + 检查溢出钩子</td></tr>
+      <tr><td>改底层后行为诡异</td><td>上层绕过接口直接依赖实现</td><td>改回走 Device/Module 接口</td></tr>
+      <tr><td>输出未限幅电机发疯</td><td>控制输出未做限幅</td><td>发送前加输出限幅</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 24 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源（自学用）</h2>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>FreeRTOS 官方文档 · 任务与调度</h3>
+        <p class="small">任务、优先级、抢占的权威说明 —— <a href="https://www.freertos.org/Documentation/02-Kernel/02-Kernel-features/01-Tasks-and-co-routines/03-Task-priorities" target="_blank" rel="noopener">freertos.org 任务文档</a></p>
+      </div>
+      <div class="card anim" style="animation-delay:.12s">
+        <h3>RT-Thread 官方手册 · 内核例程</h3>
+        <p class="small">国内最常用的 RTOS，内核例程可直接抄来跑 —— <a href="https://www.rt-thread.org/document/api/group__kernel__example.html" target="_blank" rel="noopener">rt-thread.org 内核例程</a></p>
+      </div>
+      <div class="card anim" style="animation-delay:.19s">
+        <h3>深圳大学 RobotPilots · Infantry_X</h3>
+        <p class="small">RM2019 步兵完整参赛工程，重点看分层与模块组织 —— <a href="https://github.com/SZURoshan/Infantry_X" target="_blank" rel="noopener">github.com/SZURoshan/Infantry_X</a></p>
+      </div>
+      <div class="card anim" style="animation-delay:.26s">
+        <h3>上海交大云汉交龙 · Matrix_and_Robotics</h3>
+        <p class="small">STM32 机器人学工具库，看「可复用库」怎么写 —— <a href="https://github.com/SJTU-RoboMaster-Team/Matrix_and_Robotics_on_STM32" target="_blank" rel="noopener">github.com/SJTU-RoboMaster-Team</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 25 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>五层架构：Application / Module / Device / BSP / 硬件，只能向下调用，回调例外</li>
+        <li>接口是合同；数据流一条链：中断 → DMA → Device → Module → 控制器</li>
+        <li>状态机 = 状态 + 事件 → 转移；控制周期固定，PID 参数才有意义</li>
+        <li>中断收门、DMA 搬运；RTOS = 优先级抢占 + 阻塞让出 CPU</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（本节：分层图 / 状态机 / 时间轴） ================= */
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+/* 演示色板：品牌紫 + 荧光绿 #AFFF00（亮）/ 深绿 #83BF00 */
+const C_PURPLE = '#784CF6', C_DEEP = '#4A2BD4', C_GREEN = '#AFFF00',
+      C_GREEN_DK = '#83BF00', C_LAV = '#E3DBFC', C_INK = '#262034',
+      C_MUTED = '#5A5468', C_LINE = '#E8E4F4', C_PANEL = '#F7F4FE', C_WHITE = '#FFFFFF';
+function rrect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function drawArrow(ctx, x1, y1, x2, y2, color, lw) {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw || 2;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 10 * Math.cos(a - 0.42), y2 - 10 * Math.sin(a - 0.42));
+  ctx.lineTo(x2 - 10 * Math.cos(a + 0.42), y2 - 10 * Math.sin(a + 0.42));
+  ctx.closePath(); ctx.fill();
+}
+
+/* —— 演示 1：分层架构（点击逐层展开职责与调用关系） —— */
+ARTINX_DEMOS['layering'] = (() => {
+  const LAYERS = [
+    { n: 'Application', cn: '应用层', tag: '总经理', duty: '调度全局：谁在什么时候干什么', ex: '遥控输入分发 · 裁判系统响应', call: '能调用：Module 层', by: '被谁调用：顶层，不被调用' },
+    { n: 'Module', cn: '模块层', tag: '业务部门', duty: '一个功能的家：状态机 + 控制器(PID)', ex: '云台 / 底盘 / 功率模块', call: '能调用：Device 层', by: '被 Application 调用' },
+    { n: 'Device', cn: '设备层', tag: '设备管理员', duty: '管一个外设：收发帧 + 解析协议', ex: '电机 / IMU / 遥控器设备', call: '能调用：BSP 层', by: '被 Module 调用' },
+    { n: 'BSP', cn: '板级驱动', tag: '物业', duty: '管寄存器：时钟、引脚、外设初始化', ex: 'CAN / UART / TIM 初始化', call: '能调用：只碰硬件寄存器', by: '被 Device 调用' },
+    { n: 'HW', cn: '硬件', tag: '大楼', duty: '芯片、总线、电机、传感器', ex: 'STM32 / CAN 总线 / 3508 电机', call: '能调用：无', by: '被 BSP 读写' }
+  ];
+  let raf = null, cv = null, open = 0, hover = -1;
+  function draw() {
+    const { w, h, ctx } = fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    const lw = w * 0.36;
+    const lx = 16, ly0 = 20, gap = 8;
+    const bh = (h - ly0 * 2 - gap * (LAYERS.length - 1)) / LAYERS.length;
+    for (let i = 0; i < LAYERS.length - 1; i++) {
+      drawArrow(ctx, lx + 8, ly0 + (i + 1) * bh + i * gap - 4, lx + 8, ly0 + (i + 1) * (bh + gap), C_PURPLE, 2);
+    }
+    for (let i = 0; i < LAYERS.length; i++) {
+      const L = LAYERS[i];
+      const y = ly0 + i * (bh + gap);
+      const on = i === open;
+      ctx.fillStyle = on ? C_PURPLE : (i === hover ? C_LAV : C_WHITE);
+      ctx.strokeStyle = on ? C_PURPLE : (i === hover ? C_PURPLE : C_LINE);
+      ctx.lineWidth = on ? 3 : 1.5;
+      rrect(ctx, lx, y, lw, bh, 8); ctx.fill(); ctx.stroke();
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = C_MUTED;
+      ctx.font = '10px Consolas,Menlo,monospace';
+      ctx.fillText(L.n, lx + 10, y + bh * 0.32);
+      ctx.fillStyle = on ? C_WHITE : C_INK;
+      ctx.font = 'bold 14px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillText(L.cn, lx + 10, y + bh * 0.66);
+      const tagW = ctx.measureText(L.tag).width + 14;
+      ctx.fillStyle = on ? C_GREEN : C_LAV;
+      rrect(ctx, lx + lw - tagW - 8, y + bh * 0.40, tagW, bh * 0.48, 8); ctx.fill();
+      ctx.fillStyle = on ? '#2C4000' : C_DEEP;
+      ctx.font = 'bold 11px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(L.tag, lx + lw - tagW / 2 - 8, y + bh * 0.66);
+      ctx.textAlign = 'left';
+    }
+    const px = lx + lw + 20, pw = w - px - 16, py = ly0;
+    const L = LAYERS[open];
+    ctx.fillStyle = C_PANEL; ctx.strokeStyle = C_LINE; ctx.lineWidth = 1.5;
+    rrect(ctx, px, py, pw, h - ly0 * 2, 10); ctx.fill(); ctx.stroke();
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = C_DEEP;
+    ctx.font = 'bold 19px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.fillText(L.n + ' ' + L.cn, px + 18, py + 34);
+    ctx.fillStyle = C_GREEN_DK; ctx.font = 'bold 12px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.fillText('类比：' + L.tag, px + 18, py + 56);
+    const rows = [
+      ['职责', L.duty], ['示例', L.ex], [L.call, ''], [L.by, '']
+    ];
+    let ry = py + 88;
+    ctx.font = '14px "Segoe UI","Microsoft YaHei",sans-serif';
+    for (const [k, v] of rows) {
+      if (v) {
+        ctx.fillStyle = C_MUTED; ctx.fillText('· ' + k, px + 18, ry);
+        ctx.fillStyle = C_INK; ctx.fillText(v, px + 18, ry + 22);
+        ry += 44;
+      } else {
+        ctx.fillStyle = C_INK; ctx.fillText('· ' + k, px + 18, ry);
+        ry += 28;
+      }
+    }
+    ctx.fillStyle = C_MUTED; ctx.font = '11px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.fillText('点击左侧各层查看详情；向下箭头 = 合法调用方向', px + 18, h - ly0 - 10);
+    raf = requestAnimationFrame(draw);
+  }
+  function hit(i, e) {
+    const r = cv.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const w = r.width, h = r.height;
+    const lw = w * 0.36, ly0 = 20, gap = 8;
+    const bh = (h - ly0 * 2 - gap * (LAYERS.length - 1)) / LAYERS.length;
+    const yy = ly0 + i * (bh + gap);
+    return x >= 16 && x <= 16 + lw && y >= yy && y <= yy + bh;
+  }
+  function onDown(e) {
+    for (let i = 0; i < LAYERS.length; i++) {
+      if (hit(i, e)) { open = (open === i) ? -1 : i; return; }
+    }
+  }
+  function onMove(e) {
+    let h2 = -1;
+    for (let i = 0; i < LAYERS.length; i++) if (hit(i, e)) { h2 = i; break; }
+    hover = h2;
+  }
+  return {
+    init(c) {
+      cv = c;
+      cv.addEventListener('mousedown', onDown);
+      cv.addEventListener('mousemove', onMove);
+      cv.addEventListener('mouseleave', () => { hover = -1; });
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() {
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      if (cv) {
+        cv.removeEventListener('mousedown', onDown);
+        cv.removeEventListener('mousemove', onMove);
+      }
+    }
+  };
+})();
+
+/* —— 演示 2：云台状态机（按钮触发事件，高亮 + 转移动画） —— */
+ARTINX_DEMOS['fsm'] = (() => {
+  const NODES = {
+    OFF:     { x: 175, y: 135, cn: '关机',  en: 'OFF',     sub: '不输出' },
+    INIT:    { x: 560, y: 135, cn: '初始化', en: 'INIT',    sub: '自检 + 标定' },
+    FOLLOW:  { x: 745, y: 335, cn: '跟随',  en: 'FOLLOW',  sub: '正常控制' },
+    PROTECT: { x: 175, y: 335, cn: '保护',  en: 'PROTECT', sub: '急停放松' }
+  };
+  const EDGES = [
+    { a: 'OFF',     b: 'INIT',    label: '上电',     la: 0.50, lo: -14 },
+    { a: 'INIT',    b: 'FOLLOW',  label: '标定完成', la: 0.52, lo: -16 },
+    { a: 'INIT',    b: 'PROTECT', label: '急停',     la: 0.30, lo: 12 },
+    { a: 'FOLLOW',  b: 'PROTECT', label: '急停',     la: 0.50, lo: 20 },
+    { a: 'PROTECT', b: 'INIT',    label: '解除',     la: 0.72, lo: -8, reverse: true },
+    { a: 'PROTECT', b: 'OFF',     label: '断电',     la: 0.50, lo: -14 }
+  ];
+  const TRANS = [
+    { from: 'OFF',     to: 'INIT',    ev: 'p', label: '上电' },
+    { from: 'INIT',    to: 'FOLLOW',  ev: 'c', label: '标定完成' },
+    { from: 'INIT',    to: 'PROTECT', ev: 'e', label: '急停' },
+    { from: 'FOLLOW',  to: 'PROTECT', ev: 'e', label: '急停' },
+    { from: 'PROTECT', to: 'INIT',    ev: 'r', label: '解除' },
+    { from: 'PROTECT', to: 'OFF',     ev: 'q', label: '断电' }
+  ];
+  const STYLE = {
+    OFF:     { fill: C_WHITE,  stroke: '#C9C3DE', text: C_MUTED },
+    INIT:    { fill: C_LAV,    stroke: C_PURPLE,  text: C_DEEP },
+    FOLLOW:  { fill: C_GREEN,  stroke: C_GREEN_DK, text: '#274500' },
+    PROTECT: { fill: C_DEEP,   stroke: C_DEEP,    text: C_WHITE }
+  };
+  let raf = null, cv = null;
+  let state = 'OFF';
+  let anim = null;
+  let flash = null;
+  const log = [];
+  function pushLog(msg) {
+    log.push(msg);
+    if (log.length > 3) log.shift();
+  }
+  function edgePts(a, b) {
+    const A = NODES[a], B = NODES[b];
+    const bw = 138, bh = 66;
+    const dx = B.x - A.x, dy = B.y - A.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const nx = dx / dist, ny = dy / dist;
+    const t = Math.min((bw / 2) / Math.abs(nx || 1), (bh / 2) / Math.abs(ny || 1));
+    return { x1: A.x + nx * t, y1: A.y + ny * t, x2: B.x - nx * t, y2: B.y - ny * t };
+  }
+  function draw() {
+    const { w, h, ctx } = fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    const s = Math.min(w / 900, (h - 44) / 380);
+    const ox = (w - 900 * s) / 2, oy = 44 + ((h - 44) - 380 * s) / 2;
+    const X = x => ox + x * s, Y = y => oy + y * s;
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+    ctx.font = '12px Consolas,Menlo,monospace';
+    log.forEach((m, i) => {
+      ctx.fillStyle = i === log.length - 1 ? C_PURPLE : C_MUTED;
+      ctx.fillText(m, 14, 18 + i * 17);
+    });
+    if (flash && performance.now() - flash.t0 < 1400) {
+      ctx.fillStyle = C_DEEP;
+      ctx.font = 'bold 14px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('提示：' + flash.text, w - 14, 18);
+      ctx.textAlign = 'left';
+    }
+    const drawn = {};
+    for (const e of EDGES) {
+      const key = [e.a, e.b].sort().join('-');
+      let p = edgePts(e.a, e.b);
+      if (drawn[key]) { p = drawn[key]; } else { drawn[key] = p; }
+      if (!e.reverse) drawArrow(ctx, X(p.x1), Y(p.y1), X(p.x2), Y(p.y2), C_MUTED, 1.8);
+      else {
+        ctx.strokeStyle = C_MUTED; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(X(p.x1), Y(p.y1)); ctx.lineTo(X(p.x2), Y(p.y2)); ctx.stroke();
+        drawArrow(ctx, X(p.x2), Y(p.y2), X(p.x1), Y(p.y1), C_MUTED, 1.8);
+      }
+      const lx = X(p.x1 + (p.x2 - p.x1) * e.la), ly = Y(p.y1 + (p.y2 - p.y1) * e.la) + e.lo;
+      ctx.fillStyle = C_DEEP; ctx.font = 'bold 11px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(e.label, lx, ly);
+    }
+    if (anim) {
+      const t = clamp((performance.now() - anim.t0) / anim.dur, 0, 1);
+      const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const p = edgePts(anim.from, anim.to);
+      const dx = X(p.x1 + (p.x2 - p.x1) * ease), dy = Y(p.y1 + (p.y2 - p.y1) * ease);
+      ctx.beginPath(); ctx.arc(dx, dy, 8 * s + 4, 0, Math.PI * 2);
+      ctx.fillStyle = C_GREEN; ctx.fill();
+      ctx.strokeStyle = C_GREEN_DK; ctx.lineWidth = 2; ctx.stroke();
+      if (t >= 1) { state = anim.to; anim = null; }
+    }
+    for (const k in NODES) {
+      const N = NODES[k], st = STYLE[k];
+      const bw = 138 * s, bh = 66 * s;
+      const x = X(N.x) - bw / 2, y = Y(N.y) - bh / 2;
+      const cur2 = k === state;
+      if (cur2) {
+        const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 220);
+        ctx.strokeStyle = C_PURPLE;
+        ctx.globalAlpha = 0.35 + 0.3 * pulse;
+        ctx.lineWidth = 6;
+        rrect(ctx, x - 3, y - 3, bw + 6, bh + 6, 12); ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      ctx.fillStyle = st.fill;
+      ctx.strokeStyle = st.stroke; ctx.lineWidth = cur2 ? 3 : 1.5;
+      rrect(ctx, x, y, bw, bh, 10); ctx.fill(); ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = st.text;
+      ctx.font = 'bold ' + Math.round(16 * s + 6) + 'px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillText(N.cn + ' ' + N.en, X(N.x), Y(N.y) - 7 * s);
+      ctx.font = Math.round(10 * s + 5) + 'px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillStyle = cur2 ? st.text : C_MUTED;
+      ctx.fillText(N.sub, X(N.x), Y(N.y) + 15 * s);
+      if (cur2) {
+        const mx = X(N.x), my = Y(N.y) - bh / 2 - 8;
+        ctx.beginPath(); ctx.arc(mx - 26 * s, my - 4, 4, 0, Math.PI * 2);
+        ctx.fillStyle = C_GREEN_DK; ctx.fill();
+        ctx.fillStyle = C_PURPLE; ctx.font = 'bold 11px "Segoe UI","Microsoft YaHei",sans-serif';
+        ctx.fillText('当前', mx - 12 * s, my);
+      }
+    }
+    raf = requestAnimationFrame(draw);
+  }
+  return {
+    init(c) {
+      cv = c;
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() { if (raf) { cancelAnimationFrame(raf); raf = null; } },
+    event(ev) {
+      if (anim) return;
+      const t = TRANS.find(x => x.from === state && x.ev === ev);
+      if (!t) { flash = { text: '[' + state + '] 状态下没有此转移', t0: performance.now() }; return; }
+      pushLog('[' + state + '] --' + t.label + '--> [' + t.to + ']');
+      anim = { from: state, to: t.to, t0: performance.now(), dur: 520 };
+    }
+  };
+})();
+document.getElementById('fsmP').onclick = () => ARTINX_DEMOS['fsm'].event('p');
+document.getElementById('fsmC').onclick = () => ARTINX_DEMOS['fsm'].event('c');
+document.getElementById('fsmE').onclick = () => ARTINX_DEMOS['fsm'].event('e');
+document.getElementById('fsmR').onclick = () => ARTINX_DEMOS['fsm'].event('r');
+document.getElementById('fsmQ').onclick = () => ARTINX_DEMOS['fsm'].event('q');
+
+/* —— 演示 3：控制周期时间轴（1kHz 逐拍 + 100Hz/1Hz + 中断抢占） —— */
+ARTINX_DEMOS['tick'] = (() => {
+  const PX = 46;
+  const INT_PERIOD = 7.3;
+  const INT_DUR = 0.18;
+  let raf = null, cv = null;
+  let T = 0, lastTs = 0, beatNo = -1, beats = 0, paused = false;
+  function intStart(t) {
+    const ph = ((t % INT_PERIOD) + INT_PERIOD) % INT_PERIOD;
+    return ph < INT_DUR ? t - ph : -1;
+  }
+  function draw() {
+    const { w, h, ctx } = fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2;
+    const tMin = T - cx / PX, tMax = T + cx / PX;
+    const X = t => cx + (t - T) * PX;
+    const yI = h * 0.30, yT = h * 0.72;
+    const i0 = Math.floor(tMin), i1 = Math.ceil(tMax);
+    for (let t = i0; t <= i1; t++) {
+      ctx.strokeStyle = (t % 10 === 0) ? '#D9D3EE' : '#F0EDF9';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(X(t), 10); ctx.lineTo(X(t), h - 24); ctx.stroke();
+      if (t % 10 === 0) {
+        ctx.fillStyle = C_MUTED; ctx.font = '10px Consolas,Menlo,monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText(t + ' ms', X(t), h - 8);
+      }
+    }
+    ctx.textAlign = 'left'; ctx.fillStyle = C_MUTED;
+    ctx.font = 'bold 11px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.fillText('中断', 12, yI - 7);
+    ctx.fillText('任务', 12, yT - 7);
+    ctx.strokeStyle = C_LINE; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, yI + 24); ctx.lineTo(w, yI + 24); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, yT + 24); ctx.lineTo(w, yT + 24); ctx.stroke();
+    for (let k = Math.floor(tMin / INT_PERIOD) - 1; k <= Math.ceil(tMax / INT_PERIOD) + 1; k++) {
+      const ts = k * INT_PERIOD;
+      const x1 = X(ts), x2 = X(ts + INT_DUR);
+      if (x2 < 0 || x1 > w) continue;
+      const bx = Math.max(x1, 0), bw = Math.min(x2, w) - Math.max(x1, 0);
+      if (bw > 1.5) {
+        ctx.fillStyle = C_DEEP;
+        rrect(ctx, bx, yI, bw, 22, 4); ctx.fill();
+      }
+      ctx.fillStyle = C_DEEP; ctx.font = 'bold 9px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('CAN 中断', (x1 + x2) / 2, yI - 9);
+      ctx.strokeStyle = C_DEEP; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x1, yI + 24); ctx.lineTo(x1, yT + 38); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2, yI + 24); ctx.lineTo(x2, yT + 38); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    for (let t = Math.floor(tMin); t <= Math.ceil(tMax); t++) {
+      const delayed = intStart(t) >= 0 ? INT_DUR : 0;
+      const x = X(t + delayed);
+      if (x < -10 || x > w + 10) continue;
+      ctx.fillStyle = C_GREEN;
+      rrect(ctx, x, yT, PX * 0.30, 22, 4); ctx.fill();
+      ctx.strokeStyle = C_GREEN_DK; ctx.lineWidth = 1; ctx.stroke();
+      if (delayed > 0) {
+        ctx.strokeStyle = C_PURPLE; ctx.setLineDash([2, 3]); ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(X(t), yT + 11); ctx.lineTo(x, yT + 11); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = C_PURPLE; ctx.font = 'bold 9px "Segoe UI","Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('推迟', (X(t) + x) / 2, yT - 8);
+      }
+      if (t % 5 === 0) {
+        ctx.fillStyle = C_GREEN_DK; ctx.font = 'bold 10px "Segoe UI","Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('控制 1kHz', x, yT + 38);
+      }
+    }
+    for (let t = Math.floor(tMin / 10) * 10; t <= Math.ceil(tMax / 10) * 10; t += 10) {
+      const x = X(t);
+      if (x < -60 || x > w + 60) continue;
+      ctx.fillStyle = C_PURPLE;
+      rrect(ctx, x, yT, PX * 0.9, 22, 4); ctx.fill();
+      ctx.fillStyle = C_WHITE; ctx.font = 'bold 10px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('状态机 100Hz', x + PX * 0.45, yT + 15);
+    }
+    const sNow = Math.floor(T / 1000);
+    if (sNow > beatNo) { beatNo = sNow; beats++; }
+    if (X(sNow * 1000) > 0 && X(sNow * 1000) < w) {
+      const x = X(sNow * 1000);
+      ctx.fillStyle = C_LAV;
+      rrect(ctx, x, yT, PX * 1.6, 22, 4); ctx.fill();
+      ctx.strokeStyle = C_PURPLE; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.fillStyle = C_DEEP; ctx.font = 'bold 10px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('心跳 1Hz', x + PX * 0.8, yT + 15);
+    }
+    ctx.fillStyle = C_DEEP; ctx.font = 'bold 12px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('心跳次数 ' + beats + '（每 1000ms 一次）', w - 14, 18);
+    ctx.strokeStyle = C_PURPLE; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, 6); ctx.lineTo(cx, h - 22); ctx.stroke();
+    ctx.fillStyle = C_PURPLE;
+    ctx.beginPath(); ctx.moveTo(cx - 5, 4); ctx.lineTo(cx + 5, 4); ctx.lineTo(cx, 13); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = C_MUTED; ctx.font = '11px Consolas,Menlo,monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('T = ' + T.toFixed(1) + ' ms', 12, h - 8);
+  }
+  function frame(ts) {
+    if (!lastTs) lastTs = ts;
+    const dt = Math.min(60, ts - lastTs);
+    lastTs = ts;
+    if (!paused) T += dt * 0.015 * speed;
+    draw();
+    raf = requestAnimationFrame(frame);
+  }
+  let speed = 1.5;
+  return {
+    init(c) {
+      cv = c;
+      if (!raf) raf = requestAnimationFrame(frame);
+    },
+    destroy() { if (raf) { cancelAnimationFrame(raf); raf = null; lastTs = 0; } },
+    setSpeed(v) { speed = v; },
+    toggle() {
+      paused = !paused;
+      const b = document.getElementById('tickPause');
+      b.textContent = paused ? '继续' : '暂停';
+      b.className = 'btn' + (paused ? '' : ' green');
+    }
+  };
+})();
+document.getElementById('tickSpeed').oninput = e => ARTINX_DEMOS['tick'].setSpeed(+e.target.value / 10);
+document.getElementById('tickPause').onclick = () => ARTINX_DEMOS['tick'].toggle();
+</script>
+</body>
+</html>

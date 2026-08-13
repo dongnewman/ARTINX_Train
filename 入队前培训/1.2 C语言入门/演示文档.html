@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1.2 C语言入门 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">1.2　C 语言入门</div>
+      <h1 class="anim" style="animation-delay:.2s">C 语言入门</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">变量、分支、循环、函数、数组、指针与多文件工程——STM32 开发最常用的 C</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节学什么：从 Hello World 到多文件工程</h2>
+    <div class="grid grid-4 anim" style="animation-delay:.1s;gap:10px;flex:1;align-content:center">
+      <div class="card white" style="padding:10px;text-align:center">程序结构与编译</div>
+      <div class="card white" style="padding:10px;text-align:center">Hello World</div>
+      <div class="card white" style="padding:10px;text-align:center">变量与数据类型</div>
+      <div class="card white" style="padding:10px;text-align:center">运算符与优先级</div>
+      <div class="card white" style="padding:10px;text-align:center">if / switch</div>
+      <div class="card white" style="padding:10px;text-align:center">for / while</div>
+      <div class="card white" style="padding:10px;text-align:center">函数与原型</div>
+      <div class="card white" style="padding:10px;text-align:center">数组与下标</div>
+      <div class="card white" style="padding:10px;text-align:center">struct / enum</div>
+      <div class="card white" style="padding:10px;text-align:center">指针与地址</div>
+      <div class="card white" style="padding:10px;text-align:center">.c / .h 多文件</div>
+      <div class="card white" style="padding:10px;text-align:center">#include / 宏定义</div>
+    </div>
+    <div class="card green anim" style="animation-delay:.2s;text-align:center">
+      <p>每个概念按「定义 → 语法 → 代码 → 演示 / 自测」展开；含 4 个可交互演示</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：程序结构与编译 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">C 程序长什么样，怎么跑起来</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div class="card white">
+        <h3>程序结构</h3>
+        <ul>
+          <li>C 程序由<em>函数</em>组成；<em>main</em> 是唯一入口，程序从这里开始执行</li>
+          <li>语句以分号 <em>;</em> 结尾，花括号 <em>{ }</em> 组成语句块</li>
+          <li>注释不参与编译：<em>//</em> 行注释、<em>/* */</em> 块注释</li>
+          <li>类比一句话：main 是信的正文起点，分号是句号</li>
+        </ul>
+      </div>
+      <div class="card white">
+        <h3>编译与运行（终端）</h3>
+        <pre><span class="c"># 编译：把 .c 源码翻译成可执行文件</span>
+gcc hello.c -o hello
+
+<span class="c"># 运行</span>
+./hello</pre>
+        <p class="small muted">流程：编写 .c 源码 → gcc 编译 → 运行可执行文件</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：Hello World ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">Hello World：第一个程序</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div>
+        <pre><span class="c">/* hello.c */</span>
+<span class="k">#include</span> &lt;stdio.h&gt;  <span class="c">// 标准输入输出库</span>
+
+<span class="k">int</span> <span class="f">main</span>(<span class="k">void</span>)
+{
+    <span class="f">printf</span>(<span class="s">"Hello, ARTINX!\n"</span>);
+    <span class="k">return</span> 0;
+}</pre>
+      </div>
+      <div class="card white">
+        <table>
+          <tr><th>代码</th><th>作用</th></tr>
+          <tr><td>#include &lt;stdio.h&gt;</td><td>引入标准输入输出库，才能用 printf</td></tr>
+          <tr><td>int main(void)</td><td>程序入口，从这里开始执行</td></tr>
+          <tr><td>printf(...)</td><td>打印一行，\n 是换行符</td></tr>
+          <tr><td>return 0;</td><td>正常结束，把 0 交还操作系统</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：变量与数据类型 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">变量：可读写的命名存储单元</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div class="card white">
+        <h3>定义与三步走</h3>
+        <ul>
+          <li><em>变量（variable）</em>：程序运行时可读写的命名存储单元，<em>类型</em>决定其宽度与取值范围</li>
+          <li>声明 = 买盒子贴标签，赋值 = 放东西（类比）</li>
+          <li>命名：字母 / 数字 / 下划线，不能以数字开头；建议见名知意，如 motor_speed</li>
+          <li>初始化：声明同时赋值，int speed = 3000;</li>
+        </ul>
+      </div>
+      <div class="card white">
+        <pre><span class="k">int</span>  speed = 3000;    <span class="c">// 整数</span>
+<span class="k">char</span> team  = <span class="s">'A'</span>;      <span class="c">// 单个字符</span>
+<span class="k">float</span> ratio = 0.5f;    <span class="c">// 单精度小数</span>
+
+speed = 2500;          <span class="c">// 重新赋值</span>
+<span class="f">printf</span>(<span class="s">"%d %c %.2f"</span>, speed, team, ratio);</pre>
+        <p class="small muted">printf 是填空题：%d 整数、%c 字符、%f 小数、%.2f 保留两位</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：数据类型与取值范围 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">数据类型与取值范围</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>类型</th><th>宽度</th><th>取值范围（常见实现）</th><th>装什么</th><th>占位符</th></tr>
+      <tr><td>char</td><td>1 字节</td><td>−128 ~ 127（有符号）</td><td>字符或小整数</td><td>%c</td></tr>
+      <tr><td>int</td><td>4 字节</td><td>−2147483648 ~ 2147483647</td><td>整数（最常用）</td><td>%d</td></tr>
+      <tr><td>float</td><td>4 字节</td><td>约 ±3.4e38，6~7 位有效数字</td><td>小数（单精度）</td><td>%f</td></tr>
+    </table>
+    <div class="grid grid-2 anim" style="animation-delay:.2s;margin-top:12px">
+      <div class="card white">
+        <p><em>溢出</em>：写入超出取值范围的值会回绕（int 最大值 +1 变最小值）</p>
+        <p><em>截断</em>：小数赋给 int，小数部分直接丢弃：int a = 3.9; 得 3</p>
+      </div>
+      <div class="card green">
+        <p>嵌入式常用<em>固定宽度类型</em>：uint8_t / int16_t / int32_t（#include &lt;stdint.h&gt;），宽度不随平台变化，后续写单片机代码常用</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：演示 · 变量盒子 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：把数字放进盒子（类型决定盒子大小）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="boxes"></canvas>
+      <div class="demo-controls">
+        <label>选中 <b id="boxSel" data-key="int" style="color:var(--purple)">int</b></label>
+        <label>数值 <input type="text" id="boxVal" value="42" style="width:80px;padding:4px 8px;border:1px solid #D5D0E6;border-radius:8px;font-size:13px"></label>
+        <button class="btn" id="boxPut">放入盒子</button>
+        <button class="btn ghost" id="boxReset">重置</button>
+        <span class="small muted">点击上方盒子可切换类型</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：运算符与优先级 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">运算符与优先级</h2>
+    <div class="grid grid-3 anim" style="animation-delay:.1s">
+      <div class="card white">
+        <h3>算术</h3>
+        <p>+ − * / %（取余）<br>整数除法截断：5 / 2 == 2<br>5 % 2 == 1</p>
+      </div>
+      <div class="card white">
+        <h3>关系</h3>
+        <p>==　!=　&gt;　&lt;　&gt;=　&lt;=<br>结果为 0（假）或 1（真）</p>
+      </div>
+      <div class="card white">
+        <h3>逻辑</h3>
+        <p>&amp;&amp; 与　|| 或　! 非<br>0 &lt; x &amp;&amp; x &lt; 10：x 在开区间 (0,10)</p>
+      </div>
+    </div>
+    <div class="grid grid-2 anim" style="animation-delay:.2s;margin-top:12px">
+      <div class="card white">
+        <h3>优先级要点</h3>
+        <p>乘除高于加减，比较高于逻辑与或；拿不准一律加括号</p>
+      </div>
+      <div class="callout danger">
+        <p><em>头号坑</em>：= 是赋值，== 才是相等判断。if (x = 0) 恒为假，还改掉了 x 的值</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：if / else ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">分支一：if / else</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div>
+        <pre><span class="k">if</span> (条件)          <span class="c">// 0 为假，非 0 为真</span>
+    语句 1;
+<span class="k">else if</span> (条件 2)
+    语句 2;
+<span class="k">else</span>
+    语句 3;</pre>
+        <p class="small">多分支用 if - else if - else 级联；只有一条语句时花括号可省，但建议始终写 { }</p>
+      </div>
+      <div class="card white">
+        <h3>例：成绩评级</h3>
+        <pre><span class="k">if</span> (score &gt;= 90)      <span class="f">printf</span>(<span class="s">"A"</span>);
+<span class="k">else if</span> (score &gt;= 80) <span class="f">printf</span>(<span class="s">"B"</span>);
+<span class="k">else if</span> (score &gt;= 70) <span class="f">printf</span>(<span class="s">"C"</span>);
+<span class="k">else if</span> (score &gt;= 60) <span class="f">printf</span>(<span class="s">"D"</span>);
+<span class="k">else</span>                  <span class="f">printf</span>(<span class="s">"F"</span>);</pre>
+        <p class="small muted">条件从上到下依次判断，命中即执行并结束整个 if</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：switch ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">分支二：switch / case</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div>
+        <pre><span class="k">switch</span> (level) {
+<span class="k">case</span> 1:  <span class="f">printf</span>(<span class="s">"低速"</span>); <span class="k">break</span>;
+<span class="k">case</span> 2:  <span class="f">printf</span>(<span class="s">"中速"</span>); <span class="k">break</span>;
+<span class="k">case</span> 3:  <span class="f">printf</span>(<span class="s">"高速"</span>); <span class="k">break</span>;
+<span class="k">default</span>: <span class="f">printf</span>(<span class="s">"未知"</span>);
+}</pre>
+      </div>
+      <div class="card white">
+        <h3>使用要点</h3>
+        <ul>
+          <li>case 后只能是<em>整型常量</em>（数字、字符、枚举值），不能写范围</li>
+          <li>每个 case 结尾写 <em>break</em>，否则「贯穿」继续执行下一分支</li>
+          <li><em>default</em> 兜底所有未匹配情况</li>
+          <li>适用场景：档位、状态机、按键值等多选一</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：for ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">循环一：for（知道圈数）</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div>
+        <pre><span class="c">// ① 初始　② 条件　④ 每圈更新</span>
+<span class="k">for</span> (<span class="k">int</span> i = 1; i &lt;= 100; i++)
+{
+    sum = sum + i;   <span class="c">// ③ 循环体</span>
+}</pre>
+        <p class="small">执行顺序：① → ② → ③ → ④ → ② → ③ → …，直到条件为假</p>
+      </div>
+      <div class="card white">
+        <h3>三要素</h3>
+        <ul>
+          <li>初始化：从哪开始（只执行一次）</li>
+          <li>条件：到哪结束（每圈先检查）</li>
+          <li>更新：每圈结束怎么变（i++ 即 i = i + 1）</li>
+        </ul>
+        <h3>复合赋值</h3>
+        <p>sum += i 等价 sum = sum + i；i++ 等价 i = i + 1</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：while ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">循环二：while / break / continue</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div class="card white">
+        <pre><span class="k">while</span> (i &lt;= 100)      <span class="c">// 条件成立就继续转</span>
+{
+    sum = sum + i;
+    i++;
+}</pre>
+        <ul>
+          <li>while 适合<em>不知道圈数</em>、靠条件退出</li>
+          <li><em>break</em>：跳出整个循环；<em>continue</em>：跳过本轮，进入下一圈</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h3>单片机的主循环</h3>
+        <pre><span class="k">while</span> (1) {
+    读传感器;
+    计算控制量;
+    驱动电机;
+}</pre>
+        <p class="small">while (1) 是死循环：上电后永远重复执行，后续每一节都会见到</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：演示 · 循环动画 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：for 循环 1 加到 100（速度可调）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="loopsum"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="loopStart">开始</button>
+        <button class="btn ghost" id="loopReset">重置</button>
+        <label>速度 <input type="range" id="loopSpeed" min="1" max="50" value="12"></label>
+        <span class="small muted">答案：1 + 2 + … + 100 = 5050</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：函数与函数原型 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">函数：输入参数，输出返回值</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div>
+        <pre><span class="c">// 定义：返回类型 函数名(参数列表)</span>
+<span class="k">int</span> <span class="f">max2</span>(<span class="k">int</span> a, <span class="k">int</span> b)
+{
+    <span class="k">if</span> (a &gt; b) <span class="k">return</span> a;
+    <span class="k">return</span> b;      <span class="c">// return 结束函数</span>
+}</pre>
+        <p class="small">调用：max2(3, 7) 得 7；函数可以再调用函数（max3 内部用 max2）</p>
+      </div>
+      <div class="card white">
+        <h3>函数原型（声明）</h3>
+        <pre><span class="k">int</span> <span class="f">max2</span>(<span class="k">int</span> a, <span class="k">int</span> b);   <span class="c">// 只有签名，没有函数体</span></pre>
+        <ul>
+          <li>原型只写签名加分号；实现写在 .c，原型放进 .h 供他人调用</li>
+          <li>默认<em>传值</em>：参数是副本，函数内修改不影响原变量（传址见指针一节）</li>
+          <li>不返回值的函数用 <em>void</em>：void set_speed(int v);</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：数组与下标 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">数组：连续存储，下标从 0 开始</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div>
+        <pre><span class="k">int</span> arr[5] = {10, 20, 30, 40, 50};
+
+arr[2] = 99;              <span class="c">// 改 2 号元素</span>
+
+<span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; 5; i++)   <span class="c">// 遍历</span>
+    total += arr[i];</pre>
+      </div>
+      <div class="card white">
+        <h3>要点</h3>
+        <ul>
+          <li>定义：同类型元素的<em>连续存储区</em>，元素个数在编译时确定</li>
+          <li>下标范围 <em>0 ~ n−1</em>，第一个元素是 arr[0]</li>
+          <li>初始化未写满自动补 0：int a[5] = {1,2,3};</li>
+          <li>访问 arr[5] 是<em>越界</em>——未定义行为：可能乱值、崩溃，或碰巧正常</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：struct / enum ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">struct 打包数据，enum 限定选项</h2>
+    <div class="grid grid-2 anim" style="animation-delay:.1s;flex:1;align-content:center">
+      <div class="card white">
+        <h3>struct 结构体</h3>
+        <pre><span class="k">struct</span> Student {
+    <span class="k">char</span>  name[16];
+    <span class="k">int</span>   id;
+    <span class="k">float</span> score;
+};
+s1.id = 20260101;    <span class="c">// . 访问成员</span></pre>
+        <p class="small">把不同类型字段打包成一个整体；电机的电流 / 转速 / 角度 / 温度可打包成一个结构体（讲解时结合战队现有代码展示）</p>
+      </div>
+      <div class="card white">
+        <h3>enum 枚举</h3>
+        <pre><span class="k">enum</span> Mode { STOP, FOLLOW, TRACK };
+<span class="c">// 默认编号 0,1,2，可手动指定</span>
+<span class="k">enum</span> Mode m = FOLLOW;</pre>
+        <p class="small">把变量限定在固定选项内，替代魔法数字 0/1/2，可读性更好</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 17 页：指针与地址运算符 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">指针：保存地址的变量</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div>
+        <pre><span class="k">int</span> x = 42;
+<span class="k">int</span> *p = &amp;x;     <span class="c">// p 存 x 的地址</span>
+
+*p = 7;           <span class="c">// 按地址改写 x</span>
+<span class="f">printf</span>(<span class="s">"%d"</span>, x);   <span class="c">// 输出 7</span></pre>
+      </div>
+      <div class="card white">
+        <h3>两个地址运算符</h3>
+        <ul>
+          <li><em>&amp;x</em> 取地址：得到 x 的门牌号（类比）</li>
+          <li><em>*p</em> 解引用：顺着 p 存的地址读写目标</li>
+          <li>声明写作 int *p；32 位 STM32 上指针占 4 字节</li>
+          <li>本节只要求看懂 & 与 *，不深入指针运算</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：传值 vs 传址 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">传值 vs 传址：为什么需要指针</h2>
+    <div class="cols anim" style="animation-delay:.1s">
+      <div class="card white">
+        <h3>传值：函数内改的是副本</h3>
+        <pre><span class="k">void</span> <span class="f">swap_bad</span>(<span class="k">int</span> a, <span class="k">int</span> b)
+{
+    <span class="k">int</span> t = a; a = b; b = t;
+}
+<span class="f">swap_bad</span>(x, y);   <span class="c">// x y 不变</span></pre>
+      </div>
+      <div class="card green">
+        <h3>传址：按地址改原件</h3>
+        <pre><span class="k">void</span> <span class="f">swap_ok</span>(<span class="k">int</span> *a, <span class="k">int</span> *b)
+{
+    <span class="k">int</span> t = *a; *a = *b; *b = t;
+}
+<span class="f">swap_ok</span>(&amp;x, &amp;y);  <span class="c">// 交换成功</span></pre>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.2s">
+      <p>想让函数修改某个变量，就把它的<em>地址</em>传进去。scanf("%d", &amp;score) 里的 & 同理</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：演示 · 指针门牌号 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：指针 = 门牌号（点击内存格查看）</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="pointer"></canvas>
+      <div class="demo-controls">
+        <label>修改 x 的值：</label>
+        <button class="btn ghost" id="ptr42">x = 42</button>
+        <button class="btn ghost" id="ptr99">x = 99</button>
+        <span class="small muted">点击内存格查看详情</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：.c / .h 分工 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">多文件：.h 是接口，.c 是实现</h2>
+    <div class="grid grid-2 anim" style="animation-delay:.1s">
+      <div class="card white">
+        <h3>mymath.h（声明）</h3>
+        <pre><span class="k">#ifndef</span> MYMATH_H      <span class="c">// 防重复包含</span>
+<span class="k">#define</span> MYMATH_H
+
+<span class="k">int</span> <span class="f">my_add</span>(<span class="k">int</span> a, <span class="k">int</span> b);   <span class="c">// 函数原型</span>
+
+<span class="k">#endif</span></pre>
+      </div>
+      <div class="card white">
+        <h3>mymath.c（实现）+ main.c（调用）</h3>
+        <pre><span class="k">#include</span> <span class="s">"mymath.h"</span>
+<span class="k">int</span> <span class="f">my_add</span>(<span class="k">int</span> a, <span class="k">int</span> b)
+{ <span class="k">return</span> a + b; }
+
+<span class="c">// main.c 调用，两个 .c 一起编译：</span>
+gcc main.c mymath.c -o mymath</pre>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.2s">
+      <p>.h 放函数原型、宏、类型定义（菜单）；.c 放函数实现（后厨）；每个模块一个 .c/.h 对，工程由多个模块组成</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：#include / #define ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">#include 与 #define 宏</h2>
+    <div class="grid grid-2 anim" style="animation-delay:.1s">
+      <div class="card white">
+        <h3>#include 两种写法</h3>
+        <p><code>&lt;stdio.h&gt;</code> 尖括号：系统头文件目录</p>
+        <p><code>"mymath.h"</code> 双引号：先找项目目录，再找系统目录</p>
+        <h3>#define 常量宏</h3>
+        <pre><span class="k">#define</span> MAX_SPEED 6600   <span class="c">// 改一处全改</span></pre>
+        <p class="small">本质是预处理阶段的<em>文本替换</em>；末尾不要写分号</p>
+      </div>
+      <div class="card white">
+        <h3>#define 函数宏与括号坑</h3>
+        <pre><span class="k">#define</span> <span class="f">SQ</span>(x) ((x) * (x))    <span class="c">// 正确</span>
+<span class="k">#define</span> <span class="f">SQ2</span>(x) x * x         <span class="c">// 错误示范</span>
+
+<span class="f">SQ2</span>(1 + 2)  <span class="c">// 展开 1+2*1+2 = 5，期望 9</span>
+10 / <span class="f">SQ2</span>(2)  <span class="c">// 展开 10/2*2 = 10，期望 2</span></pre>
+        <p class="small">宏的参数和整体都必须加括号</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：演示 · 猜输出题卡 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：猜输出，点击卡片翻面看答案</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="quiz"></canvas>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：常见错误对照表 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见错误与排查</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th>现象</th><th>可能原因</th><th>排查方法</th></tr>
+      <tr><td>error: expected ';' ...</td><td>上一行漏分号</td><td>检查报错行的上一行</td></tr>
+      <tr><td>undefined reference to ...</td><td>函数未实现，或 .c 没一起编译</td><td>检查实现与编译命令</td></tr>
+      <tr><td>双击 exe 一闪而过</td><td>程序结束窗口关闭</td><td>在终端运行，或加 getchar();</td></tr>
+      <tr><td>输出中文乱码</td><td>终端与文件编码不一致</td><td>统一为 UTF-8</td></tr>
+      <tr><td>程序卡住不结束</td><td>循环条件永远成立</td><td>检查条件与更新语句</td></tr>
+      <tr><td>Segmentation fault</td><td>数组越界或野指针</td><td>打印下标与地址检查</td></tr>
+      <tr><td>输出结果莫名不对</td><td>if 里把 == 写成 =</td><td>搜索 if ( 内的单等号</td></tr>
+      <tr><td>宏展开后数值不对</td><td>宏少括号 / 末尾多了分号</td><td>参数与整体都加括号</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 24 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源（课后自学）</h2>
+    <div class="grid anim" style="animation-delay:.1s;gap:10px;flex:1;align-content:center">
+      <div class="card white" style="padding:12px 18px">
+        <p><a href="https://www.bilibili.com/video/BV1dr4y1n7vA/" target="_blank" rel="noopener">翁恺《C 语言程序设计》· B 站</a> <span class="small muted">—— 浙大国家级精品课，1900 万+ 播放，零基础系统学</span></p>
+      </div>
+      <div class="card white" style="padding:12px 18px">
+        <p><a href="https://www.runoob.com/cprogramming/c-tutorial.html" target="_blank" rel="noopener">菜鸟教程 · C 语言教程</a> <span class="small muted">—— 章节式图文教程，可在线运行代码</span></p>
+      </div>
+      <div class="card white" style="padding:12px 18px">
+        <p><a href="https://www.learn-c.org/" target="_blank" rel="noopener">Learn-C.org</a> <span class="small muted">—— 英文交互式教程，边看边在线写</span></p>
+      </div>
+      <div class="card white" style="padding:12px 18px">
+        <p><a href="https://zh.cppreference.com/w/c" target="_blank" rel="noopener">cppreference 中文 · C 参考手册</a> <span class="small muted">—— 权威手册，查语法细节用</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 最后一页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>变量 = 类型确定的命名存储单元；类型决定宽度与取值范围</li>
+        <li>指针 = 保存地址的变量；& 取地址，* 解引用；传值改副本，传址改原件</li>
+        <li>数组下标从 0 开始，越界是未定义行为；struct 打包数据，enum 限定选项</li>
+        <li>.h 写声明（函数原型），.c 写实现；宏替换必须加括号</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（各小节自行编写） ================= */
+/*
+  注册格式：
+  ARTINX_DEMOS['example'] = {
+    init(canvas, slide){ ...每帧动画写在这里... },
+    destroy(){ ...清除定时器/raf... }
+  };
+  提示：
+  - canvas 尺寸随窗口变化，用下方 fit(canvas) 获取 CSS 像素尺寸并处理高清屏
+  - 页面切换到其他页时会自动调用 destroy()，切回时重新 init()
+  - 不要依赖任何外部库，用原生 canvas 即可
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+/* 共用小工具：圆角矩形与字体（演示统一色：亮绿 #AFFF00 / 深绿 #83BF00） */
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+const FONT = (px, mono) => (mono ? '700 ' + px + 'px Consolas,monospace' : '600 ' + px + 'px "Segoe UI","Microsoft YaHei",sans-serif');
+const GREEN_BRIGHT = '#AFFF00';
+const GREEN_DEEP = '#83BF00';
+
+/* —— 演示 1：变量盒子（类型决定盒子大小，赋值 = 放东西） —— */
+ARTINX_DEMOS['boxes'] = (() => {
+  let raf = null;
+  const vals = { char: null, int: null, float: null };
+  let sel = 'int';
+  let drop = null;
+  const TYPES = [
+    { key: 'char',  name: 'char',  bytes: 1, note: '字符 / 小整数' },
+    { key: 'int',   name: 'int',   bytes: 4, note: '整数（最常用）' },
+    { key: 'float', name: 'float', bytes: 4, note: '小数' }
+  ];
+  function geometry(w, h) {
+    const n = 3, gap = 26, pad = 18;
+    const bw = (w - pad * 2 - gap * (n - 1)) / n;
+    const top = 30;
+    return TYPES.map((t, i) => ({
+      x: pad + i * (bw + gap), y: top, w: bw, h: h - 64, t
+    }));
+  }
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#5A5468';
+    ctx.font = FONT(13);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('同一个数字，不同盒子的格子数不同 —— 类型决定盒子大小', 18, 20);
+    geometry(w, h).forEach(b => {
+      const t = b.t, active = sel === t.key;
+      ctx.fillStyle = '#262034'; ctx.font = FONT(17, true);
+      ctx.fillText(t.name, b.x, b.y + 22);
+      ctx.fillStyle = '#5A5468'; ctx.font = FONT(12);
+      ctx.fillText(t.note + '　' + t.bytes + ' 字节', b.x, b.y + 40);
+      const gy = b.y + 48;
+      const cw = Math.min((b.w - 12 - (t.bytes - 1) * 4) / t.bytes, 54);
+      const cx0 = b.x + (b.w - cw * t.bytes - (t.bytes - 1) * 4) / 2;
+      let anim = 0, flash = 0;
+      if (drop && drop.key === t.key) {
+        let p = clamp((performance.now() - drop.t0) / 450, 0, 1);
+        anim = 1 - p; anim = anim * anim * (3 - 2 * anim);
+        flash = 1 - p;
+      }
+      for (let i = 0; i < t.bytes; i++) {
+        const cx = cx0 + i * (cw + 4);
+        ctx.fillStyle = vals[t.key] !== null
+          ? (flash > 0 ? 'rgba(175,255,0,' + flash.toFixed(3) + ')' : GREEN_BRIGHT)
+          : '#F7F4FE';
+        ctx.strokeStyle = active ? GREEN_DEEP : '#C9C3DE';
+        ctx.lineWidth = active ? 2.5 : 1.5;
+        rr(ctx, cx, gy, cw, cw, 8); ctx.fill(); ctx.stroke();
+      }
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (vals[t.key] !== null) {
+        const v = vals[t.key];
+        ctx.save();
+        ctx.globalAlpha = clamp(1 - anim * 0.6, 0.3, 1);
+        ctx.fillStyle = '#262034';
+        const len = String(v).length;
+        ctx.font = FONT(Math.min(22, (b.w - 14) / Math.max(len, 1) * 1.5), true);
+        ctx.fillText(v, b.x + b.w / 2, gy + cw / 2 - anim * 70);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = '#C9C3DE'; ctx.font = FONT(13);
+        ctx.fillText('空盒子', b.x + b.w / 2, gy + cw / 2);
+      }
+    });
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  return {
+    init(canvas) {
+      canvas.onclick = e => {
+        const r = canvas.getBoundingClientRect();
+        const mx = e.clientX - r.left, my = e.clientY - r.top;
+        geometry(r.width, r.height).forEach(b => {
+          if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) {
+            sel = b.t.key;
+            const lb = document.getElementById('boxSel');
+            if (lb) { lb.textContent = b.t.name; lb.dataset.key = b.t.key; }
+          }
+        });
+      };
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+    },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    api: {
+      put(key, txt) {
+        sel = key;
+        const lb = document.getElementById('boxSel');
+        if (lb) { lb.textContent = (TYPES.find(t => t.key === key) || {}).name || key; lb.dataset.key = key; }
+        txt = (txt || '').trim();
+        if (key === 'char') vals.char = txt.length ? '\'' + txt[0] + '\'' : '\'?\'';
+        else if (key === 'int') { const n = parseInt(txt, 10); vals.int = isNaN(n) ? '0' : String(n); }
+        else { const f = parseFloat(txt); vals.float = isNaN(f) ? '0' : String(Math.round(f * 100) / 100); }
+        drop = { key, t0: performance.now() };
+      },
+      reset() { vals.char = null; vals.int = null; vals.float = null; drop = null; }
+    }
+  };
+})();
+
+/* —— 演示 2：for 循环 1 加到 100，速度可调 —— */
+ARTINX_DEMOS['loopsum'] = (() => {
+  let raf = null, i = 1, sum = 0, running = false, done = false, acc = 0, last = 0;
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    ctx.clearRect(0, 0, w, h);
+    const now = performance.now();
+    const dt = now - last; last = now;
+    if (running && !done) {
+      const speed = +document.getElementById('loopSpeed').value;
+      acc += dt / 1000 * speed;
+      let steps = Math.floor(acc); acc -= steps;
+      while (steps > 0 && i <= 100) { sum += i; i++; steps--; }
+      if (i > 100) { done = true; running = false; updateBtn(); }
+    }
+    /* 代码面板 */
+    const px = 30, py = 26, pw = w - 60;
+    ctx.fillStyle = '#262036'; rr(ctx, px, py, pw, 68, 12); ctx.fill();
+    ctx.font = FONT(15, true); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    let cx = px + 20;
+    const L1 = [['for (', '#F2EFFF'], ['i = 1', '#F2EFFF'], ['; ', '#F2EFFF'], ['i <= 100', '#FFD166'], ['; ', '#F2EFFF'], ['i++', GREEN_BRIGHT], [')', '#F2EFFF']];
+    L1.forEach(p => { ctx.fillStyle = p[1]; ctx.fillText(p[0], cx, py + 30); cx += ctx.measureText(p[0]).width; });
+    ctx.fillStyle = (running || done) ? GREEN_BRIGHT : '#8F87AB';
+    ctx.fillText('sum = sum + i;', px + 20, py + 56);
+    /* 大数字面板 */
+    const bw2 = (pw - 24) / 2;
+    [ [30, 'i', String(Math.min(i, 100)), '#784CF6'],
+      [30 + bw2 + 24, 'sum', String(sum), '#262034'] ].forEach(b => {
+      ctx.fillStyle = '#FFFFFF'; rr(ctx, b[0], py + 84, bw2, 104, 14); ctx.fill();
+      ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#5A5468'; ctx.font = FONT(14); ctx.textAlign = 'left';
+      ctx.fillText(b[1], b[0] + 18, py + 112);
+      ctx.fillStyle = b[3]; ctx.font = FONT(42, true); ctx.textAlign = 'right';
+      ctx.fillText(b[2], b[0] + bw2 - 18, py + 172);
+    });
+    /* 进度条 */
+    const by = py + 208, bh2 = 18;
+    ctx.fillStyle = '#F7F4FE'; rr(ctx, 30, by, pw, bh2, 9); ctx.fill();
+    const prog = clamp((i - 1) / 100, 0, 1);
+    if (prog > 0) { ctx.fillStyle = GREEN_BRIGHT; rr(ctx, 30, by, Math.max(bh2, pw * prog), bh2, 9); ctx.fill(); }
+    ctx.fillStyle = '#5A5468'; ctx.font = FONT(12.5); ctx.textAlign = 'left';
+    ctx.fillText('进度：第 ' + Math.min(i - 1, 100) + ' / 100 圈', 30, by + 38);
+    if (done) {
+      ctx.fillStyle = GREEN_DEEP; ctx.font = FONT(18, true); ctx.textAlign = 'right';
+      ctx.fillText('完成：1+2+…+100 = 5050', w - 30, by + 38);
+    }
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  function updateBtn() {
+    const b = document.getElementById('loopStart');
+    if (b) b.textContent = done ? '重来' : (running ? '暂停' : '开始');
+  }
+  return {
+    init(canvas) {
+      last = performance.now();
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+      updateBtn();
+    },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    api: {
+      toggle() {
+        if (done) { i = 1; sum = 0; done = false; running = true; acc = 0; }
+        else running = !running;
+        updateBtn();
+      },
+      reset() { i = 1; sum = 0; done = false; running = false; acc = 0; updateBtn(); }
+    }
+  };
+})();
+
+/* —— 演示 3：指针 = 门牌号（内存格 + 地址 + 箭头，点击查看） —— */
+ARTINX_DEMOS['pointer'] = (() => {
+  let raf = null, xval = 42, sel = -1, rects = [];
+  const N = 8, BASE = 0x20000000;
+  const hex = v => '0x' + v.toString(16).toUpperCase().padStart(8, '0');
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#5A5468'; ctx.font = FONT(13);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('内存就是一排带门牌号的格子；p 里存的是 x 的门牌号', 18, 22);
+    const cw = Math.min(84, (w - 40 - (N - 1) * 6) / N);
+    const x0 = (w - (cw * N + (N - 1) * 6)) / 2;
+    const gy = h * 0.44;
+    ctx.fillStyle = '#262034'; ctx.font = FONT(16, true);
+    ctx.fillText('int x = ' + xval, x0, gy - 66);
+    ctx.fillText('int *p = &x', x0 + 4 * (cw + 6), gy - 66);
+    ctx.fillStyle = '#5A5468'; ctx.font = FONT(12);
+    ctx.fillText('&x 取到 x 的门牌号', x0, gy - 46);
+    ctx.fillText('p 里存着 x 的门牌号', x0 + 4 * (cw + 6), gy - 46);
+    /* 箭头：p → x */
+    const sx = x0 + 4 * (cw + 6) + 2 * cw + 9;
+    const ex = x0 + 2 * cw + 9;
+    const cy1 = gy - 14, cy2 = gy - 14;
+    ctx.strokeStyle = GREEN_DEEP; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(sx, cy1);
+    ctx.bezierCurveTo(sx, gy - 54, ex, gy - 54, ex, cy2);
+    ctx.stroke();
+    const ang = Math.atan2(cy2 - (gy - 54), 0.0001);
+    ctx.fillStyle = GREEN_DEEP;
+    ctx.beginPath();
+    ctx.moveTo(ex, cy2);
+    ctx.lineTo(ex - 8 * Math.cos(ang - 0.5), cy2 - 8 * Math.sin(ang - 0.5));
+    ctx.lineTo(ex - 8 * Math.cos(ang + 0.5), cy2 - 8 * Math.sin(ang + 0.5));
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = GREEN_DEEP; ctx.font = FONT(13, true); ctx.textAlign = 'center';
+    ctx.fillText('指向', (sx + ex) / 2, gy - 58);
+    /* 格子 */
+    rects = [];
+    for (let k = 0; k < N; k++) {
+      const cx = x0 + k * (cw + 6);
+      ctx.fillStyle = k < 4 ? GREEN_BRIGHT : '#E3DBFC';
+      ctx.strokeStyle = sel === k ? GREEN_DEEP : '#C9C3DE';
+      ctx.lineWidth = sel === k ? 3 : 1.5;
+      rr(ctx, cx, gy, cw, cw, 8); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#5A5468'; ctx.font = FONT(11, true); ctx.textAlign = 'center';
+      ctx.fillText('0x2000000' + k, cx + cw / 2, gy + 15);
+      rects.push({ x: cx, y: gy, w: cw, h: cw, idx: k });
+    }
+    /* 值 */
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#262034'; ctx.font = FONT(20, true);
+    ctx.fillText(String(xval), x0 + 2 * cw + 9, gy + cw / 2 + 10);
+    ctx.fillStyle = GREEN_DEEP; ctx.font = FONT(13, true);
+    ctx.fillText(hex(BASE), x0 + 4 * (cw + 6) + 2 * cw + 9, gy + cw / 2 + 10);
+    /* 信息面板 */
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    const iy = h - 44;
+    if (sel >= 0) {
+      ctx.fillStyle = '#F7F4FE'; rr(ctx, 30, iy - 10, w - 60, 38, 10); ctx.fill();
+      ctx.fillStyle = '#262034'; ctx.font = FONT(15);
+      ctx.fillText(sel < 4
+        ? '门牌 0x2000000' + sel + '　这里是 x 的内存，值 = ' + xval + '（int 占 4 格）'
+        : '门牌 0x2000000' + sel + '　这里是 p，存的是 x 的门牌号 0x20000000', 48, iy + 15);
+    } else {
+      ctx.fillStyle = '#5A5468'; ctx.font = FONT(13);
+      ctx.fillText('点击任意内存格查看它存的什么；下方按钮可修改 x 的值', 30, iy + 4);
+    }
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  return {
+    init(canvas) {
+      canvas.onclick = e => {
+        const r = canvas.getBoundingClientRect();
+        const mx = e.clientX - r.left, my = e.clientY - r.top;
+        sel = -1;
+        for (const c of rects) {
+          if (mx >= c.x && mx <= c.x + c.w && my >= c.y && my <= c.y + c.h) { sel = c.idx; break; }
+        }
+      };
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+    },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    api: { set(v) { xval = v; } }
+  };
+})();
+
+/* —— 演示 4：猜输出题卡（点击翻面） —— */
+ARTINX_DEMOS['quiz'] = (() => {
+  let raf = null, rects = [];
+  const CARDS = [
+    { q: 'int i = 5;\nprintf("%d", i++);', a: '5',  e: 'i++ 先把旧值 5 交出去，再给 i 加 1。' },
+    { q: 'int i = 5;\nprintf("%d", ++i);', a: '6',  e: '++i 先给 i 加 1，再把新值 6 交出去。' },
+    { q: 'printf("%d", 5 / 2);',        a: '2',  e: '两个整数相除仍是整数，0.5 被丢掉。' },
+    { q: 'printf("%d", 5 % 2);',        a: '1',  e: '% 是取余数：5 ÷ 2 = 2 余 1。' },
+    { q: 'int a[3] = {1,2,3};\nprintf("%d", a[3]);', a: '未定义', e: '下标只有 0~2，a[3] 越界，结果不可预测。' },
+    { q: 'int x = 10;\nint *p = &x;\n*p = 7;\nprintf("%d", x);', a: '7', e: 'p 存 x 的门牌号，*p = 7 改的就是 x。' }
+  ];
+  const flipped = CARDS.map(() => false);
+  const anis = [];
+  function wrapText(ctx, text, maxW) {
+    const lines = [];
+    let cur = '';
+    for (const ch of text) {
+      if (ctx.measureText(cur + ch).width > maxW && cur) { lines.push(cur); cur = ch; }
+      else cur += ch;
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  function draw(canvas) {
+    const { w, h, ctx } = fit(canvas);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#5A5468'; ctx.font = FONT(13);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('先在心里猜输出，再点卡片翻面看答案', 18, 22);
+    const now = performance.now();
+    /* 清理动画并计算缩放与当前显示面 */
+    const scales = CARDS.map(() => 1);
+    const faces = CARDS.map((_, idx) => flipped[idx]);
+    for (let j = anis.length - 1; j >= 0; j--) {
+      const a = anis[j];
+      let p = clamp((now - a.t0) / 320, 0, 1);
+      if (p >= 1) { anis.splice(j, 1); p = 1; }
+      scales[a.idx] = Math.cos(p * Math.PI);
+      faces[a.idx] = p < 0.5 ? a.from : !a.from;
+    }
+    const cols = 3, rows = 2, gap = 16, pad = 18;
+    const top = 38;
+    const bw = (w - pad * 2 - gap * (cols - 1)) / cols;
+    const bh = (h - top - pad - gap * (rows - 1)) / rows;
+    rects = [];
+    CARDS.forEach((c, idx) => {
+      const cx = pad + (idx % cols) * (bw + gap);
+      const cy = top + Math.floor(idx / cols) * (bh + gap);
+      const s = scales[idx];
+      const back = faces[idx];
+      ctx.save();
+      ctx.translate(cx + bw / 2, cy + bh / 2);
+      ctx.scale(s < 0 ? -s : s, 1);
+      if (back) {
+        /* 背面：答案 + 解释 */
+        ctx.fillStyle = '#784CF6'; rr(ctx, -bw / 2, -bh / 2, bw, bh, 14); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.font = FONT(13);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText('答案', -bw / 2 + 20, -bh / 2 + 30);
+        ctx.fillStyle = GREEN_BRIGHT; ctx.font = FONT(28, true);
+        ctx.fillText(c.a, -bw / 2 + 20, -bh / 2 + 68);
+        ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(-bw / 2 + 20, -bh / 2 + 86); ctx.lineTo(bw / 2 - 20, -bh / 2 + 86); ctx.stroke();
+        ctx.fillStyle = '#FFFFFF'; ctx.font = FONT(13.5);
+        wrapText(ctx, c.e, bw - 40).forEach((line, li) => {
+          ctx.fillText(line, -bw / 2 + 20, -bh / 2 + 112 + li * 22);
+        });
+      } else {
+        /* 正面：题目 */
+        ctx.fillStyle = '#F7F4FE'; rr(ctx, -bw / 2, -bh / 2, bw, bh, 14); ctx.fill();
+        ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = '#784CF6'; ctx.font = FONT(13.5);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText('第 ' + (idx + 1) + ' 题 · printf 输出什么？', -bw / 2 + 20, -bh / 2 + 30);
+        ctx.fillStyle = '#262034'; ctx.font = FONT(14, true);
+        c.q.split('\n').forEach((line, li) => {
+          ctx.fillText(line, -bw / 2 + 20, -bh / 2 + 62 + li * 23);
+        });
+        ctx.fillStyle = '#C9C3DE'; ctx.font = FONT(12);
+        ctx.fillText('点击翻面', bw / 2 - 76, bh / 2 - 14);
+      }
+      ctx.restore();
+      rects.push({ x: cx, y: cy, w: bw, h: bh, idx });
+    });
+    raf = requestAnimationFrame(() => draw(canvas));
+  }
+  return {
+    init(canvas) {
+      canvas.onclick = e => {
+        const r = canvas.getBoundingClientRect();
+        const mx = e.clientX - r.left, my = e.clientY - r.top;
+        for (const c of rects) {
+          if (mx >= c.x && mx <= c.x + c.w && my >= c.y && my <= c.y + c.h) {
+            if (!anis.some(a => a.idx === c.idx)) {
+              anis.push({ idx: c.idx, t0: performance.now(), from: flipped[c.idx] });
+              flipped[c.idx] = !flipped[c.idx];
+            }
+            break;
+          }
+        }
+      };
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+    },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  };
+})();
+
+/* —— 演示控件绑定（仅此一次） —— */
+document.getElementById('boxPut').onclick = () => {
+  const d = ARTINX_DEMOS['boxes'];
+  if (d && d.api) d.api.put(document.getElementById('boxSel').dataset.key, document.getElementById('boxVal').value);
+};
+document.getElementById('boxReset').onclick = () => {
+  const d = ARTINX_DEMOS['boxes'];
+  if (d && d.api) d.api.reset();
+};
+document.getElementById('loopStart').onclick = () => {
+  const d = ARTINX_DEMOS['loopsum'];
+  if (d && d.api) d.api.toggle();
+};
+document.getElementById('loopReset').onclick = () => {
+  const d = ARTINX_DEMOS['loopsum'];
+  if (d && d.api) d.api.reset();
+};
+document.getElementById('ptr42').onclick = () => {
+  const d = ARTINX_DEMOS['pointer'];
+  if (d && d.api) d.api.set(42);
+};
+document.getElementById('ptr99').onclick = () => {
+  const d = ARTINX_DEMOS['pointer'];
+  if (d && d.api) d.api.set(99);
+};
+</script>
+</body>
+</html>

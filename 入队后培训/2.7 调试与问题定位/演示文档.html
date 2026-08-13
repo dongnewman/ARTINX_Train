@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.7 调试与问题定位 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">入队后培训 · 2.7</div>
+      <h1 class="anim" style="animation-delay:.2s">调试与问题定位</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">先分层，再定位：用证据把问题从整车缩到一行代码</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s"><h3>方法 · 八步定位流程</h3><p>现象到验证，一条流水线</p></div>
+      <div class="card anim" style="animation-delay:.1s"><h3>模型 · 五层分层</h3><p>从整车到代码，一层层排除</p></div>
+      <div class="card anim" style="animation-delay:.15s"><h3>工具 · 矩阵</h3><p>八种工具，各管一段</p></div>
+      <div class="card anim" style="animation-delay:.2s"><h3>案例 · 电机不转</h3><p>决策树与时间轴，完整走一遍</p></div>
+      <div class="card anim" style="animation-delay:.25s"><h3>技巧 · 四条</h3><p>二分法、最小复现、一次一变量、记录改动</p></div>
+      <div class="card anim" style="animation-delay:.3s"><h3>速查 · 典型问题</h3><p>电机、CAN、IMU、遥控器、整车</p></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：调试是什么 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">调试是什么：给机器人「问诊」</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>定义</h3>
+        <p>调试（Debug）：定位程序或电路「未按预期工作」的原因，修复并验证。词源：1947 年 Mark II 继电器里夹出的飞蛾。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>三个特点</h3>
+        <p>问题可能在硬件；只能靠症状与数据推理；震动、静电带来时好时坏。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>一句话总结</h3>
+        <p>调试 = 问诊式定位：范围从整车缩到一行代码或一根线。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：五层分层模型 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">五层分层模型：先分层，再定位</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th style="width:10%">层</th><th style="width:30%">电机不转案例中指什么</th><th>排除动作（这层没问题的证据）</th></tr>
+      <tr><td>整车</td><td>整车上电、公共电源、主控</td><td>其他电机、云台、灯都正常</td></tr>
+      <tr><td>子系统</td><td>底盘 CAN 总线与底盘供电</td><td>同一总线上其他电机有反馈</td></tr>
+      <tr><td>模块</td><td>1 号电机与其电调</td><td>交叉替换一个已知好的电机</td></tr>
+      <tr><td>信号</td><td>CAN 帧、24V 供电电压</td><td>CAN 工具抓到反馈帧；万用表量到 24V</td></tr>
+      <tr><td>代码</td><td>发送函数与参数</td><td>断点停住、变量值符合预期</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.15s;margin-top:12px">两条铁律：先证明上层没问题再往下钻；证明不了的层用交叉替换。层序反了会白忙：查一下午代码，发现是电源没插。</div>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：分层定位漏斗（交互演示） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">分层定位漏斗：从整车收窄到代码</h2>
+    <div class="demo-stage anim" style="animation-delay:.05s">
+      <canvas data-demo="funnel"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="fuPlay">暂停</button>
+        <button class="btn ghost" id="fuReset">重置</button>
+        <label>点击任意一层，查看该层排除方法；数据包穿过五层 = 排查范围收窄</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：八步定位流程总览 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">八步定位流程</h2>
+    <div class="grid grid-4" style="flex:1;align-content:center;gap:12px 14px">
+      <div class="card anim" style="animation-delay:.05s"><span class="chip">① 现象</span><p class="small muted" style="margin-top:6px">说清三要素</p></div>
+      <div class="card anim" style="animation-delay:.1s"><span class="chip">② 分层</span><p class="small muted" style="margin-top:6px">判断在哪层</p></div>
+      <div class="card anim" style="animation-delay:.15s"><span class="chip">③ 假设</span><p class="small muted" style="margin-top:6px">原因排序</p></div>
+      <div class="card anim" style="animation-delay:.2s"><span class="chip green">④ 证据</span><p class="small muted" style="margin-top:6px">工具验证</p></div>
+      <div class="card anim" style="animation-delay:.25s"><span class="chip">⑤ 缩小</span><p class="small muted" style="margin-top:6px">排除收窄</p></div>
+      <div class="card anim" style="animation-delay:.3s"><span class="chip">⑥ 定位</span><p class="small muted" style="margin-top:6px">具体原因</p></div>
+      <div class="card anim" style="animation-delay:.35s"><span class="chip">⑦ 修复</span><p class="small muted" style="margin-top:6px">一次一改</p></div>
+      <div class="card anim" style="animation-delay:.4s"><span class="chip">⑧ 验证</span><p class="small muted" style="margin-top:6px">回归防复发</p></div>
+    </div>
+    <div class="callout warn anim" style="animation-delay:.45s;margin-top:12px">第 4 步「证据」最常被跳过：没有证据直接改，调试变成猜彩票。</div>
+  </section>
+
+
+  <!-- ══════════════════ 第 7 页：八步详解（上） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">八步详解（上）：现象 · 分层 · 假设</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>① 现象</h3>
+        <p>说清哪台设备、何时、何条件、何表现；「其余正常」也是证据。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>② 分层</h3>
+        <p>按五层判断所在层，先排除上层再下钻。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>③ 假设</h3>
+        <p>列原因并排序，每个假设配一个验证动作。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：八步详解（中） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">八步详解（中）：证据 · 缩小 · 定位</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>④ 证据</h3>
+        <p>用工具验证假设：指示灯、抓帧、万用表、断点。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>⑤ 缩小</h3>
+        <p>按证据排除：灯亮→排除供电；无反馈→通信问题。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>⑥ 定位</h3>
+        <p>指令帧在、反馈无 → 查配置：波特率 500k ≠ 1M。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 9 页：八步详解（下） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">八步详解（下）：修复 · 验证 · 常见错误</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>⑦ 修复</h3>
+        <p>一次只改一个变量；波特率改回 1 Mbps，重新编译烧录。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>⑧ 验证</h3>
+        <p>回归：问题恢复，其余功能逐一确认无影响。</p>
+      </div>
+    </div>
+    <div class="callout danger anim" style="animation-delay:.25s;margin-top:12px">新手最常犯：从现象直接跳到修复，凭猜改，没好再猜下一个。</div>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：证据意识 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">证据意识：猜测必须被证实</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th style="width:14%">证据分级</th><th>特征</th><th>示例</th></tr>
+      <tr><td>弱证据</td><td>依赖记忆，不可追溯</td><td>「记得上次好像也这样」</td></tr>
+      <tr><td>中证据</td><td>实时观察，转瞬即逝</td><td>「指示灯现在不亮」</td></tr>
+      <tr><td>强证据</td><td>可回放、可对比、可给他人看</td><td>CAN 抓帧、示波器截图、日志 CSV、万用表读数</td></tr>
+    </table>
+    <div class="grid grid-2" style="margin-top:12px">
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>复现三问</h3>
+        <p>何时 / 何条件 / 何表现。多次记录，交集就是触发规律。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>下结论前自问</h3>
+        <p>「你当时凭什么这么判断？」答不上来 = 只是猜。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：四个实用技巧 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">四个实用技巧</h2>
+    <div class="grid grid-4" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>二分法注释</h3>
+        <p>注释一半看现象再对半，1024 行 10 次定位。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>最小复现</h3>
+        <p>干净小工程复现，切开硬件与业务代码。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>一次一个变量</h3>
+        <p>改一处验证一处，好坏都有交代。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.35s">
+        <h3>记录改动</h3>
+        <p>Git 留痕，随时回退到上一正常版本。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：工具矩阵总表 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">工具矩阵：八种工具各管一段</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th style="width:12%">工具</th><th style="width:26%">能看什么</th><th style="width:26%">什么时候用</th><th>怎么上手</th></tr>
+      <tr><td>万用表</td><td>电压、通断、电阻</td><td>怀疑供电 / 线路断了</td><td>电压档并联量；通断档听蜂鸣</td></tr>
+      <tr><td>示波器</td><td>信号波形、频率、幅值</td><td>怀疑信号质量</td><td>探头接信号，按 AUTO 抓波</td></tr>
+      <tr><td>逻辑分析仪</td><td>多路数字信号时序</td><td>SPI / I2C 时序问题</td><td>探头夹线，软件触发抓取</td></tr>
+      <tr><td>CAN 工具</td><td>总线帧 ID 与数据</td><td>CAN 不通 / 电机无反馈</td><td>设对波特率，看收发帧</td></tr>
+      <tr><td>串口工具</td><td>printf 日志</td><td>看程序走到哪一步</td><td>波特率一致，打开串口</td></tr>
+      <tr><td>Keil Debug</td><td>变量值、断点、调用栈</td><td>代码逻辑错误</td><td>F9 断点，F5 运行，看 Watch</td></tr>
+      <tr><td>Log 日志</td><td>历史数据回放</td><td>偶发问题复盘</td><td>定时存 CSV，带时间戳</td></tr>
+      <tr><td>Python</td><td>数据规律、异常点</td><td>大量数据分析</td><td>matplotlib 读 CSV 画曲线</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.15s;margin-top:12px">选工具口诀：先量电、再看灯、能抓帧不猜帧、能断点不肉眼、事后靠日志。</div>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：工具矩阵（交互演示） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">工具矩阵：点击工具看说明</h2>
+    <div class="demo-stage anim" style="animation-delay:.05s">
+      <canvas data-demo="tools"></canvas>
+      <div class="demo-controls">
+        <label>点击左侧工具卡片，右侧展开「能看什么 / 什么时候用 / 怎么上手」</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：案例案情分析 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">案例：电机不转 · 案情分析</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>现象</h3>
+        <p>上电后 1 号电机不转，其余 3 个正常。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>分层</h3>
+        <p>其余正常→上层排除，锁定模块层以下。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>假设排序</h3>
+        <p>指令没发出 / CAN 不通 / 供电异常 / 本体损坏。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>证据计划</h3>
+        <p>断点 / 抓帧 / 看灯量压 / 交叉替换。</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.4s;margin-top:12px">下一页：用决策树交互推进，答案不同、路径不同、结论不同。</div>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：交互决策树（核心演示） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">决策树演示：电机不转，逐步定位</h2>
+    <div class="demo-stage anim" style="animation-delay:.05s">
+      <canvas data-demo="tree"></canvas>
+      <div class="demo-controls">
+        <button class="btn green" id="trYes">是</button>
+        <button class="btn" id="trNo">否</button>
+        <button class="btn ghost" id="trBack">上一步</button>
+        <button class="btn ghost" id="trReset">重新开始</button>
+        <label>沿绿色路径 = 已走过的排查路线</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：案例时间轴（交互演示） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">案例时间轴：八步逐步回放</h2>
+    <div class="demo-stage anim" style="animation-delay:.05s">
+      <canvas data-demo="timeline"></canvas>
+      <div class="demo-controls">
+        <button class="btn ghost" id="tlPrev">上一步</button>
+        <button class="btn" id="tlNext">下一步</button>
+        <button class="btn green" id="tlAuto">自动播放</button>
+        <button class="btn ghost" id="tlReset">重置</button>
+        <label>逐帧回放「电机不转」案例的完整排查</label>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════ 第 17 页：案例复盘 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">案例复盘：证据链与结论</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">
+        <h3>证据链</h3>
+        <p>函数被调用→排除 A；灯亮、24V 正常→排除 C。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.15s">
+        <h3>定位</h3>
+        <p>有指令帧、无反馈帧→查配置，波特率 500k ≠ 1M。</p>
+      </div>
+      <div class="card anim" style="animation-delay:.25s">
+        <h3>修复与验证</h3>
+        <p>改回 1 Mbps 重烧；电机恢复，整车回归。</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.35s;margin-top:12px">一个案例三种证据：断点（代码）、抓帧（信号）、量电压（供电）——分层越深，工具越具体。</div>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：典型问题速查（上） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">典型问题速查（上）</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th style="width:14%">问题</th><th style="width:36%">症状清单</th><th>最可能原因（按概率排序）</th></tr>
+      <tr><td>电机不转</td><td>上电无反应 / 指示灯不亮 / 灯亮不转 / 异响后自锁</td><td>① 供电　② CAN 通信　③ 指令没发　④ 电调保护　⑤ 电机本体</td></tr>
+      <tr><td>CAN 掉线</td><td>全部电机无反馈 / 周期性掉线 / 启动某设备即掉线 / 单台无反馈</td><td>① 终端电阻　② 接线松动　③ 波特率　④ 设备拉死总线　⑤ 主控异常</td></tr>
+    </table>
+    <div class="callout warn anim" style="animation-delay:.15s;margin-top:12px">排序是统计上的概率，不代表可以跳过证据——每一项都用对应工具验证。</div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：典型问题速查（下） ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">典型问题速查（下）</h2>
+    <table class="anim" style="animation-delay:.05s">
+      <tr><th style="width:14%">问题</th><th style="width:36%">症状清单</th><th>最可能原因（按概率排序）</th></tr>
+      <tr><td>IMU 数据异常</td><td>数据不变 / 乱跳 / 缓慢漂移 / 上电自检失败</td><td>① 接线虚接　② 供电波动　③ 校准流程　④ 帧解析错位　⑤ 震动干扰</td></tr>
+      <tr><td>遥控器异常</td><td>收不到数据 / 延迟明显 / 摇杆乱跳 / 静止漂移</td><td>① 接收机接线　② 波特率　③ 协议解析　④ 无线干扰　⑤ 电量</td></tr>
+      <tr><td>整车功能异常</td><td>多子系统同挂 / 上电即异常 / 跑久才异常 / 特定动作触发</td><td>① 公共供电　② 主控崩溃　③ 总线故障　④ 资源冲突　⑤ 初始化依赖</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.15s;margin-top:12px">多子系统同时异常先查公共部分：电源、主控、总线。</div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：新手四大坑 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">新手四大坑</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="callout danger anim" style="animation-delay:.05s"><p>猜着改：没证据直接改代码，好了也不知道为什么。</p></div>
+      <div class="callout danger anim" style="animation-delay:.15s"><p>一次改仨：同时改三处，好了坏了都说不清。</p></div>
+      <div class="callout warn anim" style="animation-delay:.25s"><p>归罪玄学：没找到触发条件就放弃。</p></div>
+      <div class="callout warn anim" style="animation-delay:.35s"><p>不回归：修好 A 弄坏 B，比赛才发现。</p></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源</h2>
+    <div class="grid" style="flex:1;align-content:center;gap:12px">
+      <div class="card white anim" style="animation-delay:.05s;display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <a href="https://www.bilibili.com/video/BV1FE411i79f/" target="_blank" rel="noopener">Keil 常用的调试手段（B站，2万+播放）</a>
+        <span class="chip gray">断点 / Watch 全流程教学</span>
+      </div>
+      <div class="card white anim" style="animation-delay:.15s;display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <a href="https://www.bilibili.com/video/BV17HYWzwEFD/" target="_blank" rel="noopener">示波器入门教程（B站·尚硅谷，30集）</a>
+        <span class="chip gray">从零学会抓波形</span>
+      </div>
+      <div class="card white anim" style="animation-delay:.25s;display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <a href="https://www.keil.com/support/man/docs/uv4/default.htm" target="_blank" rel="noopener">Keil µVision 官方用户手册</a>
+        <span class="chip gray">调试窗口官方说明</span>
+      </div>
+      <div class="card white anim" style="animation-delay:.35s;display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <a href="https://matplotlib.org/stable/tutorials/introductory/pyplot.html" target="_blank" rel="noopener">matplotlib 官方 pyplot 入门</a>
+        <span class="chip gray">日志画曲线手册</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>先分层，再定位：五层漏斗一层层排除，每层都有排除动作</li>
+        <li>八步流程记心间：现象、分层、假设、证据、缩小、定位、修复、验证</li>
+        <li>猜测必须用数据证实；玄学只是没找到触发条件</li>
+        <li>八种工具各管一段；二分法、最小复现、一次一变量、记录改动</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（2.7 调试与问题定位） ================= */
+/*
+  注册格式：ARTINX_DEMOS['名字'] = { init(canvas, slide){...}, destroy(){...} };
+  演示内绿色统一：荧光绿 #AFFF00（亮）/ 深绿 #83BF00；canvas 文字禁用 emoji。
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const FONT = '"Microsoft YaHei","PingFang SC",sans-serif';
+const GRN = '#AFFF00';      // 荧光绿（亮）
+const GRN_D = '#83BF00';    // 深绿
+
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function wrapText(ctx, text, x, y, maxW, lh, align) {
+  const chars = [...text];
+  let line = '', lines = [];
+  for (const ch of chars) {
+    if (ctx.measureText(line + ch).width > maxW) { lines.push(line); line = ch; }
+    else line += ch;
+  }
+  lines.push(line);
+  ctx.textAlign = align || 'center';
+  ctx.textBaseline = 'middle';
+  lines.forEach((ln, i) => ctx.fillText(ln, x, y + (i - (lines.length - 1) / 2) * lh));
+  return lines.length;
+}
+
+// ─────────── 演示 1：分层定位漏斗（整车→子系统→模块→信号→代码） ───────────
+ARTINX_DEMOS['funnel'] = (() => {
+  let raf = null, last = 0, playing = true, sel = -1, pk = [];
+  const LAYERS = [
+    { n: '① 整车',   c: '其他电机、云台正常吗？整车能上电吗？' },
+    { n: '② 子系统', c: '同一条 CAN 上，其他设备收发正常吗？' },
+    { n: '③ 模块',   c: '电调灯亮吗？24V 正常吗？换个好的试试' },
+    { n: '④ 信号',   c: 'CAN 工具抓到帧了吗？量电压、看波形' },
+    { n: '⑤ 代码',   c: '断点停了吗？变量值对吗？二分法注释' },
+  ];
+  function spawn(w) {
+    pk = [];
+    for (let i = 0; i < 26; i++) pk.push({
+      x: w * (0.25 + Math.random() * 0.5),
+      y: 24 - Math.random() * 70,
+      v: 55 + Math.random() * 85,
+      r: 3 + Math.random() * 2.5,
+      g: i % 2 === 0
+    });
+  }
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    const now = performance.now();
+    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016;
+    last = now;
+    ctx.clearRect(0, 0, w, h);
+    const topY = 60, botY = h - 46, totalH = botY - topY, lh = totalH / 5, cx = w / 2;
+    for (let i = 0; i < 5; i++) {
+      const y0 = topY + i * lh, y1 = y0 + lh;
+      const wf = 0.95 - i * 0.105;
+      const bw = w * wf, x0 = cx - bw / 2;
+      rr(ctx, x0, y0 + 3, bw, lh - 6, 12);
+      ctx.fillStyle = sel === i ? 'rgba(175,255,0,.42)' : 'rgba(227,219,252,.55)';
+      ctx.fill();
+      ctx.strokeStyle = sel === i ? GRN_D : '#C9C0E8';
+      ctx.lineWidth = sel === i ? 2.5 : 1.2;
+      ctx.stroke();
+      ctx.font = '700 15px ' + FONT;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#5A2FD0';
+      ctx.fillText(LAYERS[i].n, x0 + 12, (y0 + y1) / 2);
+      ctx.font = '13px ' + FONT;
+      ctx.fillStyle = sel === i ? '#2C4000' : '#6E6880';
+      ctx.textAlign = 'right';
+      ctx.fillText(LAYERS[i].c, x0 + bw - 12, (y0 + y1) / 2);
+    }
+    // 漏斗包络
+    ctx.beginPath();
+    ctx.moveTo(cx - w * 0.475, topY);
+    ctx.lineTo(cx - w * 0.265, botY);
+    ctx.moveTo(cx + w * 0.475, topY);
+    ctx.lineTo(cx + w * 0.265, botY);
+    ctx.strokeStyle = '#D8D2EE'; ctx.lineWidth = 2; ctx.stroke();
+    // 数据包
+    if (!pk.length) spawn(w);
+    if (playing) {
+      for (const p of pk) {
+        p.y += p.v * dt;
+        const prog = clamp((p.y - topY) / totalH, 0, 1);
+        const hw = w * (0.475 - 0.21 * prog);
+        const lim = Math.max(6, hw - 8);
+        if (Math.abs(p.x - cx) > lim) p.x = cx + Math.sign(p.x - cx) * lim;
+        if (p.y > botY) {
+          p.y = 20 - Math.random() * 40;
+          p.x = cx + (Math.random() - 0.5) * w * 0.7;
+        }
+      }
+    }
+    for (const p of pk) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.g ? 'rgba(120,76,246,.85)' : 'rgba(131,191,0,.95)';
+      ctx.fill();
+    }
+    ctx.font = '13px ' + FONT;
+    ctx.textAlign = 'center'; ctx.fillStyle = '#6E6880';
+    ctx.fillText('点击任意一层查看排除方法；数据包穿过五层 = 排查范围收窄', cx, h - 18);
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  function onClick(e) {
+    const { w, h } = fit(e.target);
+    const x = e.offsetX, y = e.offsetY;
+    const topY = 60, botY = h - 46, totalH = botY - topY, lh = totalH / 5, cx = w / 2;
+    let hit = -1;
+    for (let i = 0; i < 5; i++) {
+      const y0 = topY + i * lh, y1 = y0 + lh;
+      const bw = w * (0.95 - i * 0.105);
+      if (y >= y0 && y <= y1 && x >= cx - bw / 2 && x <= cx + bw / 2) { hit = i; break; }
+    }
+    sel = (sel === hit) ? -1 : hit;
+  }
+  return {
+    init(canvas) {
+      canvas.addEventListener('click', onClick);
+      if (!raf) { last = 0; raf = requestAnimationFrame(() => draw(canvas)); }
+    },
+    destroy(canvas) {
+      canvas.removeEventListener('click', onClick);
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+    },
+    togglePlay() { playing = !playing; return playing; },
+    reset() { sel = -1; pk = []; },
+  };
+})();
+document.getElementById('fuPlay').onclick = (e) => {
+  e.target.textContent = ARTINX_DEMOS['funnel'].togglePlay() ? '暂停' : '播放';
+};
+document.getElementById('fuReset').onclick = () => ARTINX_DEMOS['funnel'].reset();
+
+// ─────────── 演示 2：「电机不转」交互式决策树 ───────────
+ARTINX_DEMOS['tree'] = (() => {
+  let raf = null, curId = 'n0', path = ['n0'], anim = null;
+  const POS = {
+    n0: [0, .50], n1: [1, .50],
+    E1: [2, .30], n2: [2, .62],
+    n3: [3, .30], n4: [3, .62],
+    E2: [4, .18], E3: [4, .40], E4: [4, .60], n5: [4, .82],
+    E5: [5, .71], E6: [5, .91],
+  };
+  const NODES = {
+    n0: { t: '现象：1 号电机不转', q: 0, d: '从现象出发，逐层提问，用证据推进' },
+    n1: { t: '① 主控发出控制指令了吗？', q: 1, d: '证据：Keil 断点看发送函数是否被调用', e: [{ to: 'E1', a: '否' }, { to: 'n2', a: '是' }] },
+    n2: { t: '② CAN 工具抓到指令帧了吗？', q: 1, d: '证据：CAN 工具挂总线抓帧', e: [{ to: 'n3', a: '否' }, { to: 'n4', a: '是' }] },
+    n3: { t: '③ 电调指示灯亮吗？', q: 1, d: '证据：看指示灯 / 万用表量 24V', e: [{ to: 'E2', a: '否' }, { to: 'E3', a: '是' }] },
+    n4: { t: '④ 有该电调的反馈帧吗？', q: 1, d: '证据：CAN 工具看接收列表', e: [{ to: 'E4', a: '否' }, { to: 'n5', a: '是' }] },
+    n5: { t: '⑤ 反馈帧数据合理吗？', q: 1, d: '证据：转速 / 电流 / 角度是否正常', e: [{ to: 'E5', a: '否' }, { to: 'E6', a: '是' }] },
+    E1: { t: '代码没发指令：断点查发送调用链', end: 1 },
+    E2: { t: '电调供电问题：量 24V、查保险丝', end: 1 },
+    E3: { t: 'CAN 链路问题：查接线与终端电阻', end: 1 },
+    E4: { t: 'CAN 波特率配置错：改回 1 Mbps（本案例）', end: 1, star: 1 },
+    E5: { t: '相线 / 编码器线问题：交叉替换', end: 1 },
+    E6: { t: '指令数值问题：控制量=0 / 方向反', end: 1 },
+  };
+  const COLX = [0.055, 0.235, 0.415, 0.595, 0.775, 0.935];
+  function setBtn() {
+    const busy = !!anim;
+    const canAdv = NODES[curId].q === 1 || curId === 'n0';
+    const pairs = [
+      ['trYes', !busy && canAdv],
+      ['trNo', !busy && canAdv],
+      ['trBack', !busy && path.length > 1],
+      ['trReset', !busy],
+    ];
+    for (const [id, on] of pairs) {
+      const b = document.getElementById(id);
+      b.style.opacity = on ? 1 : 0.35;
+      b.style.pointerEvents = on ? 'auto' : 'none';
+    }
+  }
+  function advance(ans) {
+    if (anim) return;
+    const cur = NODES[curId];
+    if (!(cur.q === 1 || curId === 'n0')) return;
+    const eg = cur.e ? cur.e.find(x => x.a === ans) : { to: 'n1' };
+    anim = { from: curId, to: eg.to, label: eg.a || '开始', t0: performance.now(), dur: 420 };
+    setBtn();
+  }
+  function back() {
+    if (anim || path.length <= 1) return;
+    path.pop();
+    curId = path[path.length - 1];
+    setBtn();
+  }
+  function reset() { anim = null; curId = 'n0'; path = ['n0']; setBtn(); }
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    const now = performance.now();
+    ctx.clearRect(0, 0, w, h);
+    const yTop = 58, yBot = h - 16;
+    const nodeW = Math.min(150, w * 0.095), nodeH = 46;
+    const ys = {};
+    for (const id in POS) ys[id] = yTop + POS[id][1] * (yBot - yTop);
+    // 边
+    const pathEdges = new Set();
+    for (let i = 0; i < path.length - 1; i++) pathEdges.add(path[i] + '>' + path[i + 1]);
+    for (const id in NODES) {
+      const n = NODES[id];
+      if (!n.e) continue;
+      const d = POS[id][0];
+      const x0 = COLX[d] * w + nodeW / 2, y0 = ys[id];
+      for (const eg of n.e) {
+        const x1 = COLX[POS[eg.to][0]] * w - nodeW / 2, y1 = ys[eg.to];
+        const mx = (x0 + x1) / 2;
+        const onPath = pathEdges.has(id + '>' + eg.to);
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.bezierCurveTo(mx, y0, mx, y1, x1, y1);
+        ctx.strokeStyle = onPath ? GRN_D : '#E4DFF4';
+        ctx.lineWidth = onPath ? 3 : 1.6;
+        ctx.stroke();
+        ctx.font = '700 11px ' + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = eg.a === '是' ? '#2C4000' : '#B0564C';
+        ctx.fillText(eg.a, mx + 11, (y0 + y1) / 2 + (y1 >= y0 ? 11 : -11));
+      }
+    }
+    // 动画边 + 前进圆点
+    if (anim) {
+      const p = clamp((now - anim.t0) / anim.dur, 0, 1);
+      const x0 = COLX[POS[anim.from][0]] * w + nodeW / 2, y0 = ys[anim.from];
+      const x1 = COLX[POS[anim.to][0]] * w - nodeW / 2, y1 = ys[anim.to];
+      const mx = (x0 + x1) / 2;
+      const u = 1 - p;
+      const ex = u * u * u * x0 + 3 * u * u * p * mx + 3 * u * p * p * mx + p * p * p * x1;
+      const ey = u * u * u * y0 + 3 * u * u * p * y0 + 3 * u * p * p * y1 + p * p * p * y1;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.bezierCurveTo(mx, y0, mx, y1, ex, ey);
+      ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 3.5; ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(ex, ey, 6, 0, Math.PI * 2);
+      ctx.fillStyle = GRN; ctx.fill();
+      ctx.strokeStyle = GRN_D; ctx.lineWidth = 2; ctx.stroke();
+      if (p >= 1) { path.push(anim.to); curId = anim.to; anim = null; setBtn(); }
+    }
+    // 节点
+    for (const id in NODES) {
+      const n = NODES[id];
+      const x = COLX[POS[id][0]] * w, y = ys[id];
+      const isCur = id === curId, onPath = path.includes(id);
+      const pulse = isCur ? 0.5 + 0.5 * Math.sin(now / 180) : 0;
+      rr(ctx, x - nodeW / 2, y - nodeH / 2, nodeW, nodeH, 10);
+      if (n.end) ctx.fillStyle = onPath ? 'rgba(175,255,0,.50)' : 'rgba(227,219,252,.6)';
+      else if (onPath) ctx.fillStyle = '#784CF6';
+      else ctx.fillStyle = id === 'n0' ? '#FFFFFF' : 'rgba(247,244,254,.95)';
+      ctx.fill();
+      ctx.strokeStyle = isCur ? GRN : (onPath && !n.end ? '#5A2FD0' : '#C9C0E8');
+      ctx.lineWidth = isCur ? 3 + pulse : 1.4;
+      ctx.stroke();
+      ctx.font = (n.end ? '600' : '700') + ' 11px ' + FONT;
+      ctx.fillStyle = onPath && !n.end ? '#FFFFFF' : '#262034';
+      wrapText(ctx, n.t, x, y, nodeW - 12, 13);
+    }
+    // 顶部状态条
+    const cur = NODES[curId];
+    let st;
+    if (cur.q === 1) st = cur.d + '　→　点「是 / 否」作答';
+    else if (cur.q === 0) st = cur.d;
+    else if (cur.star) st = '定位成功：' + cur.t + '　→　修复后回归验证';
+    else st = '定位结论：' + cur.t;
+    const pillW = Math.min(w * 0.92, 880), pillH = 38;
+    const px = (w - pillW) / 2, py = 8;
+    rr(ctx, px, py, pillW, pillH, 19);
+    ctx.fillStyle = cur.end ? 'rgba(175,255,0,.32)' : 'rgba(227,219,252,.7)';
+    ctx.fill();
+    ctx.strokeStyle = cur.end ? GRN_D : '#C9C0E8';
+    ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.font = '700 14px ' + FONT;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = cur.end ? '#2C4000' : '#5A2FD0';
+    ctx.fillText(st, w / 2, py + pillH / 2);
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  setBtn();
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    yes: () => advance('是'),
+    no: () => advance('否'),
+    back,
+    reset,
+  };
+})();
+document.getElementById('trYes').onclick = () => ARTINX_DEMOS['tree'].yes();
+document.getElementById('trNo').onclick = () => ARTINX_DEMOS['tree'].no();
+document.getElementById('trBack').onclick = () => ARTINX_DEMOS['tree'].back();
+document.getElementById('trReset').onclick = () => ARTINX_DEMOS['tree'].reset();
+
+
+// ─────────── 演示 3：工具矩阵（点击工具看「能看什么/什么时候用/怎么上手」） ───────────
+ARTINX_DEMOS['tools'] = (() => {
+  let raf = null, sel = -1, hover = -1, geom = null;
+  const TOOLS = [
+    { n: '万用表', icon: 'meter', see: '电压 / 通断 / 电阻', when: '怀疑供电、怀疑线断了', how: '电压档并联量；通断档听蜂鸣' },
+    { n: '示波器', icon: 'scope', see: '波形 / 频率 / 幅值', when: '怀疑信号质量', how: '探头接信号，按 AUTO 抓波' },
+    { n: '逻辑分析仪', icon: 'logic', see: '多路数字时序', when: 'SPI / I2C 时序问题', how: '探头夹线，软件触发抓取' },
+    { n: 'CAN 工具', icon: 'can', see: '总线帧 ID 与数据', when: 'CAN 不通、无反馈', how: '设对波特率，看收发帧' },
+    { n: 'Keil Debug', icon: 'keil', see: '变量值 / 断点 / 调用栈', when: '代码逻辑错误', how: 'F9 断点，F5 运行，看 Watch' },
+    { n: '串口工具', icon: 'uart', see: 'printf 日志', when: '看程序走到哪一步', how: '波特率一致，打开串口' },
+    { n: 'Log 日志', icon: 'log', see: '历史数据回放', when: '偶发问题复盘', how: '定时存 CSV，带时间戳' },
+    { n: 'Python', icon: 'py', see: '数据规律 / 异常点', when: '大量数据分析', how: 'matplotlib 读 CSV 画曲线' },
+  ];
+  function layout(w, h) {
+    const gx = 18, gy = 18, gw = w * 0.60, gh = h - 36;
+    const cols = 4, rows = 2, gap = 12;
+    const cw = (gw - gx - gap * (cols - 1)) / cols;
+    const ch = (gh - gap * (rows - 1)) / rows;
+    const cards = TOOLS.map((t, i) => {
+      const col = i % cols, row = Math.floor(i / cols);
+      return { x: gx + col * (cw + gap), y: gy + row * (ch + gap), w: cw, h: ch };
+    });
+    return { cards, px: gx + gw + 12, pw: w - gx - gw - 30, py: gy, ph: gh };
+  }
+  function icon(ctx, t, x, y, s, col) {
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    if (t === 'meter') {
+      rr(ctx, x - s * .55, y - s * .5, s * 1.1, s, 3); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y - s * .1, s * .24, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + s * .5, y + s * .35); ctx.lineTo(x + s * .8, y + s * .62); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - s * .3, y + s * .35); ctx.lineTo(x - s * .6, y + s * .62); ctx.stroke();
+    } else if (t === 'scope') {
+      rr(ctx, x - s * .6, y - s * .4, s * 1.2, s * .7, 3); ctx.stroke();
+      ctx.beginPath();
+      for (let i = 0; i <= 24; i++) {
+        const px = x - s * .45 + (i / 24) * s * .9;
+        const py = y - s * .02 + Math.sin(i / 3.2) * s * .14;
+        if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+      }
+      ctx.stroke();
+      ctx.beginPath(); ctx.arc(x - s * .3, y + s * .45, s * .1, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x + s * .3, y + s * .45, s * .1, 0, Math.PI * 2); ctx.stroke();
+    } else if (t === 'logic') {
+      rr(ctx, x - s * .6, y - s * .45, s * 1.2, s * .9, 3); ctx.stroke();
+      for (let k = 0; k < 4; k++) {
+        const yy = y - s * .3 + k * s * .2;
+        ctx.beginPath();
+        for (let i = 0; i <= 16; i++) {
+          const px = x - s * .45 + (i / 16) * s * .9;
+          const py = yy - (((i + k) % 4 < 2) ? s * .07 : 0);
+          if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+        }
+        ctx.stroke();
+      }
+    } else if (t === 'can') {
+      rr(ctx, x - s * .6, y - s * .4, s * .5, s * .8, 3); ctx.fill();
+      rr(ctx, x - s * .1, y - s * .45, s * .7, s * .9, 3); ctx.stroke();
+      ctx.font = '700 ' + Math.round(s * .34) + 'px Consolas,monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('CAN', x + s * .25, y);
+    } else if (t === 'keil') {
+      ctx.beginPath(); ctx.arc(x, y - s * .05, s * .38, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + s * .28, y + s * .22); ctx.lineTo(x + s * .55, y + s * .5); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y - s * .05, s * .1, 0, Math.PI * 2); ctx.fill();
+    } else if (t === 'uart') {
+      rr(ctx, x - s * .55, y - s * .45, s * 1.1, s * .9, 3); ctx.stroke();
+      ctx.font = '700 ' + Math.round(s * .3) + 'px Consolas,monospace';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('>_', x - s * .42, y - s * .1);
+      ctx.beginPath(); ctx.moveTo(x - s * .42, y + s * .05); ctx.lineTo(x + s * .4, y + s * .05); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - s * .42, y + s * .3); ctx.lineTo(x + s * .1, y + s * .3); ctx.stroke();
+    } else if (t === 'log') {
+      rr(ctx, x - s * .5, y - s * .5, s, s, 3); ctx.stroke();
+      for (let k = 0; k < 3; k++) {
+        ctx.beginPath();
+        ctx.moveTo(x - s * .3, y - s * .2 + k * s * .16);
+        ctx.lineTo(x + s * .3, y - s * .2 + k * s * .16);
+        ctx.stroke();
+      }
+    } else if (t === 'py') {
+      ctx.beginPath();
+      ctx.moveTo(x - s * .5, y + s * .45); ctx.lineTo(x + s * .5, y + s * .45);
+      ctx.moveTo(x - s * .5, y + s * .45); ctx.lineTo(x - s * .5, y - s * .5);
+      ctx.stroke();
+      ctx.beginPath();
+      for (let i = 0; i <= 20; i++) {
+        const px = x - s * .45 + (i / 20) * s * .9;
+        const py = y + s * .35 - (i / 20) * i * s * .0035 - Math.sin(i / 2.5) * s * .08;
+        if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+      }
+      ctx.stroke();
+    }
+  }
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    ctx.clearRect(0, 0, w, h);
+    geom = layout(w, h);
+    geom.cards.forEach((card, i) => {
+      const t = TOOLS[i];
+      rr(ctx, card.x, card.y, card.w, card.h, 12);
+      ctx.fillStyle = sel === i ? 'rgba(175,255,0,.36)' : (hover === i ? '#F7F4FE' : '#FFFFFF');
+      ctx.fill();
+      ctx.strokeStyle = sel === i ? GRN_D : (hover === i ? '#784CF6' : '#E8E4F4');
+      ctx.lineWidth = sel === i ? 2.5 : 1.2;
+      ctx.stroke();
+      icon(ctx, t.icon, card.x + card.w / 2, card.y + card.h * 0.40,
+        Math.min(24, card.h * 0.36), sel === i ? GRN_D : '#784CF6');
+      ctx.font = '700 15px ' + FONT;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = sel === i ? '#2C4000' : '#262034';
+      ctx.fillText(t.n, card.x + card.w / 2, card.y + card.h * 0.78);
+    });
+    // 详情面板
+    const { px, pw, py, ph } = geom;
+    rr(ctx, px, py, pw, ph, 14);
+    ctx.fillStyle = 'rgba(247,244,254,.8)'; ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.4; ctx.stroke();
+    if (sel >= 0) {
+      const t = TOOLS[sel];
+      ctx.font = '800 22px ' + FONT;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#5A2FD0';
+      ctx.fillText(t.n, px + 24, py + 42);
+      const rows = [
+        ['能看什么', t.see, '#784CF6'],
+        ['什么时候用', t.when, GRN_D],
+        ['怎么上手', t.how, GRN_D],
+      ];
+      rows.forEach((row, i) => {
+        const ry = py + 96 + i * 86;
+        ctx.font = '700 14px ' + FONT;
+        ctx.fillStyle = row[2];
+        ctx.fillText(row[0], px + 24, ry);
+        ctx.font = '15px ' + FONT;
+        ctx.fillStyle = '#262034';
+        wrapText(ctx, row[1], px + 118, ry, pw - 142, 22, 'left');
+      });
+    } else {
+      ctx.font = '700 16px ' + FONT;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#6E6880';
+      ctx.fillText('← 点击一个工具', px + pw / 2, py + ph / 2 - 10);
+      ctx.font = '13px ' + FONT;
+      ctx.fillText('每个工具都回答三个问题', px + pw / 2, py + ph / 2 + 18);
+    }
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  function hit(x, y) {
+    if (!geom) return -1;
+    for (let i = 0; i < geom.cards.length; i++) {
+      const c2 = geom.cards[i];
+      if (x >= c2.x && x <= c2.x + c2.w && y >= c2.y && y <= c2.y + c2.h) return i;
+    }
+    return -1;
+  }
+  function onClick(e) {
+    const i = hit(e.offsetX, e.offsetY);
+    if (i >= 0) sel = (sel === i ? -1 : i);
+  }
+  function onMove(e) {
+    const i = hit(e.offsetX, e.offsetY);
+    if (i !== hover) {
+      hover = i;
+      e.target.style.cursor = i >= 0 ? 'pointer' : 'default';
+    }
+  }
+  return {
+    init(canvas) {
+      canvas.addEventListener('click', onClick);
+      canvas.addEventListener('mousemove', onMove);
+      if (!raf) raf = requestAnimationFrame(() => draw(canvas));
+    },
+    destroy(canvas) {
+      canvas.removeEventListener('click', onClick);
+      canvas.removeEventListener('mousemove', onMove);
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+    }
+  };
+})();
+
+// ─────────── 演示 4：案例时间轴（八步流程逐步推进） ───────────
+ARTINX_DEMOS['timeline'] = (() => {
+  let raf = null, step = 0, auto = false, lastAuto = 0, popT = 0;
+  const STEPS = [
+    { t: '现象', d: '1 号电机不转，其余电机正常' },
+    { t: '分层', d: '整车正常 → 锁定底盘子系统' },
+    { t: '假设', d: '指令？通信？供电？按概率排序' },
+    { t: '证据', d: '指示灯 · CAN 抓帧 · 万用表量压' },
+    { t: '缩小', d: '主控发了帧，电调没回 → 信号层' },
+    { t: '定位', d: 'CAN 波特率配置错（500k ≠ 1M）' },
+    { t: '修复', d: '改回 1 Mbps，重新编译烧录' },
+    { t: '验证', d: '电机恢复，整车回归正常' },
+  ];
+  function setStep(i) {
+    step = clamp(i, 0, STEPS.length - 1);
+    popT = performance.now();
+  }
+  function draw(c) {
+    const { w, h, ctx } = fit(c);
+    const now = performance.now();
+    ctx.clearRect(0, 0, w, h);
+    if (auto) {
+      if (step < STEPS.length - 1 && now - lastAuto > 1600) { setStep(step + 1); lastAuto = now; }
+      else if (step === STEPS.length - 1) {
+        auto = false;
+        const b = document.getElementById('tlAuto');
+        if (b) b.textContent = '自动播放';
+      }
+    }
+    const lineY = h * 0.40;
+    const x0 = 90, x1 = w - 90;
+    const r = 15;
+    // 轴线
+    ctx.beginPath(); ctx.moveTo(x0, lineY); ctx.lineTo(x1, lineY);
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 3; ctx.stroke();
+    // 进度线
+    const curX = x0 + step * (x1 - x0) / (STEPS.length - 1);
+    ctx.beginPath(); ctx.moveTo(x0, lineY); ctx.lineTo(curX, lineY);
+    ctx.strokeStyle = GRN_D; ctx.lineWidth = 5; ctx.stroke();
+    // 节点
+    STEPS.forEach((s, i) => {
+      const x = x0 + i * (x1 - x0) / (STEPS.length - 1);
+      const done = i < step, isCur = i === step;
+      const pop = isCur ? 1 + 0.3 * Math.exp(-(now - popT) / 220) : 1;
+      ctx.beginPath();
+      ctx.arc(x, lineY, (done || isCur ? r : r - 3) * pop, 0, Math.PI * 2);
+      if (done) ctx.fillStyle = GRN_D;
+      else if (isCur) ctx.fillStyle = '#784CF6';
+      else ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
+      ctx.strokeStyle = done ? GRN_D : (isCur ? '#4A2BD4' : '#D5D0E6');
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      if (done) {
+        ctx.beginPath();
+        ctx.moveTo(x - 5, lineY); ctx.lineTo(x - 1, lineY + 5); ctx.lineTo(x + 6, lineY - 5);
+        ctx.strokeStyle = GRN; ctx.lineWidth = 2.4; ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+      ctx.font = '700 15px ' + FONT;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = isCur ? '#5A2FD0' : (done ? '#2C4000' : '#6E6880');
+      ctx.fillText(s.t, x, lineY + 40);
+      ctx.font = '13px ' + FONT;
+      ctx.fillStyle = '#B9B3CC';
+      ctx.fillText('第' + (i + 1) + '步', x, lineY - 38);
+    });
+    // 说明卡片
+    const cw = Math.min(620, w * 0.66), chh = 132;
+    const cx = (w - cw) / 2, cy = h * 0.60;
+    rr(ctx, cx, cy, cw, chh, 16);
+    ctx.fillStyle = 'rgba(247,244,254,.9)'; ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.font = '800 20px ' + FONT;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#5A2FD0';
+    ctx.fillText('第 ' + (step + 1) + ' 步 · ' + STEPS[step].t + '（' + (step + 1) + '/8）', cx + cw / 2, cy + 34);
+    ctx.font = '17px ' + FONT;
+    ctx.fillStyle = '#262034';
+    ctx.fillText(STEPS[step].d, cx + cw / 2, cy + 84);
+    raf = requestAnimationFrame(() => draw(c));
+  }
+  return {
+    init(canvas) { if (!raf) raf = requestAnimationFrame(() => draw(canvas)); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    next: () => setStep(step + 1),
+    prev: () => setStep(step - 1),
+    reset() { auto = false; const b = document.getElementById('tlAuto'); if (b) b.textContent = '自动播放'; setStep(0); },
+    setAuto(v) { auto = v; lastAuto = performance.now(); },
+  };
+})();
+document.getElementById('tlPrev').onclick = () => ARTINX_DEMOS['timeline'].prev();
+document.getElementById('tlNext').onclick = () => ARTINX_DEMOS['timeline'].next();
+document.getElementById('tlAuto').onclick = (e) => {
+  const d = ARTINX_DEMOS['timeline'];
+  d.setAuto(e.target.textContent === '自动播放');
+  e.target.textContent = (e.target.textContent === '自动播放') ? '停止' : '自动播放';
+};
+document.getElementById('tlReset').onclick = () => ARTINX_DEMOS['timeline'].reset();
+</script>
+</body>
+</html>

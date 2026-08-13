@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.1 规则研读与需求分析 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  用法：复制本文件为 演示文档.html，替换 <body> 中的
+  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
+  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">2.1</div>
+      <h1 class="anim" style="animation-delay:.2s">规则研读与需求分析</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">规则决定边界，需求决定方向：先读懂规则，再动手造车</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:30%">主题</th><th>一句话内容</th></tr>
+      <tr><td><strong>四步链路</strong></td><td>规则 → 需求 → 系统设计 → 功能实现，每步的输入、输出与电控职责</td></tr>
+      <tr><td><strong>规则文件体系</strong></td><td>规则手册 / 制作规范 / 裁判系统协议各管什么；电控必读四件事</td></tr>
+      <tr><td><strong>需求拆解</strong></td><td>把规则条文翻译成可验证的电控需求，含两个完整示范</td></tr>
+      <tr><td><strong>读规则方法</strong></td><td>关键词检索、需求清单、赛季对比表</td></tr>
+      <tr><td><strong>资源使用</strong></td><td>官方资料站、RM Search、战队开源仓库、战队历史资料</td></tr>
+      <tr><td><strong>实践任务</strong></td><td>30 分钟速读规则，产出第一份需求清单（≥10 条）</td></tr>
+    </table>
+    <div class="callout danger anim" style="animation-delay:.25s;margin-top:10px">主线：需求分析错了，后面全白做；先花时间读规则最划算。</div>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：四步链路定义 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">核心概念：四步链路</h2>
+    <div class="grid grid-4" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <span class="chip">① 规则</span>
+        <h3>读官方文件</h3>
+        <p class="small">手册 + 规范 + 协议 → 约束清单</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <span class="chip">② 需求</span>
+        <h3>翻译成指标</h3>
+        <p class="small">约束 + 兵种任务 → 需求清单</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <span class="chip">③ 设计</span>
+        <h3>搭系统方案</h3>
+        <p class="small">需求清单 → 模块 / 接口 / 策略</p>
+      </div>
+      <div class="card anim" style="animation-delay:.4s">
+        <span class="chip green">④ 实现</span>
+        <h3>编码与调试</h3>
+        <p class="small">系统方案 → 可运行功能</p>
+      </div>
+    </div>
+    <div class="callout danger anim" style="animation-delay:.5s">链条有方向：需求错了，设计与代码全白做。</div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：每步输入输出表 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">每步做什么：输入 / 输出 / 电控职责</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:13%">步骤</th><th style="width:29%">输入</th><th style="width:24%">输出</th><th>电控组职责</th></tr>
+      <tr><td><strong>① 规则</strong></td><td>规则手册 / 制作规范 / 裁判系统协议</td><td>读懂的规则约束</td><td>通读手册，圈出与电控相关条款</td></tr>
+      <tr><td><strong>② 需求</strong></td><td>规则约束 + 兵种任务</td><td>可验证的需求清单</td><td>条文 → 「系统必须做到什么」</td></tr>
+      <tr><td><strong>③ 系统设计</strong></td><td>需求清单</td><td>模块划分 / 接口 / 控制策略</td><td>划分模块、定接口、画框图</td></tr>
+      <tr><td><strong>④ 功能实现</strong></td><td>系统方案</td><td>可运行、可验收的功能</td><td>编码、调试、逐条对照验收</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.25s;margin-top:10px">一句话总结：规则决定边界，需求决定方向，实现决定结果。</div>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：为什么先读规则 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">为什么先读规则</h2>
+    <div class="callout anim" style="animation-delay:.1s">类比一句：装修不看物业规定就动工，轻则返工，重则拆墙罚款。</div>
+    <table class="anim" style="animation-delay:.2s;margin-top:12px">
+      <tr><th style="width:34%">发现需求错误的阶段</th><th>修改代价</th></tr>
+      <tr><td>读规则阶段（还没动工）</td><td>改一行字，几小时</td></tr>
+      <tr><td>系统设计阶段</td><td>重画方案，几天</td></tr>
+      <tr><td>装车调试之后</td><td>重写代码，数周，还连累机械返工</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.3s;margin-top:12px">每一条规则都可能决定车能否上场、是否被判罚。</div>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：规则文件体系 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">规则文件体系：官方发布哪些文件</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:26%">文件</th><th style="width:52%">大致内容</th><th>电控关注度</th></tr>
+      <tr><td><strong>比赛规则手册</strong></td><td>总则、各兵种规则、比赛流程、判罚条款</td><td><span class="chip green">必读</span></td></tr>
+      <tr><td><strong>机器人制作规范手册</strong></td><td>机构、传感器、执行器、重量尺寸限制</td><td><span class="chip green">必读</span></td></tr>
+      <tr><td><strong>裁判系统协议等文件</strong></td><td>裁判系统模块功能、数据交互协议</td><td><span class="chip green">必读</span></td></tr>
+      <tr><td><strong>参赛手册 / 增补说明</strong></td><td>赛程、场地、签到检录要求</td><td><span class="chip gray">浏览</span></td></tr>
+    </table>
+    <p class="small muted anim" style="animation-delay:.25s;margin-top:10px">章节位置以当赛季手册目录为准；一切以官网最新版本为准。</p>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：电控必读四件事 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">电控必读四件事</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>功率与能量限制</h3>
+        <p class="small">底盘功率、发射热量、缓冲能量上限与超限判罚方式</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>裁判系统交互</h3>
+        <p class="small">与各模块的通信、回传数据、灯条与 UI 要求</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>传感器与执行器限制</h3>
+        <p class="small">允许 / 禁止的传感器、电机电调类型、射频与气压限制</p>
+      </div>
+      <div class="card anim" style="animation-delay:.4s">
+        <h3>判罚与检录</h3>
+        <p class="small">判罚条款决定保护逻辑；车检查什么决定边界</p>
+      </div>
+    </div>
+    <div class="callout tip anim" style="animation-delay:.5s">很多限制藏在判罚与检录章节，不在「电控」章节。</div>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：读规则方法一 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">读规则方法一：关键词检索</h2>
+    <ol class="anim" style="margin:6px 0 12px">
+      <li>官网下载当赛季 PDF → 先看目录，定位电控相关章节</li>
+      <li>用 PDF 搜索框检索关键词 → 通读命中段落，而非硬啃全本</li>
+    </ol>
+    <p class="anim" style="animation-delay:.15s">高频关键词：</p>
+    <p class="anim" style="animation-delay:.2s">
+      <span class="chip">功率</span> <span class="chip">裁判系统</span> <span class="chip">传感器</span>
+      <span class="chip">限制</span> <span class="chip">禁止</span> <span class="chip">判罚</span> <span class="chip">检录</span>
+    </p>
+  </section>
+  <!-- ══════════════════ 第 9 页：读规则方法二 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">读规则方法二：边读边写需求清单</h2>
+<pre class="anim" style="animation-delay:.1s"><span class="c"># 固定格式：来源 → 一句话需求 → 初判设计方向</span>
+[规则手册·功率] -&gt; 底盘功率全程不超过限制值 -&gt; 功率监控 + 缓冲 + 限幅
+[制作规范·传感器] -&gt; 按允许清单选型 -&gt; 器件选型核对表</pre>
+    <p class="anim" style="animation-delay:.25s;margin-top:10px">划线会忘，清单才是后续开发的直接输入；格式固定便于归档与评审。</p>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：读规则方法三 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">读规则方法三：赛季对比表</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:34%">对比维度</th><th>要回答的问题</th></tr>
+      <tr><td>功率 / 热量限制</td><td>数值变了吗？缓冲规则变了吗？</td></tr>
+      <tr><td>兵种功能</td><td>新增 / 删除了什么功能要求？</td></tr>
+      <tr><td>传感器限制</td><td>哪些传感器新增允许 / 被禁止？</td></tr>
+      <tr><td>裁判系统交互</td><td>新增了什么数据交互要求？</td></tr>
+    </table>
+    <p class="anim" style="animation-delay:.25s;margin-top:10px">官方文件附版本号与更新说明，以当赛季最新版本为准；变化处 = 旧方案要改处。</p>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：交互演示 1 · 四层漏斗 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">交互演示：四步链路漏斗</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="funnel"></canvas>
+      <div class="demo-controls">
+        <label>点击任意一层，查看该层的输入 / 输出 / 电控工作</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：需求拆解示范一 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">需求拆解示范一：底盘功率限制</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:26%">规则条文（示意）</th><th style="width:34%">提炼需求</th><th>电控设计方向</th></tr>
+      <tr><td>底盘限制功率 80 W（历史赛季常见值，以当赛季手册为准）</td><td>任意工况功率 ≤ 限制值；瞬时与平均都要达标</td><td>功率监控 + 缓冲策略 + 超限保护</td></tr>
+    </table>
+    <ul class="anim" style="animation-delay:.25s;margin-top:12px">
+      <li>「任意工况」= 叠加工况：全功率加速、爬坡、边射击边移动最危险</li>
+      <li>需求写成可验证形式：四轮全功率加速 3 秒，功率峰值不超过限制值</li>
+      <li>设计顺序：先监控（知道实时功率）→ 再缓冲（削平尖峰）→ 最后保护（限幅）</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：交互演示 2 · 需求拆解表 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">交互演示：底盘功率需求拆解表</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="reqtable"></canvas>
+      <div class="demo-controls">
+        <label>点击任意单元格查看推演；选「电控设计方向」可见功率曲线对比</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：需求拆解示范二 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">需求拆解示范二：射击时云台稳定</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:26%">规则条文（示意）</th><th style="width:34%">提炼需求</th><th>电控设计方向</th></tr>
+      <tr><td>射击产生后坐力，命中精度影响得分（方向示意，以当赛季手册为准）</td><td>射击瞬间云台 Pitch 不低头；连发不抖、指向稳定</td><td>Pitch 抗后坐力前馈 + 串级控制 + 摩擦轮转速闭环</td></tr>
+    </table>
+    <ul class="anim" style="animation-delay:.25s;margin-top:12px">
+      <li>后坐力是发射瞬间的扰动，纯 PID 靠误差反应会慢半拍</li>
+      <li>前馈：知道要开火，提前给一个补偿量</li>
+      <li>单环位置控制抗扰能力弱，云台常用串级（位置环 + 速度环），2.5 节详讲</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：合格需求标准 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">什么样的需求才合格</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:34%">不合格（愿望清单）</th><th>合格（可验证需求）</th></tr>
+      <tr><td>跑得飞快</td><td>写出目标速度与加速时间，可实测对比</td></tr>
+      <tr><td>云台要稳</td><td>连发射击 N 发，Pitch 角度跌落 ≤ 设定阈值，可录数据验证</td></tr>
+      <tr><td>功率别超</td><td>全功率加速 3 秒，功率峰值 ≤ 限制值，看功率曲线验收</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.25s;margin-top:10px">三要素：要什么（指标）、什么时候要（工况）、怎么验证（可测试）。</div>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：资源一 官方资料站 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">资源一：官方资料站</h2>
+    <ul class="anim" style="animation-delay:.1s">
+      <li>官网按赛季发布规范文件列表，附版本号与更新日期</li>
+      <li>规则手册 / 制作规范 / 参赛手册 / 裁判系统协议均在此下载</li>
+      <li>官方规则答疑与文件同等效力，理解分歧以答疑为准</li>
+      <li>原则：一切以官网最新版本为准，二手转载只作参考</li>
+    </ul>
+  </section>
+  <!-- ══════════════════ 第 17 页：资源二 RM Search ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">资源二：RM Search 全文搜索</h2>
+    <ul class="anim" style="animation-delay:.1s">
+      <li>RM 专属全文搜索引擎（华南理工华南虎团队开发，已开源）</li>
+      <li>搜：论坛文章 / 问答 / 专栏、官网公告与 PDF 内文本</li>
+      <li>用：查「规则怎么理解」「硬件怎么选」类问题，比通用搜索精准</li>
+      <li>入口：官方论坛搜索顶部已接入，可直接跳转</li>
+    </ul>
+    <p class="small muted anim" style="animation-delay:.25s;margin-top:10px">入口地址见「延伸资源」页。</p>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：资源三 开源仓库阅读顺序 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">资源三：开源仓库的阅读顺序</h2>
+    <ol class="anim" style="animation-delay:.1s">
+      <li>README：仓库解决什么问题、目录结构说明</li>
+      <li>文档目录（如 doc/）：设计文档、控制方案、器件清单</li>
+      <li>架构图：模块分层与数据流</li>
+      <li>带需求定位关键代码：如功率控制 → 功率控制模块</li>
+    </ol>
+    <div class="callout danger anim" style="animation-delay:.25s;margin-top:10px">反例：从第一行 main.c 开始通读 = 低效十倍的无效努力。</div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：交互演示 3 · 开源仓库流程 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">交互演示：开源仓库「怎么读」流程</h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="repoflow"></canvas>
+      <div class="demo-controls">
+        <button class="btn ghost" id="rpPrev">上一步</button>
+        <button class="btn" id="rpNext">下一步</button>
+        <button class="btn green" id="rpAuto">自动播放</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：资源四 战队历史资料 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">资源四：战队历史资料</h2>
+    <ul class="anim" style="animation-delay:.1s">
+      <li>往届车、代码、比赛复盘沉淀在战队内部（讲解时结合战队现有资料展示）</li>
+      <li>重点看三样：当年遇到的问题与解决方案</li>
+      <li>历届车的技术选型变化</li>
+      <li>赛场上吃过的亏——规则在变，教训不过时</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：常见误区 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见误区</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center;gap:12px">
+      <div class="callout danger anim" style="animation-delay:.1s">需求分析错了，后面全白做</div>
+      <div class="callout warn anim" style="animation-delay:.2s">只看二手转载，规则版本过期不自知</div>
+      <div class="callout warn anim" style="animation-delay:.3s">开源仓库一上来啃代码，迷失在细节里</div>
+      <div class="callout warn anim" style="animation-delay:.4s">读规则不记清单，读完就忘</div>
+      <div class="callout tip anim" style="animation-delay:.5s">先花时间读规则，是最划算的投资</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：课后实践任务 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">课后实践任务</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>任务一 · 需求清单</h3>
+        <p class="small">30 分钟速读当赛季手册，产出 ≥10 条需求，每条附验证方式</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>任务二 · RM Search</h3>
+        <p class="small">查一个具体问题，记 2 种解法与来源链接</p>
+      </div>
+      <div class="card anim" style="animation-delay:.3s">
+        <h3>任务三 · 仓库导读</h3>
+        <p class="small">打开深大麦轮步兵开源仓库，写三行导读（用途 / 分层 / 功率入口）</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源</h2>
+    <table class="anim" style="animation-delay:.1s">
+      <tr><th style="width:30%">资源</th><th style="width:44%">用途</th><th>链接</th></tr>
+      <tr><td>RoboMaster 官方规范文件发布页</td><td>当赛季规则手册 / 制作规范 / 协议下载</td><td><a href="https://www.robomaster.com/zh-CN/resource/pages/announcement/1768" target="_blank" rel="noopener">robomaster.com</a></td></tr>
+      <tr><td>RoboMaster 官方论坛</td><td>规则答疑、技术交流、各队开源发布</td><td><a href="https://bbs.robomaster.com/" target="_blank" rel="noopener">bbs.robomaster.com</a></td></tr>
+      <tr><td>RM Search</td><td>RM 专属全文搜索引擎</td><td><a href="https://search.scutbot.cn/" target="_blank" rel="noopener">search.scutbot.cn</a></td></tr>
+      <tr><td>深大 RobotPilots 麦轮步兵电控开源</td><td>带 README 与 doc 目录，任务三阅读对象</td><td><a href="https://github.com/lowBO/RP-Infanry-1" target="_blank" rel="noopener">github.com/lowBO/RP-Infanry-1</a></td></tr>
+      <tr><td>华南理工华南虎 GitHub</td><td>老牌强队开源组织，含工具链与模拟器</td><td><a href="https://github.com/scutrobotlab" target="_blank" rel="noopener">github.com/scutrobotlab</a></td></tr>
+      <tr><td>上海交大交龙 GitHub</td><td>机器人学工具库、技术博客</td><td><a href="https://github.com/SJTU-RoboMaster-Team" target="_blank" rel="noopener">github.com/SJTU-RoboMaster-Team</a></td></tr>
+      <tr><td>RM Search 开源仓库</td><td>了解其原理与部署方式</td><td><a href="https://github.com/scutrobotlab/rm-search" target="_blank" rel="noopener">github.com/scutrobotlab/rm-search</a></td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 24 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>四步链路：规则 → 需求 → 设计 → 实现</li>
+        <li>电控必读：功率、裁判系统、传感器、判罚</li>
+        <li>需求拆解：条文 → 指标 → 设计方向</li>
+        <li>读规则三法：检索 / 清单 / 赛季对比</li>
+        <li>资源顺序：官网 → 搜索 → 开源 → 历史</li>
+        <li>需求错了，后面全白做</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（各小节自行编写） ================= */
+/*
+  注册格式：
+  ARTINX_DEMOS['example'] = {
+    init(canvas, slide){ ...每帧动画写在这里... },
+    destroy(){ ...清除定时器/raf... }
+  };
+  提示：
+  - canvas 尺寸随窗口变化，用下方 fit(canvas) 获取 CSS 像素尺寸并处理高清屏
+  - 页面切换到其他页时会自动调用 destroy()，切回时重新 init()
+  - 不要依赖任何外部库，用原生 canvas 即可
+*/
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/* ───── 演示 1：四层漏斗（点击展开） ───── */
+ARTINX_DEMOS['funnel'] = (() => {
+  const LAYERS = [
+    { n: '规则', sub: '比赛规则手册', c: '#784CF6', tc: '#FFFFFF',
+      inn: '规则手册 / 制作规范 / 裁判系统协议',
+      out: '读懂的规则约束',
+      ee: '圈出与电控相关的全部条款' },
+    { n: '需求', sub: '翻译成需求清单', c: '#4A2BD4', tc: '#FFFFFF',
+      inn: '规则约束 + 兵种任务',
+      out: '可验证的需求清单',
+      ee: '条文 →「系统必须做到什么」' },
+    { n: '系统设计', sub: '架构与方案', c: '#AFFF00', tc: '#2C4000',
+      inn: '需求清单',
+      out: '模块划分 / 接口 / 控制策略',
+      ee: '划分模块、定接口、画框图' },
+    { n: '功能实现', sub: '编码与调试', c: '#262034', tc: '#FFFFFF',
+      inn: '设计方案',
+      out: '可运行的机器人功能',
+      ee: '编码、调试、逐条对照验收' },
+  ];
+  let sel = 0, hover = -1, canvas = null, onResize = null;
+  let hitRects = [];
+
+  function draw() {
+    if (!canvas) return;
+    const { w, h, ctx } = fit(canvas);
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2;
+    const gap = 6;
+    const top = 10, bot = h * 0.60;
+    const range = bot - top - gap * 3;
+    const weights = LAYERS.map((_, i) => (i === sel ? 1.45 : 0.85));
+    const wsum = weights.reduce((a, b) => a + b, 0);
+    const topW0 = w * 0.88, botW3 = w * 0.30;
+    let y = top;
+    LAYERS.forEach((L, i) => {
+      const hh = range * weights[i] / wsum;
+      const fTop = (y - top) / (bot - top);
+      const fBot = (y + hh - top) / (bot - top);
+      const wTop = lerp(topW0, botW3, clamp(fTop, 0, 1));
+      const wBot = lerp(topW0, botW3, clamp(fBot, 0, 1));
+      const on = (i === sel), hv = (i === hover);
+      ctx.beginPath();
+      ctx.moveTo(cx - wTop / 2, y);
+      ctx.lineTo(cx + wTop / 2, y);
+      ctx.lineTo(cx + wBot / 2, y + hh);
+      ctx.lineTo(cx - wBot / 2, y + hh);
+      ctx.closePath();
+      ctx.fillStyle = L.c;
+      ctx.globalAlpha = hv && !on ? 0.85 : 1;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      if (on) { ctx.strokeStyle = '#AFFF00'; ctx.lineWidth = 3; ctx.stroke(); }
+      const midY = y + hh / 2;
+      ctx.fillStyle = L.tc;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '800 18px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillText(L.n, cx, midY - (on ? 11 : 8));
+      ctx.font = '600 11px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.globalAlpha = on ? 0.95 : 0.75;
+      ctx.fillText(L.sub, cx, midY + (on ? 11 : 10));
+      ctx.globalAlpha = 1;
+      if (i < LAYERS.length - 1) {
+        const ay = y + hh + gap / 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 5, ay - 3);
+        ctx.lineTo(cx + 5, ay - 3);
+        ctx.lineTo(cx, ay + 3);
+        ctx.closePath();
+        ctx.fillStyle = '#83BF00';
+        ctx.fill();
+      }
+      y += hh + gap;
+    });
+
+    // 详情面板
+    const L = LAYERS[sel];
+    const py = h * 0.64, ph = h - py - 8;
+    roundRect(ctx, 20, py, w - 40, ph, 12);
+    ctx.fillStyle = '#F7F4FE'; ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.font = '800 15px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.fillStyle = '#262034';
+    ctx.fillText('第 ' + (sel + 1) + ' 层 · ' + L.n + '（' + L.sub + '）', 36, py + 18);
+    const rows = [
+      { tag: '输入', c: '#E3DBFC', tc: '#4A2BD4', txt: L.inn },
+      { tag: '输出', c: '#E3DBFC', tc: '#4A2BD4', txt: L.out },
+      { tag: '电控', c: '#784CF6', tc: '#FFFFFF', txt: L.ee },
+    ];
+    rows.forEach((r, i) => {
+      const ry = py + 44 + i * 28;
+      const tw = ctx.measureText(r.tag).width;
+      roundRect(ctx, 36, ry - 11, tw + 20, 22, 11);
+      ctx.fillStyle = r.c; ctx.fill();
+      ctx.fillStyle = r.tc;
+      ctx.font = '700 12px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillText(r.tag, 46, ry);
+      ctx.fillStyle = '#262034';
+      ctx.font = '500 13px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillText(r.txt, 46 + tw + 26, ry);
+    });
+  }
+
+  function rebuildHitRects() {
+    const { w, h } = fit(canvas);
+    const cx = w / 2;
+    const gap = 6;
+    const top = 10, bot = h * 0.60;
+    const range = bot - top - gap * 3;
+    const weights = LAYERS.map((_, i) => (i === sel ? 1.45 : 0.85));
+    const wsum = weights.reduce((a, b) => a + b, 0);
+    const topW0 = w * 0.88, botW3 = w * 0.30;
+    let y = top;
+    hitRects = LAYERS.map((_, i) => {
+      const hh = range * weights[i] / wsum;
+      const fTop = (y - top) / (bot - top);
+      const fBot = (y + hh - top) / (bot - top);
+      const wTop = lerp(topW0, botW3, clamp(fTop, 0, 1));
+      const wBot = lerp(topW0, botW3, clamp(fBot, 0, 1));
+      const r = { x0: cx - wTop / 2, y0: y, x1: cx + wTop / 2, y1: y + hh, xb0: cx - wBot / 2, xb1: cx + wBot / 2 };
+      y += hh + gap;
+      return r;
+    });
+  }
+
+  function hit(x, y) {
+    for (let i = LAYERS.length - 1; i >= 0; i--) {
+      const r = hitRects[i];
+      if (!r) continue;
+      if (y < r.y0 || y > r.y1) continue;
+      const t = (y - r.y0) / (r.y1 - r.y0);
+      const half = lerp((r.x1 - r.x0) / 2, (r.xb1 - r.xb0) / 2, t);
+      const xc = lerp((r.x0 + r.x1) / 2, (r.xb0 + r.xb1) / 2, t);
+      if (Math.abs(x - xc) <= half) return i;
+    }
+    return -1;
+  }
+
+  function onClick(e) {
+    const r = canvas.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    rebuildHitRects();
+    const i = hit(x, y);
+    if (i >= 0) { sel = i; draw(); }
+  }
+  function onMove(e) {
+    const r = canvas.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    rebuildHitRects();
+    const i = hit(x, y);
+    if (i !== hover) { hover = i; canvas.style.cursor = i >= 0 ? 'pointer' : 'default'; draw(); }
+  }
+
+  return {
+    init(c) {
+      canvas = c;
+      canvas.addEventListener('click', onClick);
+      canvas.addEventListener('mousemove', onMove);
+      onResize = () => draw();
+      window.addEventListener('resize', onResize);
+      draw();
+    },
+    destroy() {
+      if (canvas) {
+        canvas.removeEventListener('click', onClick);
+        canvas.removeEventListener('mousemove', onMove);
+        canvas.style.cursor = 'default';
+      }
+      if (onResize) window.removeEventListener('resize', onResize);
+      canvas = null; onResize = null; hover = -1;
+    }
+  };
+})();
+
+/* ───── 演示 2：需求拆解交互表（点击单元格看推演） ───── */
+ARTINX_DEMOS['reqtable'] = (() => {
+  const COLS = [
+    { t: '规则条文', d: '底盘限制功率 80 W（历史赛季常见值，以当赛季手册为准）',
+      lines: ['① 裁判系统实时监测底盘功率', '② 超限可能被判罚（以当赛季手册为准）', '③ 数值每年可能调整，务必查当赛季手册'] },
+    { t: '提炼需求', d: '任意工况功率 ≤ 限制值',
+      lines: ['① 瞬时功率与平均功率都要达标', '② 加速 / 爬坡 / 射击叠加工况最危险', '③ 写成可验证指标：全功率加速不超限'] },
+    { t: '电控设计方向', d: '功率监控 + 缓冲策略 + 超限保护',
+      lines: ['① 监控：实时读取功率数据并记录', '② 缓冲：超级电容 / 限加速斜率 / 错峰用电', '③ 保护：输出限幅，宁慢勿超', '→ 右图：缓冲把功率尖峰削到限制线以下'] },
+  ];
+  let sel = 0, hover = -1, canvas = null, raf = null;
+  let cellRects = [];
+
+  function layout(w, h) {
+    const mx = 14, my = 8;
+    const tableW = w - mx * 2;
+    const headH = 26, rowH = 48;
+    const colW = tableW / 3;
+    cellRects = [];
+    for (let i = 0; i < 3; i++) {
+      cellRects.push({ x: mx + colW * i, y: my + headH, w: colW - 5, h: rowH });
+    }
+    return { mx, my, headH, rowH, colW, detailTop: my + headH + rowH + 14 };
+  }
+
+  function draw() {
+    if (!canvas) return;
+    const { w, h, ctx } = fit(canvas);
+    ctx.clearRect(0, 0, w, h);
+    const { mx, my, headH, rowH, colW, detailTop } = layout(w, h);
+
+    COLS.forEach((c, i) => {
+      const x = mx + colW * i;
+      roundRect(ctx, x, my, colW - 5, headH, 8);
+      ctx.fillStyle = '#E3DBFC'; ctx.fill();
+      ctx.fillStyle = '#4A2BD4';
+      ctx.font = '700 12.5px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(c.t, x + (colW - 5) / 2, my + headH / 2);
+    });
+
+    COLS.forEach((c, i) => {
+      const r = cellRects[i];
+      const on = (i === sel), hv = (i === hover);
+      roundRect(ctx, r.x, r.y, r.w, r.h, 8);
+      ctx.fillStyle = on ? 'rgba(175,255,0,.45)' : (hv ? '#F7F4FE' : '#FFFFFF');
+      ctx.fill();
+      ctx.strokeStyle = on ? '#83BF00' : (hv ? '#784CF6' : '#E8E4F4');
+      ctx.lineWidth = on ? 2.5 : 1.5;
+      ctx.stroke();
+      ctx.fillStyle = '#262034';
+      ctx.font = '700 13px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      wrapText(ctx, c.d, r.x + r.w / 2, r.y + r.h / 2, r.w - 16, 16, r.h, 3);
+      if (on) {
+        ctx.beginPath();
+        ctx.moveTo(r.x + r.w / 2 - 6, r.y + r.h + 2);
+        ctx.lineTo(r.x + r.w / 2 + 6, r.y + r.h + 2);
+        ctx.lineTo(r.x + r.w / 2, r.y + r.h + 8);
+        ctx.closePath();
+        ctx.fillStyle = '#83BF00'; ctx.fill();
+      }
+    });
+
+    const c = COLS[sel];
+    const dh = h - detailTop - 6;
+    roundRect(ctx, mx, detailTop, w - mx * 2, dh, 12);
+    ctx.fillStyle = '#F7F4FE'; ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#4A2BD4';
+    ctx.font = '800 15px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.fillText('点击列：' + c.t, mx + 18, detailTop + 18);
+
+    if (sel === 2) {
+      const txtW = w * 0.50;
+      ctx.fillStyle = '#262034';
+      ctx.font = '500 12.5px "Segoe UI","Microsoft YaHei",sans-serif';
+      c.lines.forEach((ln, i) => ctx.fillText(ln, mx + 18, detailTop + 44 + i * 22));
+      drawChart(mx + txtW + 8, detailTop + 12, w - mx * 2 - txtW - 26, dh - 24);
+    } else {
+      ctx.fillStyle = '#262034';
+      ctx.font = '500 12.5px "Segoe UI","Microsoft YaHei",sans-serif';
+      c.lines.forEach((ln, i) => ctx.fillText(ln, mx + 18, detailTop + 44 + i * 22));
+    }
+    raf = requestAnimationFrame(draw);
+  }
+
+  function wrapText(ctx, text, cx, cy, maxW, lineH, boxH, maxLines) {
+    const chars = [...text];
+    let line = '', lines = [];
+    for (const ch of chars) {
+      if (ctx.measureText(line + ch).width > maxW) { lines.push(line); line = ch; }
+      else line += ch;
+    }
+    if (line) lines.push(line);
+    if (lines.length > maxLines) { lines = lines.slice(0, maxLines - 1); lines[maxLines - 1] = lines[maxLines - 1].slice(0, -1) + '…'; }
+    const totalH = lines.length * lineH;
+    let yy = cy - totalH / 2 + lineH / 2;
+    lines.forEach(ln => { ctx.fillText(ln, cx, yy); yy += lineH; });
+  }
+
+  function drawChart(cx0, cy0, cw, chh) {
+    const { ctx } = fit(canvas);
+    roundRect(ctx, cx0, cy0, cw, chh, 10);
+    ctx.fillStyle = '#FFFFFF'; ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1; ctx.stroke();
+    const limitY = cy0 + chh * 0.30;
+    ctx.strokeStyle = '#784CF6'; ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(cx0 + 10, limitY); ctx.lineTo(cx0 + cw - 10, limitY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#784CF6';
+    ctx.font = '700 10.5px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText('限制线 80W', cx0 + 12, limitY - 3);
+    const baseY = cy0 + chh - 14;
+    ctx.strokeStyle = '#D5D0E6'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx0 + 10, baseY); ctx.lineTo(cx0 + cw - 10, baseY); ctx.stroke();
+    const t = (performance.now() / 2600) % 1;
+    const px = (tt) => cx0 + 10 + tt * (cw - 20);
+    const P = (tt, peak, sigma) => 8 + peak * Math.exp(-(((tt - t) / sigma) ** 2));
+    const toY = (p) => baseY - (p / 120) * (baseY - cy0 - 16);
+    ctx.strokeStyle = '#4A2BD4'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= 60; i++) {
+      const tt = i / 60;
+      const y = toY(P(tt, 104, 0.10));
+      i === 0 ? ctx.moveTo(px(tt), y) : ctx.lineTo(px(tt), y);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= 60; i++) {
+      const tt = i / 60;
+      const y = toY(P(tt, 64, 0.24));
+      i === 0 ? ctx.moveTo(px(tt), y) : ctx.lineTo(px(tt), y);
+    }
+    ctx.stroke();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.font = '600 10.5px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.fillStyle = '#4A2BD4'; ctx.fillText('— 无缓冲（超限）', cx0 + 12, cy0 + 12);
+    ctx.fillStyle = '#83BF00'; ctx.fillText('— 有缓冲（安全）', cx0 + 12, cy0 + 26);
+  }
+
+  function hit(x, y) {
+    for (let i = 0; i < cellRects.length; i++) {
+      const r = cellRects[i];
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return i;
+    }
+    return -1;
+  }
+  function onClick(e) {
+    const r = canvas.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    layout(r.width, r.height);
+    const i = hit(x, y);
+    if (i >= 0) sel = i;
+  }
+  function onMove(e) {
+    const r = canvas.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    layout(r.width, r.height);
+    const i = hit(x, y);
+    if (i !== hover) { hover = i; canvas.style.cursor = i >= 0 ? 'pointer' : 'default'; }
+  }
+
+  return {
+    init(c) {
+      canvas = c;
+      canvas.addEventListener('click', onClick);
+      canvas.addEventListener('mousemove', onMove);
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() {
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      if (canvas) {
+        canvas.removeEventListener('click', onClick);
+        canvas.removeEventListener('mousemove', onMove);
+        canvas.style.cursor = 'default';
+      }
+      canvas = null; hover = -1;
+    }
+  };
+})();
+
+/* ───── 演示 3：开源仓库「怎么读」流程动画 ───── */
+(() => {
+  const STEPS = [
+    { n: 'README', tip: '看用途：这是什么车、怎么用', icon: 'doc' },
+    { n: '文档目录', tip: '看方案：设计文档与器件清单', icon: 'folder' },
+    { n: '架构图', tip: '看结构：模块分层与数据流', icon: 'arch' },
+    { n: '关键代码', tip: '带需求找文件，如功率控制模块', icon: 'code' },
+  ];
+  let step = 0, auto = false, prog = 0, canvas = null, raf = null, last = 0;
+
+  function nodePos(w, h, i) {
+    return { x: w * (0.16 + 0.68 * i / (STEPS.length - 1)), y: h * 0.26 };
+  }
+
+  function drawIcon(ctx, icon, x, y, s, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.strokeStyle = color; ctx.fillStyle = color;
+    ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (icon === 'doc') {
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.45, -s * 0.6);
+      ctx.lineTo(s * 0.1, -s * 0.6);
+      ctx.lineTo(s * 0.45, -s * 0.25);
+      ctx.lineTo(s * 0.45, s * 0.6);
+      ctx.lineTo(-s * 0.45, s * 0.6);
+      ctx.closePath();
+      ctx.stroke();
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.22, -s * 0.32 + i * s * 0.24);
+        ctx.lineTo(s * 0.2, -s * 0.32 + i * s * 0.24);
+        ctx.stroke();
+      }
+    } else if (icon === 'folder') {
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.5, -s * 0.3);
+      ctx.lineTo(-s * 0.12, -s * 0.3);
+      ctx.lineTo(s * 0.02, -s * 0.5);
+      ctx.lineTo(s * 0.5, -s * 0.5);
+      ctx.lineTo(s * 0.5, s * 0.5);
+      ctx.lineTo(-s * 0.5, s * 0.5);
+      ctx.closePath();
+      ctx.stroke();
+    } else if (icon === 'arch') {
+      const bx = [-s * 0.42, s * 0.02, s * 0.46];
+      const by = [-s * 0.45, s * 0.5, -s * 0.45];
+      const bw = s * 0.28, bh = s * 0.3;
+      bx.forEach((bx0, i) => { ctx.strokeRect(bx0 - bw / 2, by[i] - bh / 2, bw, bh); });
+      ctx.beginPath();
+      ctx.moveTo(bx[0] + bw / 2, by[0]);
+      ctx.lineTo(bx[1] - bw / 2, by[1] - bh / 2);
+      ctx.moveTo(bx[0] + bw / 2, by[0]);
+      ctx.lineTo(bx[1] - bw / 2, by[1] + bh / 2);
+      ctx.moveTo(bx[1] + bw / 2, by[1]);
+      ctx.lineTo(bx[2] - bw / 2, by[2]);
+      ctx.stroke();
+    } else if (icon === 'code') {
+      ctx.font = '700 ' + (s * 1.05) + 'px Consolas,Menlo,monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('</>', 0, 2);
+    }
+    ctx.restore();
+  }
+
+  function draw() {
+    if (!canvas) return;
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    const dt = last ? (now - last) : 16;
+    last = now;
+    if (auto) {
+      prog += dt / 2000;
+      if (prog >= 1) { prog = 0; step = (step + 1) % STEPS.length; }
+    }
+    ctx.clearRect(0, 0, w, h);
+    const cy = h * 0.26, iconS = 26;
+
+    STEPS.forEach((_, i) => {
+      if (i === STEPS.length - 1) return;
+      const p0 = nodePos(w, h, i), p1 = nodePos(w, h, i + 1);
+      const done = i < step || (auto && i === step && prog > 0);
+      ctx.strokeStyle = done ? '#83BF00' : '#E8E4F4';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(p0.x + 46, p0.y);
+      ctx.lineTo(p1.x - 46, p1.y);
+      ctx.stroke();
+    });
+
+    STEPS.forEach((s, i) => {
+      const p = nodePos(w, h, i);
+      const state = i < step ? 'done' : (i === step ? 'act' : 'next');
+      roundRect(ctx, p.x - 42, p.y - 42, 84, 84, 16);
+      ctx.fillStyle = state === 'act' ? '#784CF6' : (state === 'done' ? '#F7FDEB' : '#F7F4FE');
+      ctx.fill();
+      ctx.strokeStyle = state === 'act' ? '#4A2BD4' : (state === 'done' ? '#83BF00' : '#E8E4F4');
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      const ic = state === 'act' ? '#FFFFFF' : (state === 'done' ? '#83BF00' : '#A39BB8');
+      drawIcon(ctx, s.icon, p.x, p.y - 4, iconS, ic);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.font = '700 12.5px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillStyle = state === 'act' ? '#FFFFFF' : (state === 'done' ? '#83BF00' : '#6E6880');
+      ctx.fillText(s.n, p.x, p.y + 40);
+      if (state === 'done') {
+        ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(p.x + 24, p.y - 26);
+        ctx.lineTo(p.x + 28, p.y - 22);
+        ctx.lineTo(p.x + 36, p.y - 34);
+        ctx.stroke();
+      }
+    });
+
+    let dx, dy;
+    if (step === STEPS.length - 1) {
+      const p = nodePos(w, h, step);
+      dx = p.x; dy = p.y;
+    } else {
+      const p0 = nodePos(w, h, step), p1 = nodePos(w, h, step + 1);
+      dx = lerp(p0.x, p1.x, auto ? clamp(prog, 0, 1) : 0);
+      dy = lerp(p0.y, p1.y, auto ? clamp(prog, 0, 1) : 0);
+    }
+    ctx.beginPath(); ctx.arc(dx, dy, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#AFFF00'; ctx.fill();
+    ctx.strokeStyle = '#83BF00'; ctx.lineWidth = 2.5; ctx.stroke();
+
+    const ty = h * 0.62, th = h * 0.30;
+    roundRect(ctx, 36, ty, w - 72, th, 14);
+    ctx.fillStyle = '#F7F4FE'; ctx.fill();
+    ctx.strokeStyle = '#E8E4F4'; ctx.lineWidth = 1.5; ctx.stroke();
+    const s = STEPS[step];
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#4A2BD4';
+    ctx.font = '800 13px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.fillText('STEP ' + (step + 1) + ' / 4 · ' + s.n, 58, ty + th * 0.30);
+    ctx.fillStyle = '#262034';
+    ctx.font = '600 16px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.fillText(s.tip, 58, ty + th * 0.62);
+    ctx.fillStyle = '#6E6880';
+    ctx.font = '500 12px "Segoe UI","Microsoft YaHei",sans-serif';
+    ctx.fillText('顺序不能跳：先建「模块地图」，再带着需求深入代码', 58, ty + th * 0.88);
+    raf = requestAnimationFrame(draw);
+  }
+
+  const api = {
+    init(c) {
+      canvas = c;
+      last = 0;
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() {
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      canvas = null;
+    },
+    prev() { auto = false; prog = 0; step = (step + STEPS.length - 1) % STEPS.length; },
+    next() { auto = false; prog = 0; step = (step + 1) % STEPS.length; },
+    toggleAuto() { auto = !auto; if (auto) { prog = 0; last = 0; } return auto; },
+  };
+  ARTINX_DEMOS['repoflow'] = api;
+  document.getElementById('rpPrev').onclick = () => api.prev();
+  document.getElementById('rpNext').onclick = () => api.next();
+  document.getElementById('rpAuto').onclick = () => {
+    document.getElementById('rpAuto').textContent = api.toggleAuto() ? '停止' : '自动播放';
+  };
+})();
+</script>
+</body>
+</html>

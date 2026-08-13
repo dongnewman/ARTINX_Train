@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2.2 裁判系统与整车设备 · ARTINX 电控培训</title>
+<!--
+  ============================================================
+  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
+  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
+  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
+  队徽路径 ../../assets/ 适用于「入队后培训/2.x 小节/演示文档.html」
+  两层目录结构，请勿改动。
+  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
+  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
+  ============================================================
+-->
+<style>
+/* ============ 品牌变量 ============ */
+:root{
+  --purple:#784CF6;          /* 品牌紫 */
+  --purple-deep:#5A2FD0;
+  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
+  --green:#AFFF00;           /* PPT 模板荧光绿 */
+  --green-ink:#3C6400;       /* 白底上的绿色文字 */
+  --ink:#262034;             /* 主文字 */
+  --muted:#5A5468;           /* 次要文字 */
+  --lavender:#E3DBFC;        /* 浅紫 */
+  --line:#E8E4F4;            /* 分隔线 */
+  --panel:#F7F4FE;           /* 浅紫面板 */
+  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
+  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
+}
+/* ============ 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
+  background:#E9E7F0;color:var(--ink);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ============ 舞台 ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
+#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
+  background:#fff}
+.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
+  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.prev{transform:translateX(-40px)}
+.slide.next{transform:translateX(40px)}
+/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
+.slide[data-theme="purple"]{background:#0A0812;color:#fff}
+.slide[data-theme="purple"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
+    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
+    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
+    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
+}
+/* 内容页右上角小徽章（框架自动注入） */
+.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
+/* ============ 入场动画 ============ */
+.anim{opacity:0;transform:translateY(12px)}
+.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+/* ============ 排版（小字号，保证内容放得下） ============ */
+.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
+.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
+.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
+.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
+.slide p{font-size:14.5px;line-height:1.62}
+.slide li{font-size:14.5px;line-height:1.58}
+.slide ul,.slide ol{padding-left:1.35em}
+.slide em{color:var(--purple);font-style:normal;font-weight:700}
+.slide strong{color:var(--purple)}
+.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
+.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
+.slide a:hover{border-color:var(--purple)}
+.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.green{color:var(--green-ink)}
+/* ============ 组件 ============ */
+.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:var(--lavender);color:var(--purple-deep)}
+.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
+.chip.gray{background:#EFEDF6;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card.white{background:#fff}
+.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.cols{display:flex;gap:20px;flex:1;min-height:0}
+.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
+.callout.tip{border-color:#BFE98A;background:#F7FDEB}
+.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
+.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
+.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
+  background:#fff;font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--lavender);color:var(--purple-deep)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+tr:nth-child(even) td{background:#FBFAFE}
+pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
+  font-size:13px;line-height:1.55;overflow:auto}
+pre .c{color:#8F87AB}           /* 注释 */
+pre .k{color:#AFFF00}           /* 关键字 */
+pre .n{color:#F2EFFF}           /* 普通 */
+pre .s{color:#FFD166}           /* 字符串 */
+pre .f{color:#9FC6FF}           /* 函数 */
+.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column}
+.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
+.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
+  border-top:1px solid var(--line);background:#fff}
+.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--purple);width:110px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
+  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
+.btn.green{background:var(--grad-green);color:#274500}
+.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
+/* ============ 封面（暗色，参照 PPT 模板） ============ */
+.cover-logo{position:absolute;top:28px;left:44px;height:42px}
+.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
+.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
+  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
+  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
+.cover-center h1{font-size:52px;line-height:1.16}
+.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
+.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
+.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
+  display:flex;align-items:center;gap:10px}
+.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
+/* ============ 章节页 ============ */
+.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
+  position:absolute;top:24px;right:46px}
+/* ============ 结束页 ============ */
+.end-logo{height:64px;position:absolute;top:34px;left:44px}
+/* ============ 进度与导航 ============ */
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
+#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
+#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
+#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
+#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
+#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
+#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
+  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
+  display:flex;align-items:center;gap:7px}
+#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
+#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
+  display:none;align-items:center;justify-content:center}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
+#help .box h2{font-size:19px;margin-bottom:12px}
+#help .box p{font-size:13.5px;line-height:2.3}
+#help kbd{font-family:var(--mono)}
+.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
+.edge.left{left:0}.edge.right{right:0}
+/* ============ 打印 ============ */
+@media print{
+  body{overflow:visible;background:#fff}
+  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
+  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
+}
+/* ============ 本小节补充样式 ============ */
+.topo-pop{position:absolute;top:12px;right:12px;width:290px;max-width:44%;background:#fff;
+  border:1px solid var(--line);border-left:4px solid var(--purple);border-radius:10px;
+  padding:10px 14px;box-shadow:0 6px 20px rgba(38,32,52,.15);font-size:13px;line-height:1.65;
+  display:none;z-index:6}
+.topo-pop.on{display:block}
+.topo-pop h4{font-size:15px;color:var(--purple);margin-bottom:2px}
+.topo-pop .dim{color:var(--muted);font-size:11.5px}
+.topo-pop b{color:var(--purple-deep)}
+.res-link{display:block;font-size:14px;line-height:1.95}
+.res-link small{color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+
+<div id="progress"><div id="progressBar"></div></div>
+<div id="dots"></div>
+<div id="ctrl">
+  <button id="btnPrev" title="上一页 (←)">←</button>
+  <button id="btnNext" title="下一页 (→)">→</button>
+  <button id="btnFull" title="全屏 (F)">⤢</button>
+  <button id="btnHelp" title="帮助 (?)">?</button>
+</div>
+<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+
+<div id="help"><div class="box">
+  <h2>快捷键</h2>
+  <p>
+    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
+    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
+    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
+    点击画面左右边缘 / 滑动手势也可以翻页<br>
+    带滑块的画面是实时交互演示，可放心拖动。
+  </p>
+</div></div>
+
+<main id="stage">
+<div id="deck">
+
+  <!-- ══════════════════ 第 1 页：封面（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center">
+      <div class="sec anim" style="animation-delay:.1s">2.2　入队后培训</div>
+      <h1 class="anim" style="animation-delay:.2s">裁判系统与整车设备</h1>
+      <div class="cover-divider anim" style="animation-delay:.3s"></div>
+      <div class="sub anim" style="animation-delay:.4s">认识全车官方设备，看懂信息流与能量流</div>
+    </div>
+    <div class="cover-sign anim" style="animation-delay:.5s">电控组长 董心宇</div>
+  </section>
+
+  <!-- ══════════════════ 第 2 页：本节地图 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">本节地图：学完你能做什么</h2>
+    <ul class="anim" style="animation-delay:.08s;flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px">
+      <li>认出 12 类整车设备，说出各自的「四行名片」</li>
+      <li>默画信息流图：谁给谁发什么数据</li>
+      <li>默画能量流图：常电与动力电分工</li>
+      <li>分清主控与裁判系统的角色</li>
+      <li>解释掉电保护，写出保护骨架</li>
+    </ul>
+    <p class="small muted anim" style="animation-delay:.2s">三张地图（设备 + 信息 + 能量）叠加 = 整车世界观</p>
+  </section>
+
+  <!-- ══════════════════ 第 3 页：三个视角 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">三个视角看整车</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>信息流</h3>
+        <p>遥控 → 主控；主控 ↔ 裁判系统；主控 → 灯条；图传 → 服务器</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>能量流</h3>
+        <p>电池 → 电源管理 → 常电 + 动力电；超电并接做缓冲</p>
+      </div>
+      <div class="card green anim" style="animation-delay:.3s">
+        <h3>控制关系</h3>
+        <p>主控汇聚所有指令；裁判系统只记不执行</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 4 页：设备总览 A ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">设备总览（上）：大脑与电源</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:16%">设备</th><th style="width:15%">属于谁</th><th>一句话作用</th><th style="width:16%">大致位置</th></tr>
+      <tr><td>主控板</td><td>我们</td><td>跑电控代码的「大脑」</td><td>底盘舱内</td></tr>
+      <tr><td>裁判系统主控</td><td>官方裁判</td><td>裁判数据汇集与无线回传</td><td>底盘舱内</td></tr>
+      <tr><td>电源管理模块</td><td>官方裁判</td><td>分电、测功率、断动力电</td><td>电池后第一站</td></tr>
+      <tr><td>电池</td><td>官方指定</td><td>全车唯一能量来源</td><td>电池架</td></tr>
+      <tr><td>超级电容模组</td><td>自购 + 官方监测</td><td>动力电的功率缓冲</td><td>底盘舱内</td></tr>
+      <tr><td>DR16 接收机</td><td>官方通用</td><td>接收 DT7 遥控器数据</td><td>车身上</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">型号与参数随赛季更新，一律以当赛季官方手册为准</p>
+  </section>
+
+  <!-- ══════════════════ 第 5 页：设备总览 B ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">设备总览（下）：感知与显示</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:16%">设备</th><th style="width:15%">属于谁</th><th>一句话作用</th><th style="width:16%">大致位置</th></tr>
+      <tr><td>装甲模块</td><td>官方裁判</td><td>检测被弹丸击中</td><td>云台/底盘四周</td></tr>
+      <tr><td>测速模块</td><td>官方裁判</td><td>测弹丸初速与射速</td><td>枪管两侧</td></tr>
+      <tr><td>灯条</td><td>官方裁判</td><td>显示血量与状态</td><td>车顶四周</td></tr>
+      <tr><td>图传（发送端）</td><td>官方裁判</td><td>传回第一视角画面</td><td>云台上</td></tr>
+      <tr><td>RFID 场地交互</td><td>官方裁判</td><td>补弹、增益等场地交互</td><td>车底</td></tr>
+      <tr><td>UWB 定位</td><td>官方裁判</td><td>测量机器人在场地中的位置</td><td>车顶</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">各队布局不同，表中位置为「大致」示意</p>
+  </section>
+
+  <!-- ══════════════════ 第 6 页：名片 1 主控板 + 裁判系统主控 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">设备名片（一）：两套「大脑」</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:15%"></th><th style="width:42%">主控板</th><th>裁判系统主控（MC02）</th></tr>
+      <tr><td>是什么</td><td>跑我们代码的板子，行为决策中心</td><td>官方「随车裁判」核心，汇集裁判数据</td></tr>
+      <tr><td>装在哪</td><td>底盘舱内</td><td>底盘舱内，安装要求以官方手册为准</td></tr>
+      <tr><td>和电控怎么交互</td><td>收遥控（DBUS）、串口连裁判主控、CAN 控电机、驱动灯条</td><td>串口与主控对话，无线回传服务器</td></tr>
+      <tr><td>出问题会怎样</td><td>整车失控或停摆，被判离线</td><td>裁判判离线，触发掉电保护</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">类比：一个是「司机」，一个是「随车监考老师的对讲机」</p>
+  </section>
+
+  <!-- ══════════════════ 第 7 页：名片 2 电源管理 + 电池 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">设备名片（二）：供电路上的两个盒子</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:15%"></th><th style="width:42%">电源管理模块（PM02）</th><th>电池（官方智能电池）</th></tr>
+      <tr><td>是什么</td><td>官方「电闸 + 电表」</td><td>全车唯一能量来源</td></tr>
+      <tr><td>装在哪</td><td>电池之后的第一站</td><td>电池架</td></tr>
+      <tr><td>和电控怎么交互</td><td>分常电/动力电，测功率，可断动力电</td><td>流向电源管理，再分给全车</td></tr>
+      <tr><td>出问题会怎样</td><td>电机突然断电，或全车重启</td><td>全车瘫痪；鼓包必须立即停用</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">类比：家里的配电箱——总闸接市电，下面分照明回路与空调回路</p>
+  </section>
+
+  <!-- ══════════════════ 第 8 页：名片 3 装甲 + 测速 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">设备名片（三）：挨打与射速</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:15%"></th><th style="width:42%">装甲模块</th><th>测速模块</th></tr>
+      <tr><td>是什么</td><td>官方「痛觉神经」，检测弹丸击中</td><td>官方「测速枪」，测初速与射速</td></tr>
+      <tr><td>装在哪</td><td>云台/底盘四周的装甲板背面</td><td>枪管两侧，弹丸路径两旁</td></tr>
+      <tr><td>和电控怎么交互</td><td>上报裁判系统，扣血由服务器计算</td><td>测量数据经裁判系统上报</td></tr>
+      <tr><td>出问题会怎样</td><td>误触发掉血，或漏触发不掉血</td><td>射速读 0，热量计算异常</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">两者与主控均无直接连线，数据先到裁判系统主控</p>
+  </section>
+
+  <!-- PART2 -->
+  <!-- ══════════════════ 第 9 页：名片 4 灯条 + 图传 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">设备名片（四）：显示与画面</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:15%"></th><th style="width:42%">灯条（LI01）</th><th>图传（发送端）</th></tr>
+      <tr><td>是什么</td><td>官方「血条显示器」，显示血量与状态</td><td>第一视角摄像头（FPV），发回画面</td></tr>
+      <tr><td>装在哪</td><td>车顶四周</td><td>云台上</td></tr>
+      <tr><td>和电控怎么交互</td><td>由我们的主控直接控制显示效果</td><td>画面无线直传服务器，不经主控</td></tr>
+      <tr><td>出问题会怎样</td><td>操作手看不到血量状态</td><td>操作手「失明」，先查供电与天线</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">控制方式与安装要求以官方手册为准</p>
+  </section>
+
+  <!-- ══════════════════ 第 10 页：名片 5 RFID + UWB ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">设备名片（五）：场地交互与定位</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:15%"></th><th style="width:42%">RFID 场地交互（FI02）</th><th>UWB 定位（UW01）</th></tr>
+      <tr><td>是什么</td><td>与场地道具交互的「读卡器」</td><td>车载定位，超宽带无线测距</td></tr>
+      <tr><td>装在哪</td><td>车底，靠近地面</td><td>车顶，位置要求以官方手册为准</td></tr>
+      <tr><td>和电控怎么交互</td><td>补弹/增益经裁判系统上报</td><td>位置经裁判系统上报服务器</td></tr>
+      <tr><td>出问题会怎样</td><td>补不了弹，增益不生效</td><td>小地图位置漂移或消失</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">两者与主控均无直接连线</p>
+  </section>
+
+  <!-- ══════════════════ 第 11 页：名片 6 超电 + DR16 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">设备名片（六）：缓冲与遥控</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:15%"></th><th style="width:42%">超级电容模组 + CM01</th><th>DT7 遥控器 + DR16 接收机</th></tr>
+      <tr><td>是什么</td><td>功率「缓冲罐」；CM01 为官方监测模块</td><td>操作手的手柄 + 车上的接收机</td></tr>
+      <tr><td>装在哪</td><td>并接在动力电回路上</td><td>手上 / 车身上</td></tr>
+      <tr><td>和电控怎么交互</td><td>超限时垫功率，状态上报裁判</td><td>DR16 经 DBUS 把遥控数据给主控</td></tr>
+      <tr><td>出问题会怎样</td><td>缓冲耗尽，超功率被断电处罚</td><td>车收不到指令，先查对频</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">类比：超电是「信用卡」——先刷缓冲额度，刷爆就断卡</p>
+  </section>
+
+  <!-- ══════════════════ 第 12 页：信息流链路表 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">信息流：谁给谁发什么</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:30%">链路</th><th style="width:34%">传什么</th><th>走什么路</th></tr>
+      <tr><td>DR16 → 主控</td><td>遥控数据</td><td>DBUS 有线</td></tr>
+      <tr><td>主控 ↔ 裁判系统主控</td><td>协议数据（双向）</td><td>串口</td></tr>
+      <tr><td>装甲 / 测速 → 裁判主控</td><td>打击、射速</td><td>模块连线</td></tr>
+      <tr><td>RFID / UWB → 裁判主控</td><td>场地交互、位置</td><td>模块连线</td></tr>
+      <tr><td>主控 → 灯条</td><td>显示控制</td><td>主控直连</td></tr>
+      <tr><td>主控 → 电调 → 电机</td><td>控制指令</td><td>CAN</td></tr>
+      <tr><td>裁判主控 → 服务器</td><td>全部裁判数据</td><td>无线</td></tr>
+      <tr><td>图传 → 服务器 / 客户端</td><td>视频画面</td><td>无线</td></tr>
+    </table>
+    <p class="small muted" style="margin-top:8px">协议字段与频率一律以当赛季官方《裁判系统串口协议附录》为准</p>
+  </section>
+
+  <!-- ══════════════════ 第 13 页：读图练习 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">读图练习：遮住上页回答</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:38%">问题</th><th>答案</th></tr>
+      <tr><td>摇杆到电机走哪条链？</td><td>DT7 → DR16 → 主控 → CAN → 电调 → 电机</td></tr>
+      <tr><td>扣血这条链路有主控参与吗？</td><td>没有：装甲 → 裁判主控 → 服务器</td></tr>
+      <tr><td>剩余血量数据从哪里来？</td><td>服务器 → 裁判主控 → 串口 → 主控</td></tr>
+      <tr><td>主控死机，图传会黑屏吗？</td><td>不会，图传链路完全不经过主控</td></tr>
+    </table>
+    <div class="callout tip anim" style="animation-delay:.2s;margin-top:12px">
+      信息流只有三个入口「喂」给主控：遥控器、裁判系统主控、自己的传感器
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 14 页：能量流 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">能量流：信息用电不能断，动力电可以限</h2>
+    <ul class="anim" style="animation-delay:.08s;flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px">
+      <li><em>常电</em>：主控、裁判系统、传感器，永远在线</li>
+      <li><em>动力电</em>：电调与电机，可被限功率、断电</li>
+      <li><em>超电并接动力电</em>：超出上限的部分由缓冲垫付</li>
+    </ul>
+    <div class="callout anim" style="animation-delay:.2s;margin-top:12px">
+      电池 → 电源管理 → 常电（不能断）+ 动力电（可限）｜超电并联动力电
+    </div>
+    <p class="small muted anim" style="animation-delay:.28s;margin-top:8px">类比：手术室停电，监护仪靠备用电源继续工作</p>
+  </section>
+
+  <!-- ══════════════════ 第 15 页：功率判定流程 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">裁判系统的「算账」：功率判定流程</h2>
+    <div class="grid" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.05s">1. 底盘功率 ≤ 上限 → 正常输出，缓冲回充</div>
+      <div class="card anim" style="animation-delay:.12s">2. 功率 &gt; 上限且缓冲 &gt; 0 → 消耗缓冲垫付</div>
+      <div class="card anim" style="animation-delay:.19s">3. 缓冲耗尽仍超限 → 动力电被切断</div>
+      <div class="card green anim" style="animation-delay:.26s">4. 惩罚结束 → 恢复供电（数值以规则为准）</div>
+    </div>
+    <p class="small muted anim" style="animation-delay:.33s;margin-top:10px">该流程即「功率缓冲演示」的动画逻辑，可拖动滑块复现</p>
+  </section>
+
+  <!-- ══════════════════ 第 16 页：控制关系 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">控制关系：司机与考官</h2>
+    <div class="grid grid-2" style="flex:1;align-content:center">
+      <div class="card anim" style="animation-delay:.1s">
+        <h3>主控 = 司机</h3>
+        <p>遥控、裁判、传感器数据全部汇聚，由它决定电机与灯条</p>
+      </div>
+      <div class="card anim" style="animation-delay:.2s">
+        <h3>裁判系统 = 考官</h3>
+        <p>只看血条、伤害、功率；违规就限功率、断电</p>
+      </div>
+    </div>
+    <div class="callout warn anim" style="animation-delay:.3s;margin-top:14px">
+      <em>裁判系统是「裁判的眼睛」，不是执行器</em>——只记录和判罚
+    </div>
+  </section>
+
+  <!-- PART3 -->
+  <!-- ══════════════════ 第 17 页：掉电保护 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">掉电保护：考官不说话，司机踩刹车</h2>
+    <ul class="anim" style="animation-delay:.08s;flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px">
+      <li><em>定义</em>：裁判离线（通信超时）时，必须停止射击等危险输出</li>
+      <li><em>超时判定</em>：每个控制周期检查裁判数据是否超时</li>
+      <li><em>分级保护</em>：先停射击，再停底盘运动，保留显示</li>
+      <li><em>自动恢复</em>：数据恢复后逐步恢复输出</li>
+    </ul>
+    <pre class="anim" style="animation-delay:.2s;margin-top:12px"><span class="c">/* 思路示意：裁判数据超时 -&gt; 停止危险输出（接口名以战队代码为准） */</span>
+<span class="k">int</span> referee_online = <span class="n">1</span>;
+
+<span class="k">void</span> <span class="f">referee_watchdog</span>(<span class="k">void</span>)            <span class="c">/* 每个控制周期调用 */</span>
+{
+    <span class="k">if</span> (referee_data_timeout_ms &gt; <span class="n">1000</span>) {  <span class="c">/* 阈值以官方手册为准 */</span>
+        referee_online = <span class="n">0</span>;
+        <span class="f">shooter_set_speed</span>(<span class="n">0</span>);             <span class="c">/* 停止射击 */</span>
+        <span class="f">chassis_set_speed</span>(<span class="n">0</span>);             <span class="c">/* 停止底盘输出 */</span>
+    } <span class="k">else</span> {
+        referee_online = <span class="n">1</span>;
+    }
+}</pre>
+    <p class="small muted anim" style="animation-delay:.28s;margin-top:8px">规则要求，也是安全要求：裁判看不见的车，不许在场上开火</p>
+  </section>
+
+  <!-- ══════════════════ 第 18 页：交互演示 1 设备拓扑 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：整车设备拓扑图 <span class="chip">点击设备看名片</span></h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="topo"></canvas>
+      <div class="topo-pop" id="topoPop">
+        <h4 id="topoTitle">设备名</h4>
+        <div class="dim" id="topoRole"></div>
+        <div id="topoBody"></div>
+      </div>
+      <div class="demo-controls">
+        <label>绿色 = 我们的设备　紫色 = 官方裁判设备　白色 = 官方通用设备</label>
+        <label>点击空白处收起名片</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 19 页：交互演示 2 信息流 vs 能量流 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：信息流 vs 能量流 <span class="chip gray">速度可调</span></h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="dualview"></canvas>
+      <div class="demo-controls">
+        <button class="btn" id="dvInfo">信息流</button>
+        <button class="btn ghost" id="dvEnergy">能量流</button>
+        <label>速度 <input type="range" id="dvSpeed" min="1" max="10" value="5"></label>
+        <label>信息流：谁给谁发什么；能量流：电怎么走</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 20 页：交互演示 3 功率缓冲 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">演示：功率缓冲 <span class="chip green">拖动滑块观察</span></h2>
+    <div class="demo-stage anim" style="animation-delay:.1s">
+      <canvas data-demo="power"></canvas>
+      <div class="demo-controls">
+        <label>底盘需求功率 <input type="range" id="pwReq" min="0" max="160" value="60"></label>
+        <button class="btn" id="pwAuto">自动演示</button>
+        <button class="btn ghost" id="pwReset">重置</button>
+        <label>数值为演示示例，以当赛季规则为准</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 21 页：常见问题 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">常见问题与排查</h2>
+    <table class="anim" style="animation-delay:.08s;flex:1">
+      <tr><th style="width:24%">现象</th><th style="width:32%">可能原因</th><th>排查方法</th></tr>
+      <tr><td>灯条不亮或全红</td><td>供电或与主控通信异常</td><td>查常电与线材（以官方手册为准）</td></tr>
+      <tr><td>客户端看不到我的车</td><td>裁判系统离线</td><td>查裁判主控供电与天线</td></tr>
+      <tr><td>没被打却掉血</td><td>装甲误触发</td><td>查安装缓冲与灵敏度设置</td></tr>
+      <tr><td>频繁被判超功率</td><td>缓冲耗尽或功率策略问题</td><td>读功率数据，检查超电状态</td></tr>
+      <tr><td>遥控没反应</td><td>未对频 / 供电 / 接线</td><td>查对频与 DBUS 接线</td></tr>
+      <tr><td>图传黑屏</td><td>供电 / 频道 / 天线</td><td>查链路，重启接收端</td></tr>
+      <tr><td>血量归零电机不动</td><td>动力电被切断（正常行为）</td><td>确认是断电而非故障</td></tr>
+      <tr><td>读不到裁判数据</td><td>接线 / 配置 / 协议版本</td><td>以官方手册为准逐一核对</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════════ 第 22 页：延伸资源 ══════════════════ -->
+  <section class="slide">
+    <h2 class="anim">延伸资源</h2>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px">
+      <a class="res-link anim" style="animation-delay:.05s" target="_blank" rel="noopener"
+         href="https://www.robomaster.com/zh-CN/products/components/referee">裁判系统官方产品页 <small>—— 各模块介绍与手册入口</small></a>
+      <a class="res-link anim" style="animation-delay:.1s" target="_blank" rel="noopener"
+         href="https://www.robomaster.com/zh-CN/resource/pages/announcement/1770">RM2025 参赛资料包 <small>—— 手册 / 协议 / FAQ 官方下载页</small></a>
+      <a class="res-link anim" style="animation-delay:.15s" target="_blank" rel="noopener"
+         href="https://rm-static.djicdn.com/tem/17348/RM%202025%20%E8%A3%81%E5%88%A4%E7%B3%BB%E7%BB%9F%20%E7%94%A8%E6%88%B7%E6%89%8B%E5%86%8C%EF%BC%88%E4%B8%AD%EF%BC%89V1.4.pdf">裁判系统用户手册 PDF <small>—— 官方安装与使用总手册</small></a>
+      <a class="res-link anim" style="animation-delay:.2s" target="_blank" rel="noopener"
+         href="https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c">开发板 C 型官方页 <small>—— 常用主控选型资料</small></a>
+      <a class="res-link anim" style="animation-delay:.25s" target="_blank" rel="noopener"
+         href="https://bbs.robomaster.com/forum.php">RoboMaster 官方论坛 <small>—— 裁判系统问题答疑社区</small></a>
+      <p class="small muted anim" style="animation-delay:.3s">协议字段与功率阈值：一律以当赛季官方《裁判系统串口协议附录》为准</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ 第 23 页：回顾（暗色） ══════════════════ -->
+  <section class="slide" data-theme="purple">
+    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
+    <div class="cover-center" style="justify-content:center">
+      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
+      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
+      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
+        <li>12 类设备：每张「四行名片」</li>
+        <li>信息流：主控是数据汇聚点</li>
+        <li>能量流：常电不能断，动力电可限</li>
+        <li>裁判系统是眼睛，不是执行器</li>
+        <li>掉电保护：裁判离线必须停火</li>
+      </ul>
+      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
+        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
+      </p>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const dotsEl = document.getElementById('dots');
+const bar = document.getElementById('progressBar');
+let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
+
+// 侧边圆点导航
+slides.forEach((_, i) => {
+  const d = document.createElement('i');
+  d.title = '第 ' + (i + 1) + ' 页';
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+const dots = [...dotsEl.children];
+
+// 内容页右上角注入小队徽
+slides.forEach(s => {
+  if (!s.hasAttribute('data-theme')) {
+    const img = document.createElement('img');
+    img.className = 'corner-logo';
+    img.src = '../../assets/ARTINX_logo_2023.png';
+    img.alt = 'ARTINX';
+    s.appendChild(img);
+  }
+});
+
+const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
+
+function enterDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
+  });
+}
+function leaveDemo(s) {
+  s.querySelectorAll('canvas[data-demo]').forEach(c => {
+    const d = DEMOS[c.dataset.demo];
+    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
+  });
+}
+function go(i) {
+  i = (i + slides.length) % slides.length;
+  cur = i;
+  slides.forEach((s, idx) => {
+    const on = idx === i;
+    s.classList.toggle('active', on);
+    s.classList.toggle('prev', idx < i);
+    s.classList.toggle('next', idx > i);
+    if (on) {
+      if (!s.dataset.entered) {
+        s.dataset.entered = '1';
+        s.querySelectorAll('.anim').forEach(el => {
+          el.classList.add('anim-run');
+        });
+      }
+      enterDemo(s);
+    } else if (s.dataset.entered) {
+      s.dataset.entered = '';
+      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
+      leaveDemo(s);
+    }
+  });
+  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+  bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  history.replaceState(null, '', '#/' + i);
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1);
+  else if (e.key.toLowerCase() === 'f') toggleFull();
+  else if (e.key === '?') help.classList.toggle('on');
+  else if (e.key === 'Escape') help.classList.remove('on');
+});
+document.getElementById('btnPrev').onclick = () => go(cur - 1);
+document.getElementById('btnNext').onclick = () => go(cur + 1);
+document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
+const help = document.getElementById('help');
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+document.getElementById('btnFull').onclick = toggleFull;
+// 点击边缘翻页
+['left', 'right'].forEach(side => {
+  const e = document.createElement('div');
+  e.className = 'edge ' + side;
+  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
+  deck.appendChild(e);
+});
+// 触摸滑动
+let tx = 0;
+window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+window.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+go(cur);
+
+/* ================= 交互演示注册区（2.2 裁判系统与整车设备） ================= */
+function fit(c) {
+  const r = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) {
+    c.width = Math.round(r.width * dpr);
+    c.height = Math.round(r.height * dpr);
+  }
+  c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height, ctx: c.getContext('2d') };
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+/* —— 共享：整车侧视示意图（虚拟坐标系 960x600）—— */
+/* 演示配色：荧光绿 #AFFF00（亮）/ 深绿 #83BF00，紫色沿用品牌紫 #784CF6 */
+const C = { purple: '#784CF6', deep: '#512FA3', green: '#AFFF00', greenInk: '#83BF00',
+            ink: '#262034', muted: '#5A5468', lavender: '#E3DBFC', line: '#C9C3DE', panel: '#F7F4FE' };
+
+const DEVS = [
+  { key: 'mcu',  label: '主控板',   kind: 'ours',  x: 312, y: 255, w: 64, h: 40,
+    what: '跑我们代码的「大脑」', where: '底盘舱内', how: '收遥控；串口连裁判主控；CAN 控电机；驱动灯条' },
+  { key: 'ref',  label: '裁判系统主控', kind: 'ref', x: 392, y: 255, w: 64, h: 40,
+    what: '官方「随车裁判」核心', where: '底盘舱内', how: '串口与主控对话，无线回传服务器' },
+  { key: 'pm',   label: '电源管理', kind: 'ref', x: 472, y: 255, w: 64, h: 40,
+    what: '官方「电闸 + 电表」', where: '电池后第一站', how: '分常电/动力电，测功率，可断动力电' },
+  { key: 'cap',  label: '超电模块', kind: 'ref', x: 545, y: 255, w: 55, h: 40,
+    what: '功率「缓冲罐」+ 官方监测', where: '并接动力电回路', how: '超限时垫功率，状态上报裁判' },
+  { key: 'bat',  label: '电池',     kind: 'official', x: 472, y: 330, w: 72, h: 40,
+    what: '全车唯一能量来源', where: '电池架', how: '流向电源管理，再分给全车' },
+  { key: 'dr16', label: 'DR16',     kind: 'official', x: 548, y: 330, w: 58, h: 40,
+    what: '遥控接收机（DT7 在手上）', where: '车身上', how: 'DBUS 把遥控数据给主控' },
+  { key: 'armB', label: '大装甲',   kind: 'ref', x: 383, y: 148, w: 18, h: 58,
+    what: '官方「痛觉神经」', where: '云台两侧装甲板', how: '检测击中上报裁判，扣血由服务器算' },
+  { key: 'armS', label: '小装甲',   kind: 'ref', x: 295, y: 258, w: 16, h: 62,
+    what: '官方「痛觉神经」', where: '底盘四周装甲板', how: '检测击中上报裁判，扣血由服务器算' },
+  { key: 'speed',label: '测速模块', kind: 'ref', x: 632, y: 200, w: 18, h: 32,
+    what: '官方「测速枪」', where: '枪管两侧', how: '测初速与射速，经裁判系统上报' },
+  { key: 'light',label: '灯条',     kind: 'ref', x: 576, y: 226, w: 60, h: 9,
+    what: '官方「血条显示器」', where: '车顶四周', how: '由我们的主控直接控制显示' },
+  { key: 'vt',   label: '图传',     kind: 'ref', x: 556, y: 136, w: 28, h: 24,
+    what: '第一视角摄像头', where: '云台上', how: '画面无线直传服务器，不经主控' },
+  { key: 'rfid', label: 'RFID',     kind: 'ref', x: 428, y: 398, w: 50, h: 12,
+    what: '场地道具「读卡器」', where: '车底', how: '补弹 / 增益经裁判系统上报' },
+  { key: 'uwb',  label: 'UWB',      kind: 'ref', x: 466, y: 94, w: 10, h: 42,
+    what: '车载定位（超宽带测距）', where: '车顶', how: '位置经裁判系统上报服务器' }
+];
+
+function rr(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function devStyle(kind) {
+  if (kind === 'ours') return { fill: C.green, stroke: C.greenInk, text: '#2C4000' };
+  if (kind === 'ref')  return { fill: C.purple, stroke: C.deep, text: '#FFFFFF' };
+  return { fill: '#FFFFFF', stroke: C.muted, text: C.ink };
+}
+function drawRobotBody(ctx, selectedKey) {
+  // 地面
+  ctx.strokeStyle = C.line; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(40, 470); ctx.lineTo(900, 470); ctx.stroke();
+  // 车轮
+  [350, 455, 560].forEach(wx => {
+    ctx.beginPath(); ctx.arc(wx, 428, 30, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF'; ctx.fill();
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); ctx.arc(wx, 428, 8, 0, Math.PI * 2);
+    ctx.fillStyle = C.lavender; ctx.fill();
+  });
+  // 底盘（半透明，内部设备可见）
+  rr(ctx, 300, 235, 320, 175, 14);
+  ctx.fillStyle = C.panel; ctx.fill();
+  ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+  // 云台 + 枪管
+  rr(ctx, 395, 135, 175, 100, 12);
+  ctx.fillStyle = C.panel; ctx.fill();
+  ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+  rr(ctx, 520, 178, 180, 16, 6);
+  ctx.fillStyle = C.lavender; ctx.fill();
+  ctx.strokeStyle = C.purple; ctx.lineWidth = 2; ctx.stroke();
+  // 设备
+  DEVS.forEach(d => {
+    const st = devStyle(d.kind);
+    rr(ctx, d.x, d.y, d.w, d.h, 6);
+    ctx.fillStyle = st.fill; ctx.fill();
+    ctx.strokeStyle = st.stroke; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = st.text;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (d.w < 34 || d.h < 18) {          // 窄设备：标签画在框外左侧
+      ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(d.label, d.x - 8, d.y + d.h / 2);
+    } else {
+      ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+      ctx.fillText(d.label, d.x + d.w / 2, d.y + d.h / 2);
+    }
+    if (d.key === selectedKey) {         // 选中高亮
+      rr(ctx, d.x - 4, d.y - 4, d.w + 8, d.h + 8, 8);
+      ctx.strokeStyle = C.ink; ctx.lineWidth = 3; ctx.stroke();
+    }
+  });
+}
+
+/* —— 演示 1：整车设备拓扑图（点击看名片）—— */
+ARTINX_DEMOS['topo'] = (() => {
+  let raf = null, sel = null, canvas = null, pop = null, title = null, role = null, body = null;
+  function draw() {
+    const { w, h, ctx } = fit(canvas);
+    const s = Math.min(w / 960, h / 600);
+    const ox = (w - 960 * s) / 2, oy = (h - 600 * s) / 2;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#FBFAFE'; ctx.fillRect(0, 0, w, h);
+    ctx.save();
+    ctx.translate(ox, oy); ctx.scale(s, s);
+    drawRobotBody(ctx, sel);
+    ctx.restore();
+    if (sel) {
+      const d = DEVS.find(v => v.key === sel);
+      if (d) {
+        title.textContent = d.label;
+        role.textContent = (d.kind === 'ours' ? '我们的设备 · ' : d.kind === 'ref' ? '官方裁判设备 · ' : '官方通用设备 · ') + d.where;
+        body.innerHTML = '<b>是什么</b>　' + d.what + '<br><b>和电控怎么交互</b>　' + d.how;
+        pop.classList.add('on');
+      }
+    }
+    raf = requestAnimationFrame(draw);
+  }
+  function onClick(e) {
+    const r = canvas.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    const s = Math.min(r.width / 960, r.height / 600);
+    const ox = (r.width - 960 * s) / 2, oy = (r.height - 600 * s) / 2;
+    const vx = (mx - ox) / s, vy = (my - oy) / s;
+    let hit = null;
+    DEVS.forEach(d => {
+      if (vx >= d.x - 4 && vx <= d.x + d.w + 4 && vy >= d.y - 4 && vy <= d.y + d.h + 4) hit = d.key;
+    });
+    sel = hit;
+    if (!hit) pop.classList.remove('on');
+  }
+  return {
+    init(c, sEl) {
+      canvas = c; pop = sEl.querySelector('#topoPop');
+      title = sEl.querySelector('#topoTitle'); role = sEl.querySelector('#topoRole'); body = sEl.querySelector('#topoBody');
+      canvas.addEventListener('click', onClick);
+      canvas.style.cursor = 'pointer';
+      if (!raf) raf = requestAnimationFrame(draw);
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      if (canvas) canvas.removeEventListener('click', onClick);
+    }
+  };
+})();
+
+  <!-- PART4 -->
+/* —— 演示 2：信息流 vs 能量流 双视图 —— */
+ARTINX_DEMOS['dualview'] = (() => {
+  let raf = null, canvas = null, mode = 'info', last = 0, paths = [];
+  function mkPath(pts, opts) {
+    const segs = []; let total = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const len = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
+      segs.push({ x1: pts[i][0], y1: pts[i][1], x2: pts[i + 1][0], y2: pts[i + 1][1], len });
+      total += len;
+    }
+    const n = Math.max(1, Math.round(total / 150));
+    const ps = [];
+    for (let i = 0; i < n; i++) ps.push((i + 0.5) / n);
+    return { pts, segs, total, ps, speed: opts.speed, color: opts.color, wireless: !!opts.wireless };
+  }
+  function pointAt(p, t) {
+    let d = t * p.total;
+    for (const sg of p.segs) {
+      if (d <= sg.len) {
+        const k = d / sg.len;
+        return { x: sg.x1 + (sg.x2 - sg.x1) * k, y: sg.y1 + (sg.y2 - sg.y1) * k };
+      }
+      d -= sg.len;
+    }
+    const last2 = p.segs[p.segs.length - 1];
+    return { x: last2.x2, y: last2.y2 };
+  }
+  function buildPaths() {
+    if (mode === 'info') {
+      return [
+        mkPath([[90, 155], [160, 155], [260, 300], [430, 352], [577, 350]], { speed: 110, color: C.greenInk, wireless: true }),   // 遥控→DR16 无线
+        mkPath([[577, 350], [520, 320], [430, 300], [344, 275]], { speed: 70, color: C.purple }),                              // DR16→主控 DBUS
+        mkPath([[344, 275], [424, 275]], { speed: 70, color: C.purple }),                                                       // 主控↔裁判主控
+        mkPath([[424, 275], [504, 275]], { speed: 70, color: C.purple }),
+        mkPath([[392, 177], [392, 240], [424, 275]], { speed: 70, color: C.purple }),                                           // 装甲→裁判主控
+        mkPath([[303, 289], [360, 285], [424, 275]], { speed: 70, color: C.purple }),
+        mkPath([[641, 216], [641, 250], [520, 250], [424, 275]], { speed: 70, color: C.purple }),                               // 测速→裁判主控
+        mkPath([[453, 404], [453, 330], [424, 275]], { speed: 70, color: C.purple }),                                           // RFID→裁判主控
+        mkPath([[471, 115], [471, 235], [428, 275]], { speed: 70, color: C.purple }),                                           // UWB→裁判主控
+        mkPath([[344, 275], [344, 235], [606, 230]], { speed: 70, color: C.purple }),                                           // 主控→灯条
+        mkPath([[424, 275], [520, 160], [700, 100], [850, 62]], { speed: 110, color: C.greenInk, wireless: true }),             // 裁判主控→服务器
+        mkPath([[570, 148], [700, 100], [850, 62]], { speed: 110, color: C.greenInk, wireless: true })                          // 图传→服务器
+      ];
+    }
+    return [
+      mkPath([[508, 350], [508, 295]], { speed: 90, color: C.purple }),                     // 电池→电源管理
+      mkPath([[504, 275], [344, 275]], { speed: 90, color: C.greenInk }),                   // 常电→主控
+      mkPath([[504, 275], [424, 275]], { speed: 90, color: C.greenInk }),                   // 常电→裁判主控
+      mkPath([[504, 275], [600, 275], [636, 300]], { speed: 90, color: C.purple }),         // 动力电→电调
+      mkPath([[636, 316], [636, 400], [300, 428]], { speed: 90, color: C.purple }),         // 电调→电机(轮)
+      mkPath([[573, 275], [600, 275]], { speed: 60, color: C.purple })                      // 超电并接
+    ];
+  }
+  function draw() {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
+    last = now;
+    const factor = (+document.getElementById('dvSpeed').value) * 0.4;  // 1..10 → 0.4..4
+    const s = Math.min(w / 960, h / 600);
+    const ox = (w - 960 * s) / 2, oy = (h - 600 * s) / 2;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#FBFAFE'; ctx.fillRect(0, 0, w, h);
+    ctx.save();
+    ctx.translate(ox, oy); ctx.scale(s, s);
+    drawRobotBody(ctx, null);
+    // 遥控器与服务器图标
+    rr(ctx, 40, 130, 80, 50, 10);
+    ctx.fillStyle = '#FFFFFF'; ctx.fill(); ctx.strokeStyle = C.muted; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = C.ink; ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('DT7 遥控器', 80, 155);
+    rr(ctx, 810, 34, 110, 56, 10);
+    ctx.fillStyle = C.purple; ctx.fill(); ctx.strokeStyle = C.deep; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#FFFFFF'; ctx.fillText('服务器', 865, 62);
+    if (mode === 'energy') {
+      rr(ctx, 612, 284, 48, 32, 8);
+      ctx.fillStyle = C.lavender; ctx.fill(); ctx.strokeStyle = C.purple; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = C.purple; ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+      ctx.fillText('电调', 636, 300);
+    }
+    // 路径
+    paths.forEach(p => {
+      ctx.strokeStyle = p.wireless ? '#BFE3B0' : '#D9D3EE';
+      ctx.lineWidth = 2;
+      if (p.wireless) ctx.setLineDash([8, 6]); else ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(p.pts[0][0], p.pts[0][1]);
+      for (let i = 1; i < p.pts.length; i++) ctx.lineTo(p.pts[i][0], p.pts[i][1]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+    // 流动粒子
+    paths.forEach(p => {
+      for (let i = 0; i < p.ps.length; i++) {
+        let t = p.ps[i] + (p.speed * factor * dt) / p.total;
+        if (t >= 1) t -= 1;
+        p.ps[i] = t;
+        const pt = pointAt(p, t);
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, p.wireless ? 3 : 4, 0, Math.PI * 2);
+        ctx.fillStyle = p.color; ctx.fill();
+      }
+    });
+    // 图例
+    ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    if (mode === 'info') {
+      ctx.fillStyle = C.purple; ctx.fillText('●', 60, 525); ctx.fillStyle = C.ink; ctx.fillText('有线数据（串口 / DBUS）', 76, 525);
+      ctx.fillStyle = C.greenInk; ctx.fillText('●', 300, 525); ctx.fillStyle = C.ink; ctx.fillText('无线数据（2.4G 链路）', 316, 525);
+    } else {
+      ctx.fillStyle = C.greenInk; ctx.fillText('●', 60, 525); ctx.fillStyle = C.ink; ctx.fillText('常电：信息用电，不能断', 76, 525);
+      ctx.fillStyle = C.purple; ctx.fillText('●', 340, 525); ctx.fillStyle = C.ink; ctx.fillText('动力电：可限可断', 356, 525);
+      ctx.fillStyle = C.ink; ctx.font = '13px "Microsoft YaHei",sans-serif';
+      ctx.fillText('超电并接在动力电上做缓冲', 520, 525);
+    }
+    ctx.restore();
+    raf = requestAnimationFrame(draw);
+  }
+  function setMode(m) {
+    mode = m; paths = buildPaths();
+    const b1 = document.getElementById('dvInfo'), b2 = document.getElementById('dvEnergy');
+    b1.className = 'btn' + (m === 'info' ? '' : ' ghost');
+    b2.className = 'btn' + (m === 'energy' ? '' : ' ghost');
+  }
+  return {
+    init(c) { canvas = c; paths = buildPaths(); last = 0; if (!raf) raf = requestAnimationFrame(draw); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    setMode
+  };
+})();
+document.getElementById('dvInfo').onclick = () => ARTINX_DEMOS['dualview'].setMode('info');
+document.getElementById('dvEnergy').onclick = () => ARTINX_DEMOS['dualview'].setMode('energy');
+
+/* —— 演示 3：功率缓冲（大功率 → 缓冲 → 超限被限）—— */
+ARTINX_DEMOS['power'] = (() => {
+  const LIMIT = 80,   // 功率上限（示例）
+        BUFMAX = 100, // 缓冲能量上限（示例，单位省略）
+        PUNISH = 5;   // 缓冲耗尽后的断电时长（示例，秒）
+  let raf = null, canvas = null, last = 0;
+  let buf = BUFMAX, punish = 0, auto = false, tAuto = 0;
+  function triWave(t) {                     // 周期 9s 的三角波，模拟需求功率起伏
+    const ph = (t % 9) / 9;
+    return Math.round(ph < 0.5 ? ph * 2 * 160 : (1 - ph) * 2 * 160);
+  }
+  function draw() {
+    const { w, h, ctx } = fit(canvas);
+    const now = performance.now();
+    const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
+    last = now;
+    if (auto) tAuto += dt;
+    const req = auto ? triWave(tAuto) : +document.getElementById('pwReq').value;
+    let out;
+    if (punish > 0) {
+      punish -= dt;
+      out = 0;
+      if (punish <= 0) buf = BUFMAX;
+    } else if (req <= LIMIT) {
+      out = req;
+      buf = Math.min(BUFMAX, buf + 6 * dt);   // 回充（示例速率）
+    } else if (buf > 0) {
+      out = req;
+      buf = Math.max(0, buf - (req - LIMIT) * dt);
+      if (buf <= 0) punish = PUNISH;
+    } else {
+      out = 0; punish = PUNISH;
+    }
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#FBFAFE'; ctx.fillRect(0, 0, w, h);
+    const bx = 150, bw = Math.max(80, w - 300), bh = 30;
+    const y1 = h * 0.26, y2 = h * 0.5;
+    ctx.font = 'bold 15px "Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    // 输出功率条
+    ctx.fillStyle = C.ink; ctx.fillText('实际输出功率', bx - 14, y1 + bh / 2);
+    rr(ctx, bx, y1, bw, bh, 8); ctx.fillStyle = '#EFEDF6'; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+    rr(ctx, bx, y1, Math.max(4, bw * out / 160), bh, 8);
+    ctx.fillStyle = C.purple; ctx.fill();
+    const lx = bx + bw * LIMIT / 160;
+    ctx.strokeStyle = C.greenInk; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
+    ctx.beginPath(); ctx.moveTo(lx, y1 - 12); ctx.lineTo(lx, y1 + bh + 12); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = C.greenInk; ctx.fillText('上限（示例）', lx + 8, y1 - 6);
+    ctx.fillStyle = C.ink; ctx.fillText(Math.round(out) + ' / 160', bx + bw + 14, y1 + bh / 2);
+    // 缓冲能量条
+    ctx.textAlign = 'right'; ctx.fillStyle = C.ink;
+    ctx.fillText('缓冲能量', bx - 14, y2 + bh / 2);
+    rr(ctx, bx, y2, bw, bh, 8); ctx.fillStyle = '#EFEDF6'; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+    rr(ctx, bx, y2, Math.max(4, bw * buf / BUFMAX), bh, 8);
+    ctx.fillStyle = C.green; ctx.fill();
+    ctx.strokeStyle = C.greenInk; ctx.lineWidth = 2; ctx.stroke();
+    ctx.textAlign = 'left'; ctx.fillStyle = C.ink;
+    ctx.fillText(Math.round(buf) + ' / ' + BUFMAX, bx + bw + 14, y2 + bh / 2);
+    // 状态
+    ctx.textAlign = 'center'; ctx.font = 'bold 20px "Microsoft YaHei",sans-serif';
+    let status, scolor;
+    if (punish > 0) { status = '缓冲耗尽 · 动力电被切断 ' + Math.ceil(punish) + 's（示例）'; scolor = C.deep; }
+    else if (req > LIMIT && buf > 0) { status = '大功率输出 · 正在使用缓冲能量'; scolor = C.purple; }
+    else { status = '正常输出 · 缓冲回充中'; scolor = C.greenInk; }
+    ctx.fillStyle = scolor; ctx.fillText(status, w / 2, h * 0.76);
+    ctx.font = '13px "Microsoft YaHei",sans-serif'; ctx.fillStyle = C.muted;
+    ctx.fillText('需求功率 ' + Math.round(req) + '（拖动滑块 / 点自动演示）· 数值均为演示示例，以当赛季规则为准', w / 2, h * 0.86);
+    raf = requestAnimationFrame(draw);
+  }
+  return {
+    init(c) { canvas = c; last = 0; if (!raf) raf = requestAnimationFrame(draw); },
+    destroy() { if (raf) cancelAnimationFrame(raf); raf = null; },
+    reset() { buf = BUFMAX; punish = 0; auto = false; tAuto = 0; },
+    toggleAuto() { auto = !auto; return auto; }
+  };
+})();
+document.getElementById('pwAuto').onclick = () => {
+  const on = ARTINX_DEMOS['power'].toggleAuto();
+  document.getElementById('pwAuto').textContent = on ? '停止自动' : '自动演示';
+};
+document.getElementById('pwReset').onclick = () => {
+  ARTINX_DEMOS['power'].reset();
+  document.getElementById('pwReq').value = 60;
+  document.getElementById('pwAuto').textContent = '自动演示';
+};
+</script>
+</body>
+</html>
