@@ -13,12 +13,26 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "入队前培训/1.1 环境配置/教学内容.md",
+                "file": "入队前培训/1.7 入队综合作业/教学内容.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
               "title": "教学内容"
+            }
+          },
+          {
+            "id": "e2b8b6f19b5d6a50",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "入队前培训/1.3 单片机初步认识/CubeMax配置工程.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "CubeMax配置工程"
             }
           }
         ]
@@ -99,7 +113,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "入队前培训/1.1 环境配置/教学内容.md",
+                "file": "入队前培训/1.4 电机与基础控制/教学内容.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +132,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "入队前培训/1.1 环境配置/教学内容.md",
+                "file": "入队前培训/1.4 电机与基础控制/教学内容.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +175,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "入队前培训/1.1 环境配置/教学内容.md",
+                "file": "入队前培训/1.4 电机与基础控制/教学内容.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -190,9 +204,30 @@
   },
   "active": "53d6d36e9a82c0d2",
   "lastOpenFiles": [
-    "新建 Text Document.txt",
-    "软件安装包全集.zip",
-    "().md",
-    "入队前培训/1.1 环境配置/教学内容.md"
+    "入队前培训/1.2 C语言入门/教学内容.md",
+    "入队前培训/1.2 C语言入门/课后自测.md",
+    "入队前培训/1.3 单片机初步认识/教学内容.md",
+    "入队前培训/1.3 单片机初步认识/CubeMax配置工程.md",
+    "入队前培训/1.4 电机与基础控制/教学内容.md",
+    "入队前培训/1.5 PID与闭环控制/教学内容.md",
+    "入队前培训/1.7 入队综合作业/教学内容.md",
+    "入队前培训/1.6 Git与AI工具使用/Git常用命令指南.pdf",
+    "入队前培训/1.6 Git与AI工具使用/教学内容.md",
+    "入队前培训/1.1 环境配置/教学内容.md",
+    "入队前培训/1.4 电机与基础控制/教学内容.md.tmp.93004.8879e2d6696a",
+    "入队前培训/1.4 电机与基础控制/教学内容.md.tmp.93004.f34eab380de2",
+    "入队前培训/1.3 单片机初步认识/教学内容.md.tmp.93004.635a0cd8b71e",
+    "入队前培训/1.3 单片机初步认识/教学内容.md.tmp.93004.aca550ac2c32",
+    "入队前培训/1.2 C语言入门/教学内容.md.tmp.93004.c43070349dff",
+    "_frame/message/msg/VT03_Info.h",
+    "_frame/message/msg/Stp23L_Info.h",
+    "_frame/message/msg/RefereeRecv_Info.h",
+    "_frame/message/msg/RefereeSend_Info.h",
+    "_frame/message/README.md",
+    "_frame/docs/FourBarSolver_Usage.md",
+    "_frame/bsp/README.md",
+    "_frame/components/README.md",
+    "README.md",
+    "().md"
   ]
 }
