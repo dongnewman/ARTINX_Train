@@ -174,7 +174,18 @@ input[type=range]{accent-color:var(--purple);width:110px}
   .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
   #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
 }
+
+/* 2026-08-21 培训演示重制：离线图片与更清晰的教学排版 */
+.media-split{display:grid;grid-template-columns:1.08fr .92fr;gap:20px;flex:1;min-height:0;align-items:center}
+.media-split img{width:100%;max-height:310px;object-fit:contain;border-radius:14px;background:#F7F4FE;border:1px solid var(--line);padding:10px}
+.source-note{font-size:10.5px;color:var(--muted);margin-top:5px;text-align:right}
+.gear-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:stretch}
+.gear-card{border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;background:#fff}
+.gear-card .lamp{width:34px;height:34px;border-radius:50%;margin:8px auto;border:3px solid #E8E4F4;box-shadow:0 0 18px rgba(120,76,246,.18)}
+.gear-card .rpm{font-size:24px;font-weight:800;color:var(--purple)}
+
 </style>
+<link rel="icon" href="data:,">
 </head>
 <body>
 
@@ -560,7 +571,7 @@ input[type=range]{accent-color:var(--purple);width:110px}
 
   <!-- ══════════════════ 第 21 页：延伸资源 ══════════════════ -->
   <section class="slide">
-    <h2 class="anim">延伸资源（自学用）</h2>
+    <h2 class="anim">补充内容与延伸资源</h2>
     <table class="anim" style="animation-delay:.05s">
       <tr><th>资源</th><th>用途</th></tr>
       <tr><td><a href="https://www.robomaster.com/zh-CN/products/components/general/M3508" target="_blank" rel="noopener">M3508 官方产品页</a></td><td>参数 + 官方文档下载入口（含 C620 电调说明）</td></tr>
@@ -574,24 +585,6 @@ input[type=range]{accent-color:var(--purple);width:110px}
   </section>
 
   <!-- ══════════════════ 第 22 页：回顾（暗色） ══════════════════ -->
-  <section class="slide" data-theme="purple">
-    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
-    <div class="cover-center" style="justify-content:center">
-      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
-      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
-      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
-        <li>电机（肌肉）· 电调（翻译官兼驾驶员）· 编码器（里程表）</li>
-        <li>CAN：一条总线 + ID 广播，指令与反馈都是 8 字节标准帧</li>
-        <li>控制量是命令，反馈量是实况；开环蒙眼，闭环睁眼</li>
-        <li>M3508 底盘 · M2006 机构 · GM6020 云台</li>
-        <li>IMU：Yaw 摇头 / Pitch 点头 / Roll 歪头</li>
-        <li>动手：读反馈 → 转起来 → 改方向 → 改控制量</li>
-      </ul>
-      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
-        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
-      </p>
-    </div>
-  </section>
 
 </div>
 </main>

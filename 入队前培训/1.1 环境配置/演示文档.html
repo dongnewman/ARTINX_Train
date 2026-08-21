@@ -175,7 +175,18 @@ input[type=range]{accent-color:var(--purple);width:110px}
   .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
   #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
 }
+
+/* 2026-08-21 培训演示重制：离线图片与更清晰的教学排版 */
+.media-split{display:grid;grid-template-columns:1.08fr .92fr;gap:20px;flex:1;min-height:0;align-items:center}
+.media-split img{width:100%;max-height:310px;object-fit:contain;border-radius:14px;background:#F7F4FE;border:1px solid var(--line);padding:10px}
+.source-note{font-size:10.5px;color:var(--muted);margin-top:5px;text-align:right}
+.gear-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:stretch}
+.gear-card{border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;background:#fff}
+.gear-card .lamp{width:34px;height:34px;border-radius:50%;margin:8px auto;border:3px solid #E8E4F4;box-shadow:0 0 18px rgba(120,76,246,.18)}
+.gear-card .rpm{font-size:24px;font-weight:800;color:var(--purple)}
+
 </style>
+<link rel="icon" href="data:,">
 </head>
 <body>
 
@@ -612,7 +623,7 @@ int main(void) {      <span class="c">/* 程序入口 */</span>
 
   <!-- ══════════════════ 第 22 页：延伸资源 ══════════════════ -->
   <section class="slide">
-    <h2 class="anim">延伸资源（均已验证可访问）</h2>
+    <h2 class="anim">补充内容与延伸资源</h2>
     <div class="grid grid-2" style="flex:1;align-content:center;gap:8px">
       <div class="card white anim" style="animation-delay:.05s;padding:8px 12px">
         <p style="font-size:13px"><strong>VS Code 官网</strong> <span class="small muted">下载编辑器</span>　<a href="https://code.visualstudio.com" target="_blank" rel="noopener">code.visualstudio.com</a></p>
@@ -642,23 +653,6 @@ int main(void) {      <span class="c">/* 程序入口 */</span>
   </section>
 
   <!-- ══════════════════ 第 23 页：回顾（暗色） ══════════════════ -->
-  <section class="slide" data-theme="purple">
-    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
-    <div class="cover-center" style="justify-content:center">
-      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
-      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
-      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
-        <li>编辑器 = 写，编译器 = 翻译，IDE = 工具箱（Keil MDK）</li>
-        <li>PC：.c → gcc → .exe → 运行；STM32 多一步烧录：.c → Keil → .hex → ST-Link → 板子运行</li>
-        <li>8 个工具全部安装，并用 --version 系列命令逐一验证</li>
-        <li>PATH = 系统找程序的通讯录；改完必须重开终端</li>
-        <li>报错先读「文件名:行号」，再查 PATH / 接线 / 驱动</li>
-      </ul>
-      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
-        安装步骤与课后自测见 <strong>教学内容.md</strong>，本节结束前完成掌握清单。
-      </p>
-    </div>
-  </section>
 
 </div>
 </main>

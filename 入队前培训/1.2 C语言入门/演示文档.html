@@ -175,7 +175,18 @@ input[type=range]{accent-color:var(--purple);width:110px}
   .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
   #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
 }
+
+/* 2026-08-21 培训演示重制：离线图片与更清晰的教学排版 */
+.media-split{display:grid;grid-template-columns:1.08fr .92fr;gap:20px;flex:1;min-height:0;align-items:center}
+.media-split img{width:100%;max-height:310px;object-fit:contain;border-radius:14px;background:#F7F4FE;border:1px solid var(--line);padding:10px}
+.source-note{font-size:10.5px;color:var(--muted);margin-top:5px;text-align:right}
+.gear-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:stretch}
+.gear-card{border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;background:#fff}
+.gear-card .lamp{width:34px;height:34px;border-radius:50%;margin:8px auto;border:3px solid #E8E4F4;box-shadow:0 0 18px rgba(120,76,246,.18)}
+.gear-card .rpm{font-size:24px;font-weight:800;color:var(--purple)}
+
 </style>
+<link rel="icon" href="data:,">
 </head>
 <body>
 
@@ -705,7 +716,7 @@ gcc main.c mymath.c -o mymath</pre>
 
   <!-- ══════════════════ 第 24 页：延伸资源 ══════════════════ -->
   <section class="slide">
-    <h2 class="anim">延伸资源（课后自学）</h2>
+    <h2 class="anim">补充内容与延伸资源</h2>
     <div class="grid anim" style="animation-delay:.1s;gap:10px;flex:1;align-content:center">
       <div class="card white" style="padding:12px 18px">
         <p><a href="https://www.bilibili.com/video/BV1dr4y1n7vA/" target="_blank" rel="noopener">翁恺《C 语言程序设计》· B 站</a> <span class="small muted">—— 浙大国家级精品课，1900 万+ 播放，零基础系统学</span></p>
@@ -719,24 +730,6 @@ gcc main.c mymath.c -o mymath</pre>
       <div class="card white" style="padding:12px 18px">
         <p><a href="https://zh.cppreference.com/w/c" target="_blank" rel="noopener">cppreference 中文 · C 参考手册</a> <span class="small muted">—— 权威手册，查语法细节用</span></p>
       </div>
-    </div>
-  </section>
-
-  <!-- ══════════════════ 最后一页：回顾（暗色） ══════════════════ -->
-  <section class="slide" data-theme="purple">
-    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
-    <div class="cover-center" style="justify-content:center">
-      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
-      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
-      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
-        <li>变量 = 类型确定的命名存储单元；类型决定宽度与取值范围</li>
-        <li>指针 = 保存地址的变量；& 取地址，* 解引用；传值改副本，传址改原件</li>
-        <li>数组下标从 0 开始，越界是未定义行为；struct 打包数据，enum 限定选项</li>
-        <li>.h 写声明（函数原型），.c 写实现；宏替换必须加括号</li>
-      </ul>
-      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
-        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
-      </p>
     </div>
   </section>
 

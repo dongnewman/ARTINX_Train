@@ -175,7 +175,18 @@ input[type=range]{accent-color:var(--purple);width:110px}
   .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
   #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
 }
+
+/* 2026-08-21 培训演示重制：离线图片与更清晰的教学排版 */
+.media-split{display:grid;grid-template-columns:1.08fr .92fr;gap:20px;flex:1;min-height:0;align-items:center}
+.media-split img{width:100%;max-height:310px;object-fit:contain;border-radius:14px;background:#F7F4FE;border:1px solid var(--line);padding:10px}
+.source-note{font-size:10.5px;color:var(--muted);margin-top:5px;text-align:right}
+.gear-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:stretch}
+.gear-card{border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;background:#fff}
+.gear-card .lamp{width:34px;height:34px;border-radius:50%;margin:8px auto;border:3px solid #E8E4F4;box-shadow:0 0 18px rgba(120,76,246,.18)}
+.gear-card .rpm{font-size:24px;font-weight:800;color:var(--purple)}
+
 </style>
+<link rel="icon" href="data:,">
 </head>
 <body>
 
@@ -243,25 +254,20 @@ input[type=range]{accent-color:var(--purple);width:110px}
 
   <!-- ══════════════════ 第 3 页：什么是单片机 ══════════════════ -->
   <section class="slide">
-    <h2 class="anim">什么是单片机</h2>
-    <div class="cols">
+    <h2 class="anim">C 板就是一台微型专用计算机</h2>
+    <div class="media-split">
       <div>
-        <p class="anim" style="animation-delay:.1s">单片机（MCU，Microcontroller Unit）是把 <em>CPU、存储器和外设</em>集成在一颗芯片上的微型计算机，每秒执行千万到亿条指令，只忠实执行你写的程序——程序是它唯一的工作说明书。</p>
-        <p class="anim small muted" style="animation-delay:.2s">类比：一人公司——一名员工（CPU）配档案柜（Flash）和办公桌（RAM）。</p>
-        <ul class="anim small" style="animation-delay:.3s">
-          <li>电脑 = 多部门大公司；单片机 = 指甲盖大小的迷你公司</li>
-          <li>没有程序，芯片只是通电的石头</li>
+        <p class="anim" style="animation-delay:.1s">单片机（MCU，Microcontroller Unit）把 <em>CPU、Flash、RAM 和外设</em>集成到一颗芯片。它不运行桌面软件，只按固定周期、固定优先级执行机器人控制任务。</p>
+        <ul class="anim" style="animation-delay:.2s">
+          <li>CPU 执行指令；Flash 保存程序；RAM 保存运行变量。</li>
+          <li>GPIO、Timer、CAN、UART 等外设直接连接真实硬件。</li>
+          <li>RoboMaster C 板主控为 STM32F407IGHx，板载 CAN、IMU、用户按键和 RGB LED。</li>
         </ul>
+        <div class="callout tip anim" style="animation-delay:.3s;margin-top:10px">一句话：单片机是把程序变成电平、数据帧和电机动作的桥梁。</div>
       </div>
-      <div>
-        <pre class="anim" style="animation-delay:.2s">┌──────────── STM32 芯片（迷你公司）────────────┐
-│ Flash 档案柜：存程序      RAM 办公桌：存变量    │
-│        │                        │             │
-│        ▼                        ▼             │
-│                CPU：执行指令                    │
-│                   │ 总线                      │
-│   GPIO · Timer · UART · CAN · DMA …… 外设      │
-└────────────────────────────────────────────────┘</pre>
+      <div class="anim" style="animation-delay:.2s">
+        <img src="../../assets/training/cboard_type_c_official.jpg" alt="RoboMaster 开发板 C 型">
+        <div class="source-note">图片：RoboMaster 开发板 C 型官方产品页</div>
       </div>
     </div>
   </section>
@@ -535,22 +541,27 @@ PA5 = 0V 时两端有压差，灯亮</pre>
 
   <!-- ══════════════════ 第 18 页：按键防抖 ══════════════════ -->
   <section class="slide">
-    <h2 class="anim">按键防抖：按一次只认一次</h2>
-    <svg class="anim" viewBox="0 0 460 60" style="width:100%;max-height:70px;animation-delay:.1s">
-      <polyline points="10,22 150,22 150,10 260,10 260,22 450,22" fill="none" stroke="#8F87AB" stroke-width="2.5" stroke-linecap="round"/>
-      <polyline points="10,42 144,42 150,10 162,32 152,42 166,10 178,32 170,42 254,42 260,10 272,32 262,42 276,10 288,32 280,42 450,42"
-        fill="none" stroke="#784CF6" stroke-width="2.5" stroke-linecap="round"/>
-      <text x="300" y="18" font-size="11" fill="#5A5468">灰：理想按键波形</text>
-      <text x="300" y="38" font-size="11" fill="#784CF6">紫：实际触点弹跳（抖动）</text>
-    </svg>
-    <pre class="anim" style="animation-delay:.2s"><span class="k">if</span> (key_last == <span class="n">1</span> &amp;&amp; key_now == <span class="n">0</span>) {      <span class="c">/* 按下边沿 */</span>
-    <span class="f">HAL_Delay</span>(<span class="n">20</span>);                        <span class="c">/* 等 20 ms，抖动结束 */</span>
-    <span class="k">if</span> (<span class="f">HAL_GPIO_ReadPin</span>(KEY_GPIO_Port, KEY_Pin) == <span class="n">0</span>)
-        <span class="f">HAL_GPIO_TogglePin</span>(LED_GPIO_Port, LED_Pin);
-}
-key_last = key_now;</pre>
-    <div class="callout tip anim" style="animation-delay:.3s;margin-top:8px">
-      机械触点按下/松开时毫秒级多次通断；主循环太快把每次跳变都读到了。解法：边沿检测 + 20 ms 延时再确认
+    <h2 class="anim">按键防抖：先确认稳定，再产生一次事件</h2>
+    <div class="cols">
+      <div>
+        <p class="anim">机械触点会在几毫秒内反复通断。主循环如果直接把“电平为低”当成一次按键，就会在按住期间连续触发。</p>
+        <pre class="anim" style="animation-delay:.15s"><span class="c">/* 伪代码：非阻塞消抖 */</span>
+raw = <span class="f">ReadKey</span>();
+<span class="k">if</span> (raw != candidate) { candidate = raw; changed_at = now; }
+<span class="k">if</span> (now - changed_at &gt;= <span class="n">20</span> &amp;&amp; stable != candidate) {
+    stable = candidate;
+    <span class="k">if</span> (stable == PRESSED) key_event = <span class="n">1</span>;
+}</pre>
+      </div>
+      <div>
+        <div class="card anim" style="animation-delay:.2s">
+          <h3>C 板实物对应</h3>
+          <table><tr><th>功能</th><th>引脚</th><th>有效电平</th></tr>
+          <tr><td>用户按键</td><td>PA0</td><td>按下为低</td></tr>
+          <tr><td>蓝/绿/红 LED</td><td>PH10/11/12</td><td>高电平点亮</td></tr></table>
+        </div>
+        <div class="callout warn anim" style="animation-delay:.3s;margin-top:10px">防抖不能用 20 ms 阻塞延时卡住 1 ms 电机控制任务；按键逻辑应产生“事件”，控制任务读取事件。</div>
+      </div>
     </div>
   </section>
 
@@ -624,7 +635,7 @@ key_last = key_now;</pre>
 
   <!-- ══════════════════ 第 22 页：延伸资源 ══════════════════ -->
   <section class="slide">
-    <h2 class="anim">延伸资源</h2>
+    <h2 class="anim">补充内容与延伸资源</h2>
     <ul class="anim" style="animation-delay:.1s;line-height:2.05;font-size:14.5px">
       <li><a href="https://www.st.com/en/microcontrollers-microprocessors/stm32f4-series.html" target="_blank">STM32F4 系列官方产品页</a> —— 选型与数据手册入口</li>
       <li><a href="https://www.st.com/en/development-tools/stm32cubemx.html" target="_blank">STM32CubeMX 官方页面</a> —— 工具说明与最新版下载</li>
@@ -632,24 +643,6 @@ key_last = key_now;</pre>
       <li><a href="https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c" target="_blank">RoboMaster 开发板 C 型官方页面</a> —— 官方开发板介绍（主控同为 F407）</li>
       <li><a href="https://github.com/RoboMaster/Development-Board-C-Examples" target="_blank">官方 GitHub 示例仓库</a> —— 点灯到整车的渐进示例与教程 PDF</li>
     </ul>
-  </section>
-
-  <!-- ══════════════════ 最后一页：回顾（暗色） ══════════════════ -->
-  <section class="slide" data-theme="purple">
-    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
-    <div class="cover-center" style="justify-content:center">
-      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
-      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
-      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:1.95">
-        <li>单片机 = CPU + Flash + RAM + 外设，一颗芯片当公司</li>
-        <li>七个外设各管一事：GPIO 手脚、Timer 闹钟、PWM 旋钮、UART 对讲机、CAN 广播、中断敲门、DMA 搬运</li>
-        <li>CubeMX 四步建工程，HAL 三函数点亮第一盏灯</li>
-        <li>按键防抖：边沿检测 + 20 ms 延时，按一次只认一次</li>
-      </ul>
-      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
-        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
-      </p>
-    </div>
   </section>
 
 </div>

@@ -173,7 +173,18 @@ input[type=checkbox]{accent-color:var(--purple)}
   .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
   #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
 }
+
+/* 2026-08-21 培训演示重制：离线图片与更清晰的教学排版 */
+.media-split{display:grid;grid-template-columns:1.08fr .92fr;gap:20px;flex:1;min-height:0;align-items:center}
+.media-split img{width:100%;max-height:310px;object-fit:contain;border-radius:14px;background:#F7F4FE;border:1px solid var(--line);padding:10px}
+.source-note{font-size:10.5px;color:var(--muted);margin-top:5px;text-align:right}
+.gear-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:stretch}
+.gear-card{border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;background:#fff}
+.gear-card .lamp{width:34px;height:34px;border-radius:50%;margin:8px auto;border:3px solid #E8E4F4;box-shadow:0 0 18px rgba(120,76,246,.18)}
+.gear-card .rpm{font-size:24px;font-weight:800;color:var(--purple)}
+
 </style>
+<link rel="icon" href="data:,">
 </head>
 <body>
 
@@ -577,8 +588,20 @@ input[type=checkbox]{accent-color:var(--purple)}
   </section>
 
   <!-- ══════════════════ 第 24 页：延伸资源 ══════════════════ -->
+
   <section class="slide">
-    <h2 class="anim">延伸资源（链接均已验证可访问）</h2>
+    <h2 class="anim">RTT：把 PID 调参变成可复现的实验</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim"><h3>上传</h3><p>固定键名输出 Target、Speed、Error、Output 和参数；控制环 1 kHz，RTT 可降到 200 Hz。</p></div>
+      <div class="card anim" style="animation-delay:.1s"><h3>观察</h3><p>目标与反馈同图，检查上升时间、超调、稳态误差、调节时间和输出饱和。</p></div>
+      <div class="card green anim" style="animation-delay:.2s"><h3>迭代</h3><p>一次只改一个参数，保存 CSV 与失败参数；曲线证据决定下一步，不凭“听起来顺”。</p></div>
+    </div>
+    <pre class="anim" style="animation-delay:.3s">Time:1250,Target:3000,Speed:2875,Error:125,Output:4120,Kp:0.80,Ki:0.02,Kd:0.00</pre>
+    <div class="callout tip anim" style="animation-delay:.4s;margin-top:10px">下一节大作业会要求用战队 RTT 工具保存三轮数据，并在线调整 PID 参数。</div>
+  </section>
+
+<section class="slide">
+    <h2 class="anim">补充内容与延伸资源</h2>
     <div class="grid" style="flex:1;align-content:center;gap:8px">
       <div class="card white anim" style="animation-delay:.1s;padding:8px 14px">
         <h3 style="margin:0 0 2px">Brian Douglas《PID Control - A brief introduction》</h3>
@@ -605,25 +628,6 @@ input[type=checkbox]{accent-color:var(--purple)}
         <p class="small muted">PID Tuner / pidtune 自动调参工具索引：2.5 或综合作业再回来看。</p>
         <p class="small"><a href="https://www.mathworks.com/help/control/pid-controller-design.html">mathworks.com/help/control/pid-controller-design.html</a></p>
       </div>
-    </div>
-  </section>
-
-  <!-- ══════════════════ 最后一页：回顾（暗色） ══════════════════ -->
-  <section class="slide" data-theme="purple">
-    <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
-    <div class="cover-center" style="justify-content:center">
-      <div class="sec anim" style="animation-delay:.1s">RECAP</div>
-      <h1 class="anim" style="animation-delay:.15s;font-size:38px">本节回顾</h1>
-      <ul class="anim" style="animation-delay:.25s;font-size:16px;line-height:2">
-        <li>闭环 = 测差距、消差距；开环蒙眼，闭环睁眼</li>
-        <li>P 看现在、I 算旧账、D 猜未来</li>
-        <li>调参顺序：先 P、再 I、最后 D</li>
-        <li>dt 固定 + 积分限幅（2.5 展开）</li>
-        <li>课后：速度闭环跑通 + 调参记录 + 自测</li>
-      </ul>
-      <p class="anim" style="animation-delay:.35s;color:rgba(255,255,255,.72);font-size:15px">
-        自学资料见 <strong>教学内容.md</strong> 的「延伸资源」章节，并完成课后自测。
-      </p>
     </div>
   </section>
 

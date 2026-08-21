@@ -1,181 +1,15 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1.7 入队综合作业 · ARTINX 电控培训</title>
-<!--
-  ============================================================
-  ARTINX 电控组培训 · 幻灯片框架模板（自包含，无外部依赖）
-  风格参照队内 PPT 模板：暗色封面（黑底 + 紫色光晕 + 荧光绿），
-  内容页白底为主，品牌紫 #784CF6 / 荧光绿 #AFFF00。
-  用法：复制本文件为 演示文档.html，替换 <body> 中的
-  <section class="slide"> 内容，并在末尾 <script> 中注册交互演示。
-  队徽路径 ../../assets/ 适用于「入队前培训/1.x 小节/演示文档.html」
-  两层目录结构，请勿改动。
-  注意：全篇不得使用 emoji；封面署名「电控组长 董心宇」，
-  封面不写建议课时与前置要求；正文术语严谨，类比一句话带过。
-  ============================================================
--->
-<style>
-/* ============ 品牌变量 ============ */
-:root{
-  --purple:#784CF6;          /* 品牌紫 */
-  --purple-deep:#5A2FD0;
-  --purple-dark:#512FA3;     /* PPT 模板暗底紫光主色 */
-  --green:#AFFF00;           /* PPT 模板荧光绿 */
-  --green-ink:#3C6400;       /* 白底上的绿色文字 */
-  --ink:#262034;             /* 主文字 */
-  --muted:#5A5468;           /* 次要文字 */
-  --lavender:#E3DBFC;        /* 浅紫 */
-  --line:#E8E4F4;            /* 分隔线 */
-  --panel:#F7F4FE;           /* 浅紫面板 */
-  --grad:linear-gradient(135deg,#512FA3 0%,#784CF6 100%);
-  --grad-green:linear-gradient(135deg,#AFFF00 0%,#7FD400 100%);
-  --mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,monospace;
-}
-/* ============ 基础 ============ */
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%}
-body{
-  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Roboto,sans-serif;
-  background:#E9E7F0;color:var(--ink);
-  overflow:hidden;-webkit-font-smoothing:antialiased;
-}
-/* ============ 舞台 ============ */
-#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:46px 8px 36px}
-#deck{position:relative;width:min(97vw,calc((100vh - 86px) * 16 / 9));aspect-ratio:16/9;
-  border-radius:14px;overflow:hidden;
-  box-shadow:0 16px 48px rgba(38,32,52,.20),0 3px 10px rgba(38,32,52,.10);
-  background:#fff}
-.slide{position:absolute;inset:0;padding:30px 46px 26px;background:#fff;
-  opacity:0;visibility:hidden;transform:translateX(40px);transition:all .4s cubic-bezier(.25,.8,.3,1);
-  display:flex;flex-direction:column;overflow:hidden}
-.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
-.slide.prev{transform:translateX(-40px)}
-.slide.next{transform:translateX(40px)}
-/* 暗色主题页（封面/章节页/结束页）：黑底 + 紫色光晕 + 荧光绿点缀（参照队内 PPT 模板） */
-.slide[data-theme="purple"]{background:#0A0812;color:#fff}
-.slide[data-theme="purple"]::before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:
-    radial-gradient(760px 480px at 82% 12%,rgba(99,57,200,.55),transparent 62%),
-    radial-gradient(640px 520px at 8% 96%,rgba(81,47,163,.60),transparent 60%),
-    radial-gradient(420px 300px at 60% 70%,rgba(120,76,246,.28),transparent 65%),
-    radial-gradient(300px 180px at 90% 88%,rgba(175,255,0,.10),transparent 60%);
-}
-/* 内容页右上角小徽章（框架自动注入） */
-.corner-logo{position:absolute;top:16px;right:20px;height:32px;opacity:.92;border-radius:6px;z-index:3}
-/* ============ 入场动画 ============ */
-.anim{opacity:0;transform:translateY(12px)}
-.slide.active .anim.anim-run{animation:rise .5s cubic-bezier(.2,.7,.3,1) forwards}
-@keyframes rise{to{opacity:1;transform:none}}
-/* ============ 排版（小字号，保证内容放得下） ============ */
-.slide h1{font-size:40px;font-weight:800;letter-spacing:.5px}
-.slide h2{font-size:24px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-right:52px}
-.slide h2::before{content:"";width:8px;height:20px;border-radius:3px;background:var(--grad-green);flex:none}
-.slide h3{font-size:17px;font-weight:700;margin:10px 0 6px}
-.slide p{font-size:14.5px;line-height:1.62}
-.slide li{font-size:14.5px;line-height:1.58}
-.slide ul,.slide ol{padding-left:1.35em}
-.slide em{color:var(--purple);font-style:normal;font-weight:700}
-.slide strong{color:var(--purple)}
-.slide[data-theme="purple"] strong,.slide[data-theme="purple"] em{color:var(--green)}
-.slide a{color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--lavender);transition:border-color .2s}
-.slide a:hover{border-color:var(--purple)}
-.slide[data-theme="purple"] a{color:var(--green);border-color:rgba(175,255,0,.35)}
-.muted{color:var(--muted)}
-.small{font-size:12.5px}
-.green{color:var(--green-ink)}
-/* ============ 组件 ============ */
-.chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12.5px;font-weight:700;
-  background:var(--lavender);color:var(--purple-deep)}
-.chip.green{background:rgba(175,255,0,.45);color:#2C4000}
-.chip.gray{background:#EFEDF6;color:var(--muted)}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
-.card.white{background:#fff}
-.card.green{background:linear-gradient(135deg,rgba(175,255,0,.30),rgba(175,255,0,.10));border-color:#CBE98A}
-.grid{display:grid;gap:12px}
-.grid-2{grid-template-columns:1fr 1fr}
-.grid-3{grid-template-columns:repeat(3,1fr)}
-.grid-4{grid-template-columns:repeat(4,1fr)}
-.cols{display:flex;gap:20px;flex:1;min-height:0}
-.cols>div{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
-.callout{border-radius:12px;padding:10px 16px;font-size:13.5px;line-height:1.55;border:1px solid var(--line);background:#fff}
-.callout.tip{border-color:#BFE98A;background:#F7FDEB}
-.callout.warn{border-color:#F3D9A4;background:#FFF9EC}
-.callout.danger{border-color:#F0B9C4;background:#FFF3F5}
-.kbd{display:inline-block;padding:1px 8px;border-radius:5px;border:1px solid #D5D0E6;border-bottom-width:2px;
-  background:#fff;font-family:var(--mono);font-size:12px}
-table{width:100%;border-collapse:collapse;font-size:13.5px}
-th{background:var(--lavender);color:var(--purple-deep)}
-th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
-tr:nth-child(even) td{background:#FBFAFE}
-pre{background:#262036;color:#EDE9FA;border-radius:12px;padding:12px 16px;font-family:var(--mono);
-  font-size:13px;line-height:1.55;overflow:auto}
-pre .c{color:#8F87AB}           /* 注释 */
-pre .k{color:#AFFF00}           /* 关键字 */
-pre .n{color:#F2EFFF}           /* 普通 */
-pre .s{color:#FFD166}           /* 字符串 */
-pre .f{color:#9FC6FF}           /* 函数 */
-.demo-stage{border:1px solid var(--line);border-radius:12px;background:#FBFAFE;flex:1;min-height:0;
-  position:relative;overflow:hidden;display:flex;flex-direction:column}
-.demo-stage canvas{width:100%;height:100%;flex:1;display:block}
-.demo-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;
-  border-top:1px solid var(--line);background:#fff}
-.demo-controls label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
-input[type=range]{accent-color:var(--purple);width:110px}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 15px;border-radius:999px;border:none;
-  background:var(--grad);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
-.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(120,76,246,.35)}
-.btn.green{background:var(--grad-green);color:#274500}
-.btn.ghost{background:#fff;color:var(--purple);border:2px solid var(--lavender)}
-/* ============ 封面（暗色，参照 PPT 模板） ============ */
-.cover-logo{position:absolute;top:28px;left:44px;height:42px}
-.cover-center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-top:8px}
-.cover-center .sec{display:inline-block;width:fit-content;padding:4px 16px;border-radius:999px;
-  font-size:15px;font-weight:800;letter-spacing:3px;color:var(--green);
-  background:rgba(175,255,0,.10);border:1px solid rgba(175,255,0,.55)}
-.cover-center h1{font-size:52px;line-height:1.16}
-.cover-center .sub{font-size:18px;color:rgba(255,255,255,.78)}
-.cover-divider{width:96px;height:5px;border-radius:3px;background:var(--grad-green)}
-.cover-sign{position:absolute;bottom:26px;left:44px;font-size:15px;color:rgba(255,255,255,.85);
-  display:flex;align-items:center;gap:10px}
-.cover-sign::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--green)}
-/* ============ 章节页 ============ */
-.divider-num{font-size:96px;font-weight:900;line-height:1;color:rgba(255,255,255,.14);
-  position:absolute;top:24px;right:46px}
-/* ============ 结束页 ============ */
-.end-logo{height:64px;position:absolute;top:34px;left:44px}
-/* ============ 进度与导航 ============ */
-#progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,32,52,.08);z-index:50}
-#progressBar{height:100%;width:0;background:var(--grad-green);transition:width .4s}
-#dots{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:50}
-#dots i{width:7px;height:7px;border-radius:50%;background:#C9C3DE;cursor:pointer;transition:all .25s}
-#dots i.on{background:var(--purple);transform:scale(1.45);box-shadow:0 0 0 4px rgba(120,76,246,.16)}
-#ctrl{position:fixed;right:14px;bottom:10px;display:flex;gap:6px;z-index:50}
-#ctrl button{width:30px;height:30px;border-radius:50%;border:1px solid #D5D0E6;background:#fff;
-  font-size:13px;color:var(--purple);cursor:pointer;transition:all .15s}
-#ctrl button:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
-#brand{position:fixed;left:14px;bottom:10px;z-index:50;font-size:12px;font-weight:700;color:var(--purple);
-  display:flex;align-items:center;gap:7px}
-#brand .dot{width:9px;height:9px;border-radius:2px;background:var(--grad-green)}
-#help{position:fixed;inset:0;background:rgba(38,32,52,.55);backdrop-filter:blur(4px);z-index:100;
-  display:none;align-items:center;justify-content:center}
-#help.on{display:flex}
-#help .box{background:#fff;border-radius:16px;padding:28px 38px;max-width:520px}
-#help .box h2{font-size:19px;margin-bottom:12px}
-#help .box p{font-size:13.5px;line-height:2.3}
-#help kbd{font-family:var(--mono)}
-.edge{position:absolute;top:0;bottom:0;width:9%;cursor:pointer;z-index:5}
-.edge.left{left:0}.edge.right{right:0}
-/* ============ 打印 ============ */
-@media print{
-  body{overflow:visible;background:#fff}
-  .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always}
-  #progress,#dots,#ctrl,#brand,#help,.edge,.corner-logo{display:none}
-}
+from __future__ import annotations
 
+import re
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+PRE = ROOT / "入队前培训"
+TEMPLATE = (ROOT / "_internal" / "SLIDE_TEMPLATE.html").read_text(encoding="utf-8")
+
+
+EXTRA_CSS = """
 /* 2026-08-21 培训演示重制：离线图片与更清晰的教学排版 */
 .media-split{display:grid;grid-template-columns:1.08fr .92fr;gap:20px;flex:1;min-height:0;align-items:center}
 .media-split img{width:100%;max-height:310px;object-fit:contain;border-radius:14px;background:#F7F4FE;border:1px solid var(--line);padding:10px}
@@ -184,48 +18,162 @@ input[type=range]{accent-color:var(--purple);width:110px}
 .gear-card{border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;background:#fff}
 .gear-card .lamp{width:34px;height:34px;border-radius:50%;margin:8px auto;border:3px solid #E8E4F4;box-shadow:0 0 18px rgba(120,76,246,.18)}
 .gear-card .rpm{font-size:24px;font-weight:800;color:var(--purple)}
+"""
 
-</style>
-<link rel="icon" href="data:,">
-</head>
-<body>
 
-<div id="progress"><div id="progressBar"></div></div>
-<div id="dots"></div>
-<div id="ctrl">
-  <button id="btnPrev" title="上一页 (←)">←</button>
-  <button id="btnNext" title="下一页 (→)">→</button>
-  <button id="btnFull" title="全屏 (F)">⤢</button>
-  <button id="btnHelp" title="帮助 (?)">?</button>
-</div>
-<div id="brand"><span class="dot"></span>ARTINX 电控组 · 2027 赛季培训</div>
+def replace_slide(html: str, title: str, new_section: str) -> str:
+    pattern = re.compile(
+        r'<section class="slide"[^>]*>(?:(?!<section class="slide").)*?'
+        + re.escape(title)
+        + r'(?:(?!<section class="slide").)*?</section>',
+        re.S,
+    )
+    result, count = pattern.subn(new_section.strip(), html, count=1)
+    if count == 0:
+        heading = re.search(r"<h2[^>]*>(.*?)</h2>", new_section, re.S)
+        expected = re.sub(r"<[^>]+>", "", heading.group(1)).strip() if heading else ""
+        if expected and expected in html:
+            return html
+    if count != 1:
+        raise RuntimeError(f"未唯一找到幻灯片：{title}，匹配数 {count}")
+    return result
 
-<div id="help"><div class="box">
-  <h2>快捷键</h2>
-  <p>
-    <kbd>←</kbd> <kbd>→</kbd> / <kbd>空格</kbd> 翻页
-    <kbd>Home</kbd> <kbd>End</kbd> 首尾页<br>
-    <kbd>F</kbd> 全屏　<kbd>?</kbd> 帮助　<kbd>Esc</kbd> 关闭本框<br>
-    点击画面左右边缘 / 滑动手势也可以翻页<br>
-    带滑块的画面是实时交互演示，可放心拖动。
-  </p>
-</div></div>
 
-<main id="stage">
-<div id="deck">
-<section class="slide" data-theme="purple">
+def remove_recap_and_normalize(path: Path) -> None:
+    html = path.read_text(encoding="utf-8")
+    html = re.sub(
+        r'\s*<!--[^>]*最后一页[^>]*-->\s*<section class="slide"[^>]*>.*?本节回顾.*?</section>',
+        "",
+        html,
+        flags=re.S,
+    )
+    html = re.sub(
+        r'\s*<section class="slide"[^>]*>(?:(?!<section class="slide").)*?本节回顾(?:(?!<section class="slide").)*?</section>',
+        "",
+        html,
+        flags=re.S,
+    )
+    html = html.replace("延伸资源（均已验证可访问）", "补充内容与延伸资源")
+    html = html.replace("延伸资源（课后自学）", "补充内容与延伸资源")
+    html = html.replace("延伸资源（自学用）", "补充内容与延伸资源")
+    html = html.replace("延伸资源（链接均已验证可访问）", "补充内容与延伸资源")
+    html = html.replace(">延伸资源<", ">补充内容与延伸资源<")
+    if '<link rel="icon" href="data:,">' not in html:
+        html = html.replace("</head>", '<link rel="icon" href="data:,">\n</head>', 1)
+    if EXTRA_CSS.strip() not in html:
+        html = html.replace("</style>", EXTRA_CSS + "\n</style>", 1)
+    path.write_text(html, encoding="utf-8", newline="\n")
 
+
+def update_existing_decks() -> None:
+    for section in sorted(PRE.iterdir()):
+        if section.is_dir() and section.name.startswith(("1.1", "1.2", "1.3", "1.4", "1.5", "1.6")):
+            remove_recap_and_normalize(section / "演示文档.html")
+
+    p13 = PRE / "1.3 单片机初步认识" / "演示文档.html"
+    html = p13.read_text(encoding="utf-8")
+    html = replace_slide(
+        html,
+        "什么是单片机",
+        """
+  <section class="slide">
+    <h2 class="anim">C 板就是一台微型专用计算机</h2>
+    <div class="media-split">
+      <div>
+        <p class="anim" style="animation-delay:.1s">单片机（MCU，Microcontroller Unit）把 <em>CPU、Flash、RAM 和外设</em>集成到一颗芯片。它不运行桌面软件，只按固定周期、固定优先级执行机器人控制任务。</p>
+        <ul class="anim" style="animation-delay:.2s">
+          <li>CPU 执行指令；Flash 保存程序；RAM 保存运行变量。</li>
+          <li>GPIO、Timer、CAN、UART 等外设直接连接真实硬件。</li>
+          <li>RoboMaster C 板主控为 STM32F407IGHx，板载 CAN、IMU、用户按键和 RGB LED。</li>
+        </ul>
+        <div class="callout tip anim" style="animation-delay:.3s;margin-top:10px">一句话：单片机是把程序变成电平、数据帧和电机动作的桥梁。</div>
+      </div>
+      <div class="anim" style="animation-delay:.2s">
+        <img src="../../assets/training/cboard_type_c_official.jpg" alt="RoboMaster 开发板 C 型">
+        <div class="source-note">图片：RoboMaster 开发板 C 型官方产品页</div>
+      </div>
+    </div>
+  </section>
+""",
+    )
+    html = replace_slide(
+        html,
+        "按键防抖：按一次只认一次",
+        """
+  <section class="slide">
+    <h2 class="anim">按键防抖：先确认稳定，再产生一次事件</h2>
+    <div class="cols">
+      <div>
+        <p class="anim">机械触点会在几毫秒内反复通断。主循环如果直接把“电平为低”当成一次按键，就会在按住期间连续触发。</p>
+        <pre class="anim" style="animation-delay:.15s"><span class="c">/* 伪代码：非阻塞消抖 */</span>
+raw = <span class="f">ReadKey</span>();
+<span class="k">if</span> (raw != candidate) { candidate = raw; changed_at = now; }
+<span class="k">if</span> (now - changed_at &gt;= <span class="n">20</span> &amp;&amp; stable != candidate) {
+    stable = candidate;
+    <span class="k">if</span> (stable == PRESSED) key_event = <span class="n">1</span>;
+}</pre>
+      </div>
+      <div>
+        <div class="card anim" style="animation-delay:.2s">
+          <h3>C 板实物对应</h3>
+          <table><tr><th>功能</th><th>引脚</th><th>有效电平</th></tr>
+          <tr><td>用户按键</td><td>PA0</td><td>按下为低</td></tr>
+          <tr><td>蓝/绿/红 LED</td><td>PH10/11/12</td><td>高电平点亮</td></tr></table>
+        </div>
+        <div class="callout warn anim" style="animation-delay:.3s;margin-top:10px">防抖不能用 20 ms 阻塞延时卡住 1 ms 电机控制任务；按键逻辑应产生“事件”，控制任务读取事件。</div>
+      </div>
+    </div>
+  </section>
+""",
+    )
+    p13.write_text(html, encoding="utf-8", newline="\n")
+
+    p15 = PRE / "1.5 PID与闭环控制" / "演示文档.html"
+    html = p15.read_text(encoding="utf-8")
+    resource_marker = re.search(
+        r'<section class="slide"[^>]*>(?:(?!<section class="slide").)*?补充内容与延伸资源', html, re.S
+    )
+    if not resource_marker:
+        raise RuntimeError("1.5 未找到补充内容页")
+    insert_at = resource_marker.start()
+    rtt_slide = """
+  <section class="slide">
+    <h2 class="anim">RTT：把 PID 调参变成可复现的实验</h2>
+    <div class="grid grid-3" style="flex:1;align-content:center">
+      <div class="card anim"><h3>上传</h3><p>固定键名输出 Target、Speed、Error、Output 和参数；控制环 1 kHz，RTT 可降到 200 Hz。</p></div>
+      <div class="card anim" style="animation-delay:.1s"><h3>观察</h3><p>目标与反馈同图，检查上升时间、超调、稳态误差、调节时间和输出饱和。</p></div>
+      <div class="card green anim" style="animation-delay:.2s"><h3>迭代</h3><p>一次只改一个参数，保存 CSV 与失败参数；曲线证据决定下一步，不凭“听起来顺”。</p></div>
+    </div>
+    <pre class="anim" style="animation-delay:.3s">Time:1250,Target:3000,Speed:2875,Error:125,Output:4120,Kp:0.80,Ki:0.02,Kd:0.00</pre>
+    <div class="callout tip anim" style="animation-delay:.4s;margin-top:10px">下一节大作业会要求用战队 RTT 工具保存三轮数据，并在线调整 PID 参数。</div>
+  </section>
+
+"""
+    if "RTT：把 PID 调参变成可复现的实验" not in html:
+        html = html[:insert_at] + rtt_slide + html[insert_at:]
+    html = re.sub(r"[ \t]+$", "", html, flags=re.M)
+    p15.write_text(html, encoding="utf-8", newline="\n")
+
+
+def s(title: str, body: str, theme: str = "") -> str:
+    attr = ' data-theme="purple"' if theme else ""
+    return f'<section class="slide"{attr}>\n{body}\n</section>'
+
+
+def build_assignment_deck() -> None:
+    prefix, tail = TEMPLATE.split('<div id="deck">', 1)
+    _, suffix = tail.split("</main>", 1)
+    framework = suffix.split("/* ================= 交互演示注册区（各小节自行编写） ================= */", 1)[0]
+    slides: list[str] = []
+    slides.append(s("封面", """
     <img class="cover-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
     <div class="cover-center"><div class="sec anim">1.7　入队综合作业</div>
       <h1 class="anim" style="animation-delay:.15s">四档电机速度控制器</h1>
       <div class="cover-divider anim" style="animation-delay:.25s"></div>
       <div class="sub anim" style="animation-delay:.35s">C 板按键 · RGB LED · PID 速度环 · RTT 数据调参</div>
     </div><div class="cover-sign anim" style="animation-delay:.45s">电控组长 董心宇</div>
-
-</section>
-
-<section class="slide">
-
+""", "purple"))
+    slides.append(s("完成线", """
     <h2 class="anim">完成线不是“电机转了”，而是闭环、可测、可解释</h2>
     <div class="gear-row" style="margin-top:18px">
       <div class="gear-card anim"><h3>0 档</h3><div class="lamp"></div><div class="rpm">0</div><p>上电默认，输出清零</p></div>
@@ -234,11 +182,8 @@ input[type=range]{accent-color:var(--purple);width:110px}
       <div class="gear-card anim" style="animation-delay:.3s"><h3>高速</h3><div class="lamp" style="background:#EF4444"></div><div class="rpm">5000</div><p>红灯，最后验证</p></div>
     </div>
     <div class="callout tip anim" style="margin-top:16px;animation-delay:.4s">每按一次 KEY：0 → 低 → 中 → 高 → 0；三档都必须由 PID 根据 CAN 反馈闭环控制。</div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("硬件与安全", """
     <h2 class="anim">先把危险路径关掉，再开始写控制</h2>
     <div class="media-split"><div>
       <ul class="anim"><li>C 板、统一 CAN 电机与电调、调试器、限流电源、固定台架。</li>
@@ -247,11 +192,8 @@ input[type=range]{accent-color:var(--purple);width:110px}
       <li>异响、反向加速、过热、CAN 掉线：立即断电。</li></ul>
       <div class="callout danger anim" style="animation-delay:.2s;margin-top:12px">上电高速转、掉线继续输出、无输出限幅，均为验收红线。</div>
     </div><div class="anim"><img src="../../assets/training/cboard_type_c_official.jpg" alt="RoboMaster 开发板 C 型"><div class="source-note">图片：RoboMaster 官方产品页</div></div></div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("引脚", """
     <h2 class="anim">C 板引脚按官方手册配置，不凭经验猜</h2>
     <table class="anim"><tr><th>功能</th><th>引脚</th><th>有效电平</th><th>作业用途</th></tr>
       <tr><td>KEY</td><td>PA0</td><td>按下为低</td><td>产生一次档位切换事件</td></tr>
@@ -259,18 +201,12 @@ input[type=range]{accent-color:var(--purple);width:110px}
       <tr><td>LED_G</td><td>PH11</td><td>高电平点亮</td><td>中速档</td></tr>
       <tr><td>LED_R</td><td>PH12</td><td>高电平点亮</td><td>高速档；故障时闪烁</td></tr></table>
     <div class="grid grid-2" style="margin-top:14px"><div class="card anim"><h3>CubeMX</h3><p>起始 `.ioc` 可能未启用这些 GPIO。配置后重新生成，并检查自定义代码仍在 USER CODE 区域。</p></div><div class="card green anim"><h3>单色自测</h3><p>电机不通电，逐个点亮蓝/绿/红，再读 PA0 原始值；先证明引脚，再写状态机。</p></div></div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("模式", """
     <h2 class="anim">模式管理只接受“按下事件”，不直接跟随原始电平</h2>
     <div class="demo-stage anim"><canvas data-demo="modecycle"></canvas><div class="demo-controls"><button class="btn" id="modeNext">模拟按下一次 KEY</button><button class="btn ghost" id="modeReset">上电复位</button><span class="small muted" id="modeText">当前：0 档</span></div></div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("防抖", """
     <h2 class="anim">非阻塞防抖：稳定 20 ms 后只发一次事件</h2>
     <div class="cols"><div><pre class="anim">raw = ReadKey();
 if (raw != candidate) {
@@ -281,19 +217,13 @@ if (now - changed_at &gt;= 20 &amp;&amp; stable != candidate) {
     stable = candidate;
     if (stable == PRESSED) key_event = 1;
 }</pre></div><div><ul class="anim"><li>按住期间 stable 不再变化，所以不会连跳。</li><li>机械弹跳只会更新 candidate，不立即改变档位。</li><li>不得用 20 ms `HAL_Delay()` 阻塞 1 ms 控制任务。</li><li>验收会连续按 8 次并故意长按。</li></ul></div></div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("模块", """
     <h2 class="anim">四个职责分开，调试时才能逐层定位</h2>
     <div class="grid grid-4" style="flex:1;align-content:center"><div class="card anim"><h3>Button</h3><p>读 PA0、消抖、产生一次事件</p></div><div class="card anim" style="animation-delay:.1s"><h3>ModeManager</h3><p>四档状态、目标 RPM、LED 映射</p></div><div class="card anim" style="animation-delay:.2s"><h3>MotorCtrl</h3><p>CAN 反馈、PID、限幅、发送控制量</p></div><div class="card green anim" style="animation-delay:.3s"><h3>Telemetry</h3><p>RTT 上传、参数写入、CSV 证据</p></div></div>
     <div class="callout anim">名字可以不同，但不能把按键、PID、RTT 和故障逻辑堆进一个无限循环。</div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("闭环", """
     <h2 class="anim">速度环每 1 ms 更新，RTT 每 5 ms 采样</h2>
     <pre class="anim" style="font-size:15px;line-height:1.8">档位 ──▶ target_rpm ─┐
                       ├─▶ error ─▶ PID ─▶ current_cmd ─▶ CAN 电调 ─▶ 电机
@@ -301,75 +231,48 @@ CAN 反馈 ─▶ speed_rpm ┘                                          │
       ▲                                                           │
       └──────────────────── 编码器反馈 ────────────────────────────┘</pre>
     <div class="grid grid-3" style="margin-top:12px"><div class="card anim"><h3>控制任务</h3><p>固定周期，误差方向 target - feedback。</p></div><div class="card anim"><h3>停止路径</h3><p>0 档与故障：目标、输出、积分全部清零。</p></div><div class="card green anim"><h3>采样任务</h3><p>降低输出频率，避免 RTT 打印干扰控制。</p></div></div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("PID要求", """
     <h2 class="anim">PID 的“能用”包含限幅、复位和参数边界</h2>
     <table class="anim"><tr><th>要求</th><th>为什么</th><th>验收方法</th></tr><tr><td>输出限幅</td><td>限制最大电流命令</td><td>检查 Output 不越界</td></tr><tr><td>积分限幅</td><td>避免长时间累积</td><td>目标切换时无持续大冲击</td></tr><tr><td>0 档清积分</td><td>停机后不能保存旧推力</td><td>高速回 0 再进低速</td></tr><tr><td>参数集中配置</td><td>避免多处数值互相覆盖</td><td>现场修改一个参数</td></tr><tr><td>NaN/越界拒绝</td><td>在线写内存也可能写错</td><td>输入异常值不应用</td></tr></table>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("RTT上传", """
     <h2 class="anim">固定键名让曲线、CSV 和报告指向同一组数据</h2>
     <pre class="anim">SEGGER_RTT_printf(0,
   "Time:%lu,Mode:%d,Target:%.2f,Speed:%.2f,"
-  "Error:%.2f,Output:%.2f,Kp:%.5f,Ki:%.5f,Kd:%.5f\n",
+  "Error:%.2f,Output:%.2f,Kp:%.5f,Ki:%.5f,Kd:%.5f\\n",
   Time::GetTick(), mode, target, speed,
   target - speed, output, kp, ki, kd);</pre>
     <div class="grid grid-3" style="margin-top:12px"><div class="card anim"><h3>必须</h3><p>键值对、逗号分隔、换行结束。</p></div><div class="card anim"><h3>必须</h3><p>字段语义与固件版本一致。</p></div><div class="card green anim"><h3>建议</h3><p>5 ms 输出；如丢样，再降频或减字段。</p></div></div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("PID演示", """
     <h2 class="anim">演示：一次只改一个参数，观察目标与反馈</h2>
     <div class="demo-stage anim"><canvas data-demo="pidresponse"></canvas><div class="demo-controls"><label>Kp <input id="taskKp" type="range" min="0" max="3" step="0.05" value="0.8"><span id="taskKpV">0.80</span></label><label>Ki <input id="taskKi" type="range" min="0" max="2" step="0.02" value="0.12"><span id="taskKiV">0.12</span></label><button class="btn ghost" id="pidReset">重新阶跃</button><span class="small muted">绿虚线：目标；紫线：实际；灰线：输出</span></div></div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("在线调参", """
     <h2 class="anim">在线写入必须“校验—应用—回传确认”</h2>
     <div class="grid grid-4" style="flex:1;align-content:center"><div class="card anim"><h3>1 写入</h3><p>工具把参数写入公开的 volatile 结构体。</p></div><div class="card anim"><h3>2 校验</h3><p>检查通道、ID、有限数、限幅和允许范围。</p></div><div class="card anim"><h3>3 应用</h3><p>仅参数变化时 SetParams，并安全处理积分。</p></div><div class="card green anim"><h3>4 回传</h3><p>RTT 返回当前 Kp/Ki/Kd，确认真正生效。</p></div></div>
     <div class="callout warn anim">工具当前通过调试器直接写内存；重新编译后地址可能变化。旧 ELF/MAP 地址禁止继续使用。</div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("三轮实验", """
     <h2 class="anim">至少三轮数据，其中一轮必须“不够好”</h2>
     <table class="anim"><tr><th>轮次</th><th>目的</th><th>只允许改什么</th><th>交付证据</th></tr><tr><td>A</td><td>只有 P 的基线</td><td>先扫 Kp，Ki=Kd=0</td><td>CSV、曲线、现象</td></tr><tr><td>B</td><td>针对问题改进</td><td>只改 P 或只加入 I</td><td>与 A 同条件对比</td></tr><tr><td>C</td><td>最终三档循环</td><td>锁定最终参数</td><td>0/低/中/高/0 完整数据</td></tr></table>
     <div class="callout tip anim" style="margin-top:14px">记录前写预测，记录后写结果：每轮都要能回答“为什么这样改、数据支持什么结论”。</div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("指标", """
     <h2 class="anim">不要只看“曲线挺顺”，用五个指标说话</h2>
     <div class="grid grid-3" style="flex:1;align-content:center"><div class="card anim"><h3>上升时间</h3><p>进入目标附近用了多久。</p></div><div class="card anim"><h3>最大超调</h3><p>峰值超过目标多少。</p></div><div class="card anim"><h3>稳态误差</h3><p>稳定后平均值与目标之差。</p></div><div class="card anim"><h3>调节时间</h3><p>进入并持续保持在误差带内多久。</p></div><div class="card anim"><h3>饱和比例</h3><p>输出有多少时间顶住限幅。</p></div><div class="card green anim"><h3>数据质量</h3><p>时间单调、字段齐全、固件与日志匹配。</p></div></div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("功能验收", """
     <h2 class="anim">功能验收：8 次按键 + 断线测试</h2>
     <div class="cols"><div><ol class="anim"><li>上电 3 s 内电机不转，LED 熄灭。</li><li>连续按 8 次，四档严格循环两轮。</li><li>故意长按，不能连续跳档。</li><li>蓝/绿/红对应低/中/高。</li><li>三档均由 PID 闭环，不是固定电流。</li></ol></div><div><ol class="anim" start="6"><li>高速回 0 后输出与积分清零。</li><li>断开 CAN，100 ms 内停机并红灯闪烁。</li><li>恢复 CAN 后不得自动高速重启。</li></ol><div class="callout danger anim" style="margin-top:12px">故障必须回到 0 档或重新上电后再恢复。</div></div></div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("性能验收", """
     <h2 class="anim">性能验收：统一目标、统一台架、统一误差带</h2>
     <table class="anim"><tr><th>项目</th><th>要求</th><th>数据证据</th></tr><tr><td>稳态误差</td><td>低/中/高均在目标 ±5%</td><td>稳定区间平均值</td></tr><tr><td>调节时间</td><td>2 s 内进入并保持在 ±5%</td><td>Target/Speed 曲线</td></tr><tr><td>振荡与饱和</td><td>无持续振荡、无长时间饱和</td><td>Error/Output 曲线</td></tr><tr><td>长期运行</td><td>四档循环 5 min 无异常</td><td>完整 CSV 与现场演示</td></tr></table>
     <div class="callout anim" style="margin-top:14px">若硬件条件需要修改目标或阈值，导师必须在发题前统一修改，不能现场对个人临时放宽。</div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("提交", """
     <h2 class="anim">提交的是可复验工程，不是一段演示视频</h2>
     <pre class="anim">姓名_入队作业/
 ├─ source/          最终源代码与工程
@@ -380,138 +283,23 @@ CAN 反馈 ─▶ speed_rpm ┘                                          │
 ├─ DEBUG_LOG.md     两个真实问题的证据链
 └─ README.md        接线、编译、烧录、操作</pre>
     <div class="callout tip anim" style="margin-top:12px">发放框架是去 Git 版本；本作业不要求 Git 历史，也不要为了评分伪造提交记录。</div>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("评分", """
     <h2 class="anim">100 分里，RTT 数据与在线调参占 35 分</h2>
     <table class="anim"><tr><th>项目</th><th>分值</th><th>关键证据</th></tr><tr><td>四档与 LED</td><td>20</td><td>防抖、顺序、颜色、上电 0 档</td></tr><tr><td>PID 速度闭环</td><td>25</td><td>固定周期、限幅、三档性能</td></tr><tr><td>RTT 监控与保存</td><td>20</td><td>字段、曲线、三轮 CSV</td></tr><tr><td>RTT 在线调参</td><td>15</td><td>写入、校验、应用、回读</td></tr><tr><td>安全与异常</td><td>10</td><td>零输出、CAN 超时、故障不自启</td></tr><tr><td>工程说明与答辩</td><td>10</td><td>可复验、能解释、能现场修改</td></tr></table>
-
-</section>
-
-<section class="slide">
-
+"""))
+    slides.append(s("补充", """
     <h2 class="anim">补充内容与资料：都已放在本节文件夹</h2>
     <div class="grid grid-2" style="flex:1;align-content:center"><div class="card anim"><h3>离线资料</h3><ul><li>去 Git 战队代码框架 ZIP</li><li>去 Git RTT 工具 ZIP</li><li>C 板、M3508、C620 官方手册</li><li>RTT 调参指南与评分验收表</li></ul></div><div class="card anim"><h3>在线入口</h3><ul><li><a href="https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c">RoboMaster C 板产品页</a></li><li><a href="https://www.segger.com/products/debug-probes/j-link/technology/about-real-time-transfer/">SEGGER RTT 技术介绍</a></li><li><a href="https://www.st.com/en/microcontrollers-microprocessors/stm32f407-417.html">STM32F407/417 官方页</a></li></ul></div></div>
     <div class="callout warn anim">在线参数写入目前依赖当前固件内存地址；以随附指南和当前 MAP/ELF 为准。</div>
-
-</section>
-
-<section class="slide" data-theme="purple">
-
+"""))
+    slides.append(s("开始", """
     <img class="end-logo anim" src="../../assets/ARTINX.png" alt="ARTINX">
     <div class="cover-center"><div class="sec anim">START SAFE</div><h1 class="anim" style="font-size:38px">第一步：电机不通电，只做按键和灯</h1><div class="cover-divider anim"></div>
       <ul class="anim" style="font-size:17px;line-height:1.9"><li>核对 PA0、PH10、PH11、PH12</li><li>单色点亮蓝、绿、红</li><li>实现非阻塞防抖与四档循环</li><li>通过连续 8 次按键测试后，再接电机</li></ul></div>
+""", "purple"))
 
-</section>
-</div>
-</main>
-
-<script>
-/* ================= 幻灯片框架（勿删改本节逻辑） ================= */
-const deck = document.getElementById('deck');
-const slides = [...deck.querySelectorAll('.slide')];
-const dotsEl = document.getElementById('dots');
-const bar = document.getElementById('progressBar');
-let cur = Math.min(parseInt(location.hash.replace(/^#\//, '')) || 0, slides.length - 1);
-
-// 侧边圆点导航
-slides.forEach((_, i) => {
-  const d = document.createElement('i');
-  d.title = '第 ' + (i + 1) + ' 页';
-  d.onclick = () => go(i);
-  dotsEl.appendChild(d);
-});
-const dots = [...dotsEl.children];
-
-// 内容页右上角注入小队徽
-slides.forEach(s => {
-  if (!s.hasAttribute('data-theme')) {
-    const img = document.createElement('img');
-    img.className = 'corner-logo';
-    img.src = '../../assets/ARTINX_logo_2023.png';
-    img.alt = 'ARTINX';
-    s.appendChild(img);
-  }
-});
-
-const DEMOS = window.ARTINX_DEMOS = window.ARTINX_DEMOS || {};
-
-function enterDemo(s) {
-  s.querySelectorAll('canvas[data-demo]').forEach(c => {
-    const d = DEMOS[c.dataset.demo];
-    if (d && d.init) { try { d.init(c, s); } catch (e) { console.error('demo init 失败:', c.dataset.demo, e); } }
-  });
-}
-function leaveDemo(s) {
-  s.querySelectorAll('canvas[data-demo]').forEach(c => {
-    const d = DEMOS[c.dataset.demo];
-    if (d && d.destroy) { try { d.destroy(); } catch (e) { console.error(e); } }
-  });
-}
-function go(i) {
-  i = (i + slides.length) % slides.length;
-  cur = i;
-  slides.forEach((s, idx) => {
-    const on = idx === i;
-    s.classList.toggle('active', on);
-    s.classList.toggle('prev', idx < i);
-    s.classList.toggle('next', idx > i);
-    if (on) {
-      if (!s.dataset.entered) {
-        s.dataset.entered = '1';
-        s.querySelectorAll('.anim').forEach(el => {
-          el.classList.add('anim-run');
-        });
-      }
-      enterDemo(s);
-    } else if (s.dataset.entered) {
-      s.dataset.entered = '';
-      s.querySelectorAll('.anim').forEach(el => el.classList.remove('anim-run'));
-      leaveDemo(s);
-    }
-  });
-  dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
-  bar.style.width = ((i + 1) / slides.length * 100) + '%';
-  history.replaceState(null, '', '#/' + i);
-}
-window.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
-  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
-  else if (e.key === 'Home') go(0);
-  else if (e.key === 'End') go(slides.length - 1);
-  else if (e.key.toLowerCase() === 'f') toggleFull();
-  else if (e.key === '?') help.classList.toggle('on');
-  else if (e.key === 'Escape') help.classList.remove('on');
-});
-document.getElementById('btnPrev').onclick = () => go(cur - 1);
-document.getElementById('btnNext').onclick = () => go(cur + 1);
-document.getElementById('btnHelp').onclick = () => help.classList.toggle('on');
-const help = document.getElementById('help');
-function toggleFull() {
-  if (document.fullscreenElement) document.exitFullscreen();
-  else document.documentElement.requestFullscreen().catch(() => {});
-}
-document.getElementById('btnFull').onclick = toggleFull;
-// 点击边缘翻页
-['left', 'right'].forEach(side => {
-  const e = document.createElement('div');
-  e.className = 'edge ' + side;
-  e.onclick = () => go(cur + (side === 'right' ? 1 : -1));
-  deck.appendChild(e);
-});
-// 触摸滑动
-let tx = 0;
-window.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
-window.addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - tx;
-  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
-}, { passive: true });
-
-go(cur);
-
-
+    demo_js = r'''
 /* ================= 交互演示注册区（1.7） ================= */
 function fit(c) {
   const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
@@ -543,3 +331,21 @@ go(cur);
 </script>
 </body>
 </html>
+'''
+    html = prefix.replace("</style>", EXTRA_CSS + "\n</style>", 1)
+    if '<link rel="icon" href="data:,">' not in html:
+        html = html.replace("</head>", '<link rel="icon" href="data:,">\n</head>', 1)
+    html += '<div id="deck">\n' + "\n\n".join(slides) + "\n</div>\n</main>" + framework + demo_js
+    html = html.replace("<title>1.x 节标题 · ARTINX 电控培训</title>", "<title>1.7 入队综合作业 · ARTINX 电控培训</title>")
+    out = PRE / "1.7 入队综合作业" / "演示文档.html"
+    out.write_text(html, encoding="utf-8", newline="\n")
+
+
+def main() -> None:
+    update_existing_decks()
+    build_assignment_deck()
+    print("已重制入队前 1.1-1.7 演示文档")
+
+
+if __name__ == "__main__":
+    main()
