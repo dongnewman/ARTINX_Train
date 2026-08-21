@@ -52,9 +52,3 @@ RoboMaster 机甲大师机器人大赛南方科技大学 ARTINX 战队电控组�
 ## 3. 长期学习
 
 大纲第 3 部分（裁判系统深入、UI、功率控制、高级运动控制、机械臂、嵌入式深入、工程工具）为按需学习内容，将在新车开发和调试过程中逐步补充专题文档。
-
-## 其他
-
-- `assets/` — 队徽素材（取自 ARTINX 官方 GitHub 仓库 [ARTINX/ARTINX.github.io](https://github.com/ARTINX/ARTINX.github.io)）
-- `_internal/` — 内容编写规范与幻灯片框架模板，供后续补充章节时复用
-- 完整培训大纲见 [27 ARTINX电控组培训大纲 拟.md](27%20ARTINX电控组培训大纲%20拟.md)
